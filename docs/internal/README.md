@@ -35,6 +35,12 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | [Contributing](./contributing.md) | How to contribute code, docs, or plugins |
 | [Repository Management](./repository-management.md) | Branch strategy, CI/CD, RBAC |
 
+## R&D & Future Direction
+
+| Guide | Description |
+|-------|-------------|
+| [Next-Gen Agent Architectures](./nextgen-agents.md) | Self-healing codebases, multimodal spatial coding, RLCE |
+
 ## For Maintainers (Operating mtc)
 
 | Guide | Description |
