@@ -38,6 +38,7 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | Guide | Description |
 |-------|-------------|
 | [Platform Governance](./governance.md) | Ownership, security, approval processes |
+| [IP Governance](./ip-governance.md) | Licensing boundaries, patent strategy, trademarks |
 | [Release Process](./release-process.md) | Versioning, changelog, publishing |
 | [Security Policy](./security-policy.md) | Vulnerability handling, access control |
 | [Repository Management](./repository-management.md) | Branch strategy, CI/CD, RBAC |

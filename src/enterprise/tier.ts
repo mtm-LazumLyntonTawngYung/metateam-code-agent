@@ -1,3 +1,12 @@
+/**
+ * PROPRIETARY — MetaTeam Technologies
+ *
+ * This file is part of the Enterprise Edition of Metateam Code Agent.
+ * It is NOT licensed under the MIT License.
+ * Commercial license required. See LICENSE.ENTERPRISE or contact
+ * legal@metateam.io for terms.
+ */
+
 import type { Tier, EnterpriseFeature } from "./types";
 import { FEATURE_TIER_MAP } from "./types";
 import { getLicense, isEnterprise, hasFeature } from "./license";
