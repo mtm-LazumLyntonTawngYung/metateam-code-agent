@@ -1,0 +1,41 @@
+src/init/index.ts
+  s_e9bd648b1bdd91::t_8a39f30badeb39 168-170
+src/cli.tsx
+  s_e9bd648b1bdd91::t_b0f8d8ae1618bc 142-144
+  s_e9bd648b1bdd91::t_04dd2d2668d08b 170-173
+  s_e9bd648b1bdd91::t_489810277e9c32 141
+  s_e9bd648b1bdd91::t_9b3e4f6a7e1cee 150-152
+src/config/index.ts
+  s_e9bd648b1bdd91::t_9f3c6becb0a1a8 50-52
+src/server/handler.ts
+  s_e9bd648b1bdd91::t_3b478c3d228c91 101-102
+src/telemetry/reporter.ts
+  s_e9bd648b1bdd91::t_093c1ef8c20fb3 51-54
+  s_e9bd648b1bdd91::t_1729fd7661320d 60-61,64-69
+src/review/index.ts
+  s_e9bd648b1bdd91::t_dd142a6fc07c94 199-207
+  s_e9bd648b1bdd91::t_6dc645f580dad3 51
+  s_e9bd648b1bdd91::t_d9247367ec944a 189-193
+.mtc/mcp.json
+  s_e9bd648b1bdd91::t_33d8a35cb137f2 1-3
+CHANGELOG.md
+  s_e9bd648b1bdd91::t_1997ea8c455c85 1-23
+src/init/templates.ts
+  s_e9bd648b1bdd91::t_f86e7427d0fde3 41-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "292b2a50b7dba0966bc893f2bf1fad0c2a90f805",
+  "prompts": {},
+  "sessions": {
+    "s_e9bd648b1bdd91": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053c58c13ffetGhUrRem8TjiOZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
