@@ -1,0 +1,43 @@
+src/enterprise/audit.ts
+  s_403c34f4751866::t_e7cf27e3062911 1-124
+src/enterprise/org.ts
+  s_403c34f4751866::t_7ed1ddc2f4ed79 1-131
+docs/internal/README.md
+  s_403c34f4751866::t_5eeffaabf7af5c 20
+src/enterprise/tier.ts
+  s_403c34f4751866::t_18df8fa5b57da2 2,22
+  s_403c34f4751866::t_c4452dcc29b99d 1,3-21,23-53
+src/enterprise/index.ts
+  s_403c34f4751866::t_5160e7e0a6e950 1-16
+src/cli.tsx
+  s_403c34f4751866::t_1eeb69498704e6 192-338
+  s_403c34f4751866::t_e33fd373889aea 21-36
+src/config/index.ts
+  s_403c34f4751866::t_6afb7a6bfe233a 19
+src/enterprise/types.ts
+  s_403c34f4751866::t_5cf83711c7acb3 1-88
+src/enterprise/dashboard.ts
+  s_403c34f4751866::t_30ea1017162392 1-422
+docs/internal/commercialization.md
+  s_403c34f4751866::t_4b854c274d50b8 1-227
+CHANGELOG.md
+  s_403c34f4751866::t_7691886f9a70d9 3-13
+src/enterprise/license.ts
+  s_403c34f4751866::t_5e7ec9cb48816c 1-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "8ba817d39dea659a098e9a76c6e00c8142fc6c34",
+  "prompts": {},
+  "sessions": {
+    "s_403c34f4751866": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0538db391ffeoAUxFXgzXlxTRb",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
