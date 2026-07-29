@@ -56,6 +56,12 @@ Custom agents can be defined in your project configuration. Each agent has a sys
 
 Project-specific rules can be loaded and are appended to the active agent's system prompt.
 
+## Documentation
+
+- **[Internal Documentation Portal](docs/internal/README.md)** — Onboarding, governance, architecture, workflows
+- **[Internal Playbook](docs/playbook.md)** — Prompt engineering, agent usage, troubleshooting
+- **[Hackathon Guide](docs/hackathon.md)** — Building subagents and MCP plugins
+
 ## Development
 
 This project uses:
