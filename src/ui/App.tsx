@@ -18,6 +18,14 @@ import {
   isToolDenied,
 } from "../agents/index";
 import { checkForUpdates } from "../utils/updater";
+import { ensureTelemetryConfig } from "../config";
+import {
+  trackSessionStart,
+  trackSessionEnd,
+  trackModelUsage,
+  setSessionId,
+} from "../telemetry/tracker";
+import { createSession } from "../session/history";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
@@ -41,12 +49,22 @@ export default function App() {
   const activeAgentRef = useRef<AgentDefinition | null>(null);
 
   useEffect(() => {
-    const id = initAgents();
-    setActiveAgentId(id);
+    const agentId = initAgents();
+    setActiveAgentId(agentId);
     activeAgentRef.current = getActiveAgent();
+
+    const telem = ensureTelemetryConfig();
+    if (telem.enabled) {
+      const sid = createSession("mtc-session");
+      setSessionId(sid);
+      trackSessionStart();
+      trackModelUsage("deepseek-v4-flash-free", 0);
+    }
+
     startAll().then(() => setMcpCount(getConnectedCount()));
     checkForUpdates().then(setUpdateInfo);
     return () => {
+      trackSessionEnd();
       stopAll();
     };
   }, []);
