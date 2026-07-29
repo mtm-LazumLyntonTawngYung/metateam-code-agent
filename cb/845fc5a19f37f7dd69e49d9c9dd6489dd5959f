@@ -1,0 +1,25 @@
+docs/templates/mcp-plugin-scaffold.ts
+  s_e9bd648b1bdd91::t_4d477670cccc13 1-110
+docs/playbook.md
+  s_e9bd648b1bdd91::t_4bc95c3b375d06 1-380
+docs/hackathon.md
+  s_e9bd648b1bdd91::t_38926e89e26934 1-279
+docs/templates/subagent-template.md
+  s_e9bd648b1bdd91::t_9fb787fa149591 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "cb845fc5a19f37f7dd69e49d9c9dd6489dd5959f",
+  "prompts": {},
+  "sessions": {
+    "s_e9bd648b1bdd91": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053c58c13ffetGhUrRem8TjiOZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
