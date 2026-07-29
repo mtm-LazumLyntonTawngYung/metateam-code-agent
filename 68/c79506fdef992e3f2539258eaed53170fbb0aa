@@ -1,0 +1,55 @@
+src/cli.tsx
+  s_bb8268d312fa52::t_a2af519c4119a1 11-13
+  s_bb8268d312fa52::t_bc85a2e754c2d9 1-10,14-16
+src/ui/theme.ts
+  s_bb8268d312fa52::t_df94cb4163ee4b 1-22
+src/config/index.ts
+  s_bb8268d312fa52::t_dccf16c061eced 1-2
+src/mcp/index.ts
+  s_bb8268d312fa52::t_e1ff2b8b9dbeef 1
+src/ui/banner.ts
+  s_bb8268d312fa52::t_70ee15e1dc032c 1-6
+.gitignore
+  s_bb8268d312fa52::t_0ee63cf9d9e6b9 2
+  s_bb8268d312fa52::t_015db15eb5ed9f 1
+  s_bb8268d312fa52::t_c88a36c473bf5e 3-5
+bin/mtc.js
+  s_bb8268d312fa52::t_f3756f34997754 1-20
+src/ui/components/Statusbar.tsx
+  s_bb8268d312fa52::t_a64d300e20ca22 1-15
+tsconfig.json
+  s_bb8268d312fa52::t_8b930f030d41ae 1-21
+src/ui/Home.tsx
+  s_bb8268d312fa52::t_f4d273b4fa2643 9,11,13
+  s_bb8268d312fa52::t_b7f530d7107867 1-2,4-8,10,14-18
+  s_bb8268d312fa52::t_d838d517b09f6b 3,12
+package.json
+  s_bb8268d312fa52::t_754dc41e8f60c7 19-20
+  s_bb8268d312fa52::t_a3489527398c24 15-18
+  s_bb8268d312fa52::t_e3a518d4a1c202 1-14,21-22,27-28
+  s_bb8268d312fa52::t_e149dd3c868799 23-26
+src/ui/components/Header.tsx
+  s_bb8268d312fa52::t_a1a66421a56411 1-18
+src/ui/components/InputBox.tsx
+  s_bb8268d312fa52::t_b65aa6540243f2 1-14
+src/utils/index.ts
+  s_bb8268d312fa52::t_0f74aa09197aa8 1
+bun.lock
+  s_bb8268d312fa52::t_c781068b10f723 1-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "68c79506fdef992e3f2539258eaed53170fbb0aa",
+  "prompts": {},
+  "sessions": {
+    "s_bb8268d312fa52": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0543481a2ffeilgAAQ57qiWalA",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
