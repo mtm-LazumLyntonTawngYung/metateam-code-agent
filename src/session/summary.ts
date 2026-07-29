@@ -38,7 +38,10 @@ export function getLatestSummary(sessionId: string): SummaryRow | null {
   );
 }
 
-export function buildContext(sessionId: string): {
+export function buildContext(
+  sessionId: string,
+  systemPrompt?: string,
+): {
   systemMessages: string[];
   messages: MessageRow[];
   usage: ReturnType<typeof estimateContextUsage>;
@@ -49,6 +52,7 @@ export function buildContext(sessionId: string): {
   const usage = estimateContextUsage(allTokenCounts, DEFAULT_BUDGET);
 
   const systemMessages: string[] = [];
+  if (systemPrompt) systemMessages.push(systemPrompt);
   if (summaries.length > 0) {
     const latest = summaries[summaries.length - 1];
     systemMessages.push(
