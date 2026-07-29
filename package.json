@@ -12,10 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@inkjs/ui": "^2.0.0",
     "chalk": "^6.0.0",
     "commander": "^15.0.0",
     "figlet": "^1.11.4",
     "ink": "^7.1.1",
+    "ink-text-input": "^6.0.0",
     "react": "^19.2.8",
     "react-devtools-core": "^7.0.1"
   },

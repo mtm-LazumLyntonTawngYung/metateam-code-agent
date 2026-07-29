@@ -1,14 +1,20 @@
 import { Box, Text } from "ink";
-import { theme } from "../theme";
+import TextInput from "ink-text-input";
 
 type InputBoxProps = {
-  prompt?: string;
+  query: string;
+  onChange: (value: string) => void;
 };
 
-export default function InputBox({ prompt = ">" }: InputBoxProps) {
+export default function InputBox({ query, onChange }: InputBoxProps) {
   return (
     <Box>
-      <Text color={theme.colors.primary}>{prompt} </Text>
+      <Text color="blue">| </Text>
+      <TextInput
+        value={query}
+        onChange={onChange}
+        placeholder="Fix a TODO in the codebase"
+      />
     </Box>
   );
 }
