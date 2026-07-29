@@ -18,6 +18,22 @@ import {
 } from "./llm/index";
 import { startDaemon } from "./daemon/index";
 import { loadDaemonConfig } from "./daemon/config";
+import {
+  activateLicense,
+  deactivateLicense,
+  getLicense,
+  formatLicenseInfo,
+  generateLicenseKey,
+  hasFeature,
+  isEnterprise,
+  queryAuditLogs,
+  getSystemStatus,
+  startDashboard,
+  createOrganization,
+  listOrganizations,
+  type LicenseInfo,
+  type Tier,
+} from "./enterprise/index";
 
 const program = new Command();
 
@@ -171,6 +187,153 @@ daemonCmd
     }
     const config = loadDaemonConfig(options);
     startDaemon(config);
+  });
+
+const enterpriseCmd = program.command("enterprise").description("Enterprise license management and control plane");
+
+enterpriseCmd
+  .command("status")
+  .description("Show enterprise license and system status")
+  .action(() => {
+    const status = getSystemStatus();
+    const license = getLicense();
+    console.log(`\n  MTC Enterprise Status`);
+    console.log(`  ${"=".repeat(50)}`);
+    console.log(`  Tier:           ${status.tier}`);
+    console.log(`  License:        ${status.licenseStatus}`);
+    console.log(`  Organization:   ${license.organization}`);
+    console.log(`  Seats:          ${license.currentSeats}/${license.maxSeats}`);
+    console.log(`  Expires:        ${license.expiresAt.slice(0, 10)}`);
+    console.log(`  MCP Servers:    ${status.connectedMcpServers} connected`);
+    console.log(`  Features:`);
+    for (const f of status.features) {
+      console.log(`    ${f.available ? "\u2705" : "\u274C"} ${f.feature.replace(/_/g, " ")} (${f.tier})`);
+    }
+    console.log();
+  });
+
+enterpriseCmd
+  .command("activate")
+  .description("Activate an enterprise license key")
+  .argument("<key>", "License key")
+  .action((key: string) => {
+    const result = activateLicense(key);
+    if (result.success) {
+      console.log(`\n  License activated successfully!`);
+      console.log(`  Tier: ${result.license!.tier}`);
+      console.log(`  Features: ${result.license!.features.join(", ")}\n`);
+    } else {
+      console.error(`\n  Activation failed: ${result.error}\n`);
+      process.exit(1);
+    }
+  });
+
+enterpriseCmd
+  .command("deactivate")
+  .description("Deactivate the current license")
+  .action(() => {
+    deactivateLicense();
+    console.log("\n  License deactivated. Reverted to community tier.\n");
+  });
+
+enterpriseCmd
+  .command("generate")
+  .description("Generate a new license key")
+  .requiredOption("-t, --tier <tier>", "License tier: community, enterprise, enterprise-plus")
+  .requiredOption("-o, --org <name>", "Organization name")
+  .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
+  .option("-s, --seats <number>", "Max seats", "50")
+  .action((options: { tier: string; org: string; expires: string; seats: string }) => {
+    const key = generateLicenseKey(
+      options.tier as Tier,
+      options.org,
+      options.expires,
+      parseInt(options.seats, 10) || 50,
+    );
+    console.log(`\n  Generated License Key:`);
+    console.log(`  ${key}`);
+    console.log(`  Tier:    ${options.tier}`);
+    console.log(`  Org:     ${options.org}`);
+    console.log(`  Expires: ${options.expires.slice(0, 10)}`);
+    console.log(`  Seats:   ${options.seats}\n`);
+  });
+
+enterpriseCmd
+  .command("dashboard")
+  .description("Start the enterprise control plane web dashboard")
+  .option("-p, --port <port>", "Port to listen on", "3000")
+  .option("-H, --host <host>", "Host to bind to", "127.0.0.1")
+  .action((options: { port: string; host: string }) => {
+    if (!isEnterprise()) {
+      console.error("\n  Enterprise dashboard requires an enterprise license.");
+      console.error("  Activate one with: mtc enterprise activate <key>\n");
+      process.exit(1);
+    }
+    console.log(`\n  Starting MTC Enterprise Control Plane...\n`);
+    startDashboard(parseInt(options.port, 10) || 3000, options.host);
+  });
+
+enterpriseCmd
+  .command("audit")
+  .description("Query enterprise audit logs")
+  .option("-l, --limit <count>", "Number of entries", "20")
+  .option("-a, --actor <name>", "Filter by actor")
+  .option("-s, --since <date>", "Show entries after this date")
+  .action((options: { limit: string; actor?: string; since?: string }) => {
+    if (!isEnterprise()) {
+      console.error("\n  Audit logs require an enterprise license.\n");
+      process.exit(1);
+    }
+    const logs = queryAuditLogs({
+      limit: parseInt(options.limit, 10) || 20,
+      actor: options.actor,
+      since: options.since,
+    });
+    if (logs.length === 0) {
+      console.log("\n  No audit entries found.\n");
+      return;
+    }
+    console.log(`\n  Audit Log (${logs.length} entries):`);
+    console.log(`  ${"=".repeat(60)}`);
+    for (const log of logs) {
+      console.log(`  ${log.timestamp.slice(0, 19)}  ${log.actor.padEnd(16)} ${log.action.padEnd(20)} ${log.resource}`);
+    }
+    console.log();
+  });
+
+enterpriseCmd
+  .command("org")
+  .description("Manage organizations")
+  .argument("<action>", "Action: list, create")
+  .argument("[name]", "Organization name (for create)")
+  .argument("[slug]", "Organization slug (for create)")
+  .action((action: string, name?: string, slug?: string) => {
+    if (action === "list") {
+      const orgs = listOrganizations();
+      if (orgs.length === 0) {
+        console.log("\n  No organizations found.\n");
+        return;
+      }
+      console.log(`\n  Organizations (${orgs.length}):`);
+      console.log(`  ${"=".repeat(50)}`);
+      for (const org of orgs) {
+        console.log(`  ${org.name.padEnd(20)} ${org.tier.padEnd(15)} ${org.members.length} members`);
+      }
+      console.log();
+    } else if (action === "create") {
+      if (!name || !slug) {
+        console.error("\n  Usage: mtc enterprise org create <name> <slug>\n");
+        process.exit(1);
+      }
+      const org = createOrganization(name, slug);
+      console.log(`\n  Organization created:`);
+      console.log(`  ID:   ${org.id}`);
+      console.log(`  Name: ${org.name}`);
+      console.log(`  Slug: ${org.slug}\n`);
+    } else {
+      console.error(`\n  Unknown action: ${action}. Use: list, create\n`);
+      process.exit(1);
+    }
   });
 
 function printReview(result: ReviewResult, verbose: boolean): void {
