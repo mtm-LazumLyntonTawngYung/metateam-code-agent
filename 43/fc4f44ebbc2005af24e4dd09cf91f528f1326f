@@ -1,0 +1,25 @@
+install.sh
+  s_44b7650325e744::t_2aaaac1dc768b4 45-61
+  s_44b7650325e744::t_59c62b100cd542 1-3,5-44,62-67
+  s_44b7650325e744::t_1928d89b68f1cb 4
+.gitignore
+  s_44b7650325e744::t_6c60496e87daa0 3
+.github/workflows/release.yml
+  s_44b7650325e744::t_a58c591c7f407a 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "43fc4f44ebbc2005af24e4dd09cf91f528f1326f",
+  "prompts": {},
+  "sessions": {
+    "s_44b7650325e744": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053fb1518ffeBpkA4lpcO7Uuw3",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
