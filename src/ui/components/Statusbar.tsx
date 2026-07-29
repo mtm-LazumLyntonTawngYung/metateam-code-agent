@@ -5,9 +5,10 @@ type StatusbarProps = {
   mcpCount: number;
   agentName: string;
   agentId: string;
+  latestVersion?: string | null;
 };
 
-export default function Statusbar({ mcpCount, agentName, agentId }: StatusbarProps) {
+export default function Statusbar({ mcpCount, agentName, latestVersion }: StatusbarProps) {
   return (
     <Box
       width="100%"
@@ -21,7 +22,13 @@ export default function Statusbar({ mcpCount, agentName, agentId }: StatusbarPro
         </Text>
       </Box>
       <Box>
-        <Text color={theme.colors.muted}>v1.0.0</Text>
+        <Text color={theme.colors.muted}>
+          {latestVersion ? (
+            <Text color={theme.colors.warning}>{"\u26a1"} {latestVersion}</Text>
+          ) : (
+            <Text>v1.0.0</Text>
+          )}
+        </Text>
       </Box>
     </Box>
   );

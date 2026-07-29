@@ -15,13 +15,13 @@ import {
   setActiveAgent,
   getActiveAgent,
   getAllAgents,
-  getPrimaryAgents,
   isToolDenied,
-  getAgentById,
 } from "../agents/index";
+import { checkForUpdates } from "../utils/updater";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
+import type { UpdateInfo } from "../utils/updater";
 
 type View = "home" | "chat" | "connect";
 
@@ -37,6 +37,7 @@ export default function App() {
   const { columns, rows } = useWindowSize();
   const [mcpCount, setMcpCount] = useState(0);
   const [activeAgentId, setActiveAgentId] = useState<string>("build");
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function App() {
     setActiveAgentId(id);
     activeAgentRef.current = getActiveAgent();
     startAll().then(() => setMcpCount(getConnectedCount()));
+    checkForUpdates().then(setUpdateInfo);
     return () => {
       stopAll();
     };
@@ -181,6 +183,7 @@ export default function App() {
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSubmit}
+          updateInfo={updateInfo}
         />
       ) : null}
 
@@ -213,6 +216,7 @@ export default function App() {
             activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"
           }
           agentId={activeAgentId}
+          latestVersion={updateInfo?.hasUpdate ? updateInfo.latestVersion : null}
         />
       )}
     </Box>

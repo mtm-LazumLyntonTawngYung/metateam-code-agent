@@ -1,1 +1,2 @@
-// Terminal size hooks, ASCII font loaders, etc.
+export { checkForUpdates } from "./updater";
+export type { UpdateInfo } from "./updater";
