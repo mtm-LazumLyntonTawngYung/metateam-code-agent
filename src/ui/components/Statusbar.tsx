@@ -3,9 +3,11 @@ import { theme } from "../theme";
 
 type StatusbarProps = {
   mcpCount: number;
+  agentName: string;
+  agentId: string;
 };
 
-export default function Statusbar({ mcpCount }: StatusbarProps) {
+export default function Statusbar({ mcpCount, agentName, agentId }: StatusbarProps) {
   return (
     <Box
       width="100%"
@@ -15,7 +17,7 @@ export default function Statusbar({ mcpCount }: StatusbarProps) {
     >
       <Box flexGrow={1}>
         <Text color={theme.colors.muted}>
-          ~  {"\u2699"} {mcpCount} MCP connected
+          {"\u2699"} {mcpCount} MCP  |  <Text bold>{agentName}</Text>
         </Text>
       </Box>
       <Box>
