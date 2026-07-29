@@ -1,0 +1,37 @@
+src/session/history.ts
+  s_bb8268d312fa52::t_869ae1394fcbd4 2,30-34,39,43-46,50-53,57,71,85,95,99-102
+  s_bb8268d312fa52::t_76c5f98beb984d 74-82,103
+  s_bb8268d312fa52::t_7eaea8e2447767 1,3-29,35-38,40-42,47-49,54-56,58-70,72-73,83-84,86-94,96-98,104
+src/session/tokens.ts
+  s_bb8268d312fa52::t_1191855cc7ffbc 1-66
+src/session/db.ts
+  s_bb8268d312fa52::t_976d8994f38753 82-83,87-89
+  s_bb8268d312fa52::t_4071d38b13e007 81,84-86,90-96
+  s_bb8268d312fa52::t_3fc6c53055a5e0 1-80,97-102
+src/session/patches.ts
+  s_bb8268d312fa52::t_b55b557c268f97 1,28,40,44-47,54-61
+  s_bb8268d312fa52::t_c37620092ab303 2-27,29-30,39,41-43,48-53,62-67
+  s_bb8268d312fa52::t_d3c9d15b8bb4b6 31-38
+src/session/summary.ts
+  s_bb8268d312fa52::t_581fa7a30db1b5 2,29
+  s_bb8268d312fa52::t_97b721114456ec 3-14,19-26,28,30,32-34,39-87,89-112
+  s_bb8268d312fa52::t_57e3d107b5ed82 1,15-18,27,31,35-38,88
+src/session/index.ts
+  s_bb8268d312fa52::t_76b3039a382663 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "d6c362a7f074eab5b6057067964f1015ff77df63",
+  "prompts": {},
+  "sessions": {
+    "s_bb8268d312fa52": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0543481a2ffeilgAAQ57qiWalA",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
