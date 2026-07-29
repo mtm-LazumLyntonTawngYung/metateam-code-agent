@@ -1,0 +1,7 @@
+{
+  "port": 8080,
+  "host": "0.0.0.0",
+  "autofixLabel": "autofix",
+  "maxConcurrentJobs": 3,
+  "tempDir": "/tmp/mtc-daemon"
+}

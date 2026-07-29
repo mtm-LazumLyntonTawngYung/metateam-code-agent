@@ -16,6 +16,8 @@ import {
   classifyTask,
   KNOWN_MODELS,
 } from "./llm/index";
+import { startDaemon } from "./daemon/index";
+import { loadDaemonConfig } from "./daemon/config";
 
 const program = new Command();
 
@@ -140,6 +142,35 @@ serveCmd
       port: parseInt(options.port, 10) || 8080,
       host: options.host,
     });
+  });
+
+const daemonCmd = program.command("daemon").description("Start headless daemon with webhook listener for autonomous autofix");
+
+daemonCmd
+  .option("-p, --port <port>", "Port to listen on", "8080")
+  .option("-H, --host <host>", "Host to bind to", "0.0.0.0")
+  .option("-s, --webhook-secret <secret>", "Webhook secret for signature verification")
+  .option("-t, --github-token <token>", "GitHub personal access token")
+  .option("-g, --gitlab-token <token>", "GitLab personal access token")
+  .option("--slack-webhook <url>", "Slack webhook URL for notifications")
+  .option("--teams-webhook <url>", "Teams webhook URL for notifications")
+  .option("-l, --autofix-label <label>", "Issue label that triggers autofix", "autofix")
+  .action((options: {
+    port: string;
+    host: string;
+    webhookSecret?: string;
+    githubToken?: string;
+    gitlabToken?: string;
+    slackWebhook?: string;
+    teamsWebhook?: string;
+    autofixLabel: string;
+  }) => {
+    if (!options.githubToken && !options.gitlabToken) {
+      console.error("Error: --github-token or --gitlab-token is required");
+      process.exit(1);
+    }
+    const config = loadDaemonConfig(options);
+    startDaemon(config);
   });
 
 function printReview(result: ReviewResult, verbose: boolean): void {

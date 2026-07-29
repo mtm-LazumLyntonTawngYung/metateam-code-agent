@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-07-29
+
+### Added
+- **Daemon mode** (`mtc daemon`) — headless background worker with webhook listener
+- **Webhook server** — receives GitHub/GitLab webhooks with HMAC-SHA256 verification
+- **Autonomous bug fixing pipeline** — clones repo, analyzes issues via LLM, writes fixes, runs tests, opens Draft PRs
+- **GitHub API client** — full REST + GraphQL support for repos, issues, branches, blobs, trees, commits, and PRs
+- **GitLab API client** — issue notes, branches, merge requests, project management
+- **Slack notifications** — rich message attachments with status, repo, issue, and PR links
+- **Teams notifications** — Adaptive Cards with facts and action buttons
+- **Pipeline job tracking** — concurrent job management, status lifecycle, error handling
+- **Autofix retry logic** — one retry attempt if tests fail after initial fix
+- **Daemon configuration** — `.mtc/daemon.json` config template, CLI options for all settings
+
 ## [0.2.0] - 2026-07-29
 
 ### Added
