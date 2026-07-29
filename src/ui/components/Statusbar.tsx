@@ -1,7 +1,13 @@
 import { Box, Text } from "ink";
 import { theme } from "../theme";
 
-export default function Statusbar() {
+type StatusbarProps = {
+  mcpCount: number;
+  agentName: string;
+  agentId: string;
+};
+
+export default function Statusbar({ mcpCount, agentName, agentId }: StatusbarProps) {
   return (
     <Box
       width="100%"
@@ -11,7 +17,7 @@ export default function Statusbar() {
     >
       <Box flexGrow={1}>
         <Text color={theme.colors.muted}>
-          ~  {"\u2699"} 1 MCP /status
+          {"\u2699"} {mcpCount} MCP  |  <Text bold>{agentName}</Text>
         </Text>
       </Box>
       <Box>

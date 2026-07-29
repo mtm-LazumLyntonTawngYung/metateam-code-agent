@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Box, useInput, useWindowSize } from "ink";
 import HomeScreen from "./Home";
 import ChatView from "./ChatView";
@@ -9,8 +9,19 @@ import PermissionPrompt from "./PermissionPrompt";
 import Statusbar from "./components/Statusbar";
 import { executeTool } from "../tools/index";
 import { isSensitiveTool } from "../tools/permissions";
+import { startAll, stopAll, getConnectedCount } from "../mcp/index";
+import {
+  initAgents,
+  setActiveAgent,
+  getActiveAgent,
+  getAllAgents,
+  getPrimaryAgents,
+  isToolDenied,
+  getAgentById,
+} from "../agents/index";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
+import type { AgentDefinition } from "../agents/types";
 
 type View = "home" | "chat" | "connect";
 
@@ -19,30 +30,78 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [showAgents, setShowAgents] = useState(false);
   const [showCommands, setShowCommands] = useState(false);
-  const [pendingPerm, setPendingPerm] = useState<PendingPermission | null>(null);
+  const [pendingPerm, setPendingPerm] = useState<PendingPermission | null>(
+    null,
+  );
   const alwaysAllow = useRef(new Set<string>());
   const { columns, rows } = useWindowSize();
+  const [mcpCount, setMcpCount] = useState(0);
+  const [activeAgentId, setActiveAgentId] = useState<string>("build");
+  const activeAgentRef = useRef<AgentDefinition | null>(null);
+
+  useEffect(() => {
+    const id = initAgents();
+    setActiveAgentId(id);
+    activeAgentRef.current = getActiveAgent();
+    startAll().then(() => setMcpCount(getConnectedCount()));
+    return () => {
+      stopAll();
+    };
+  }, []);
+
+  const switchAgent = useCallback((id: string) => {
+    const agent = setActiveAgent(id);
+    if (agent) {
+      setActiveAgentId(agent.id);
+      activeAgentRef.current = agent;
+    }
+  }, []);
 
   useInput((_input, key) => {
     if (pendingPerm) return;
     if (key.escape) {
-      if (showAgents) { setShowAgents(false); return; }
-      if (showCommands) { setShowCommands(false); return; }
-      if (view !== "home") { setView("home"); return; }
+      if (showAgents) {
+        setShowAgents(false);
+        return;
+      }
+      if (showCommands) {
+        setShowCommands(false);
+        return;
+      }
+      if (view !== "home") {
+        setView("home");
+        return;
+      }
       return;
     }
     if (key.tab && view === "home" && !showAgents && !showCommands) {
       setShowAgents(true);
       return;
     }
-    if (key.ctrl && _input === "p" && view === "home" && !showAgents && !showCommands) {
+    if (
+      key.ctrl &&
+      _input === "p" &&
+      view === "home" &&
+      !showAgents &&
+      !showCommands
+    ) {
       setShowCommands(true);
       return;
     }
   });
 
   const requestToolExecution = useCallback(
-    async (name: string, args: Record<string, unknown>): Promise<ToolResult> => {
+    async (
+      name: string,
+      args: Record<string, unknown>,
+    ): Promise<ToolResult> => {
+      const agent = activeAgentRef.current;
+      if (agent && isToolDenied(name, agent)) {
+        return {
+          success: false,
+          error: `Tool "${name}" is denied by the current agent (${agent.name})`,
+        };
+      }
       if (!isSensitiveTool(name) || alwaysAllow.current.has(name)) {
         return executeTool(name, args);
       }
@@ -76,18 +135,33 @@ export default function App() {
         setQuery("");
         return;
       }
+      if (value === "/agent" || value.startsWith("/agent ")) {
+        const parts = value.split(/\s+/);
+        if (parts.length > 1) {
+          switchAgent(parts[1]);
+          return;
+        }
+        setShowAgents(true);
+        return;
+      }
     }
     if (value.trim()) {
       setView("chat");
     }
   };
 
-  const handleSelectAgent = () => setShowAgents(false);
+  const handleSelectAgent = (id: string) => {
+    switchAgent(id);
+    setShowAgents(false);
+  };
 
   const handleSelectCommand = (id: string) => {
     setShowCommands(false);
     if (id === "connect") setView("connect");
     if (id === "exit") process.exit(0);
+    if (id.startsWith("agent-")) {
+      switchAgent(id.slice(6));
+    }
   };
 
   const handleConnectSave = () => setView("home");
@@ -111,7 +185,11 @@ export default function App() {
       ) : null}
 
       {!pendingPerm && showAgents && (
-        <AgentSelector onSelect={handleSelectAgent} />
+        <AgentSelector
+          agents={getAllAgents()}
+          currentId={activeAgentId}
+          onSelect={handleSelectAgent}
+        />
       )}
       {!pendingPerm && showCommands && (
         <CommandPalette onSelect={handleSelectCommand} />
@@ -121,13 +199,22 @@ export default function App() {
           query={query}
           onBack={() => setView("home")}
           requestTool={requestToolExecution}
+          activeAgentId={activeAgentId}
         />
       )}
       {!pendingPerm && view === "connect" && (
         <ConnectForm onSave={handleConnectSave} />
       )}
 
-      {!pendingPerm && <Statusbar />}
+      {!pendingPerm && (
+        <Statusbar
+          mcpCount={mcpCount}
+          agentName={
+            activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"
+          }
+          agentId={activeAgentId}
+        />
+      )}
     </Box>
   );
 }

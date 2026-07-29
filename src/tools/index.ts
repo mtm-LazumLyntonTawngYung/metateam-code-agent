@@ -23,6 +23,16 @@ export function getAllTools(): ToolDefinition[] {
   return Object.values(toolRegistry);
 }
 
+export function registerTool(name: string, def: ToolDefinition): () => void {
+  if (toolRegistry[name]) {
+    console.warn(`Warning: overwriting existing tool "${name}"`);
+  }
+  toolRegistry[name] = def;
+  return () => {
+    delete toolRegistry[name];
+  };
+}
+
 export async function executeTool(
   name: string,
   args: Record<string, unknown>,

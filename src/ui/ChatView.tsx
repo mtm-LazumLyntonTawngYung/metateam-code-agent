@@ -2,12 +2,14 @@ import { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { theme } from "./theme";
+import { getSubagents, runSubagent, getAgentById } from "../agents/index";
 import type { ToolResult } from "../tools/schema";
 
 type ChatViewProps = {
   query: string;
   onBack: () => void;
   requestTool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
+  activeAgentId: string;
 };
 
 type LogEntry =
@@ -16,10 +18,14 @@ type LogEntry =
   | { kind: "tool_result"; result: ToolResult }
   | { kind: "message"; text: string; color?: string };
 
-export default function ChatView({ query, onBack, requestTool }: ChatViewProps) {
+export default function ChatView({ query, onBack, requestTool, activeAgentId }: ChatViewProps) {
   const [logs, setLogs] = useState<LogEntry[]>([
     { kind: "query", text: query },
-    { kind: "message", text: "Tool commands: /read /write /edit /bash /glob", color: theme.colors.muted },
+    {
+      kind: "message",
+      text: "Commands: /read /write /edit /bash /glob /call /subagent /agent",
+      color: theme.colors.muted,
+    },
   ]);
   const [toolInput, setToolInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -79,10 +85,57 @@ export default function ChatView({ query, onBack, requestTool }: ChatViewProps) 
           path: rest[1] || undefined,
         });
         setBusy(false);
+      } else if (cmd === "/call" && rest[0]) {
+        const toolName = rest[0];
+        let args: Record<string, unknown>;
+        try {
+          args = rest.slice(1).length ? JSON.parse(rest.slice(1).join(" ")) : {};
+        } catch {
+          args = { input: rest.slice(1).join(" ") };
+        }
+        setBusy(true);
+        result = await requestTool(toolName, args);
+        setBusy(false);
+      } else if (cmd === "/subagent" && rest[0]) {
+        const subagentId = rest[0];
+        const subQuery = rest.slice(1).join(" ");
+        const agent = getAgentById(subagentId);
+        if (!agent || agent.mode !== "subagent") {
+          result = {
+            success: false,
+            error: `Unknown subagent: ${subagentId}. Available: ${getSubagents().map((a) => a.id).join(", ") || "none"}`,
+          };
+        } else if (!subQuery) {
+          result = {
+            success: false,
+            error: "Usage: /subagent <name> <commands...>",
+          };
+        } else {
+          setBusy(true);
+          try {
+            const subResult = await runSubagent({ agent, query: subQuery });
+            result = {
+              success: true,
+              data: `Subagent "${agent.name}" completed in ${subResult.duration}ms (${subResult.toolCalls} tool calls)\n\n${subResult.output}`,
+            };
+          } catch (err) {
+            result = {
+              success: false,
+              error: `Subagent failed: ${err instanceof Error ? err.message : String(err)}`,
+            };
+          }
+          setBusy(false);
+        }
+      } else if (cmd === "/agent" && rest[0]) {
+        result = {
+          success: false,
+          error: "Switch agents from the home screen with Tab or /agent",
+        };
       } else {
         result = {
           success: false,
-          error: "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | /bash cmd | /glob pattern",
+          error:
+            "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | /bash cmd | /glob pattern | /call toolName {jsonArgs} | /subagent name /read ...",
         };
       }
 
@@ -118,7 +171,9 @@ export default function ChatView({ query, onBack, requestTool }: ChatViewProps) 
             if (entry.kind === "message") {
               return (
                 <Box key={i}>
-                  <Text color={entry.color ?? theme.colors.muted}>{entry.text}</Text>
+                  <Text color={entry.color ?? theme.colors.muted}>
+                    {entry.text}
+                  </Text>
                 </Box>
               );
             }
@@ -133,7 +188,10 @@ export default function ChatView({ query, onBack, requestTool }: ChatViewProps) 
                       {entry.result.data && (
                         <Box paddingLeft={2}>
                           <Text color={theme.colors.text}>
-                            {JSON.stringify(entry.result.data, null, 2).slice(0, 600)}
+                            {JSON.stringify(entry.result.data, null, 2).slice(
+                              0,
+                              600,
+                            )}
                           </Text>
                         </Box>
                       )}
