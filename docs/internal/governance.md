@@ -82,6 +82,13 @@ All contributions must adhere to:
    code in `src/enterprise/` is proprietary and must not be distributed
    under the MIT license
 
+## Entity & Corporate Governance
+
+The mtc platform is developed and maintained by **MetaTeam AI Labs, Inc.**,
+a Delaware C-Corp spun out of MetaTeam Technologies (see [Spin-Off Strategy](./spin-off.md)).
+The open-source core remains MIT-licensed; enterprise features require a
+commercial agreement with MetaTeam AI Labs.
+
 ## Escalation Path
 
 | Issue | Contact |
@@ -90,3 +97,4 @@ All contributions must adhere to:
 | Platform outage | #mtc-oncall (PagerDuty) |
 | Feature request | GitHub Issues |
 | General questions | #mtc-users (Slack) |
+| Commercial / licensing | enterprise@metateam-ai-labs.io |
