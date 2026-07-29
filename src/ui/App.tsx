@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Box, useInput, useWindowSize } from "ink";
 import HomeScreen from "./Home";
 import ChatView from "./ChatView";
@@ -9,6 +9,7 @@ import PermissionPrompt from "./PermissionPrompt";
 import Statusbar from "./components/Statusbar";
 import { executeTool } from "../tools/index";
 import { isSensitiveTool } from "../tools/permissions";
+import { startAll, stopAll, getConnectedCount } from "../mcp/index";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 
@@ -22,6 +23,12 @@ export default function App() {
   const [pendingPerm, setPendingPerm] = useState<PendingPermission | null>(null);
   const alwaysAllow = useRef(new Set<string>());
   const { columns, rows } = useWindowSize();
+  const [mcpCount, setMcpCount] = useState(0);
+
+  useEffect(() => {
+    startAll().then(() => setMcpCount(getConnectedCount()));
+    return () => { stopAll(); };
+  }, []);
 
   useInput((_input, key) => {
     if (pendingPerm) return;
@@ -127,7 +134,7 @@ export default function App() {
         <ConnectForm onSave={handleConnectSave} />
       )}
 
-      {!pendingPerm && <Statusbar />}
+      {!pendingPerm && <Statusbar mcpCount={mcpCount} />}
     </Box>
   );
 }
