@@ -2,14 +2,16 @@ import { Box, Text } from "ink";
 import { mtcBanner } from "./banner";
 import { theme } from "./theme";
 import InputBox from "./components/InputBox";
+import type { UpdateInfo } from "../utils/updater";
 
 type HomeScreenProps = {
   query: string;
   onQueryChange: (value: string) => void;
   onSubmit: (value: string) => void;
+  updateInfo?: UpdateInfo | null;
 };
 
-export default function HomeScreen({ query, onQueryChange, onSubmit }: HomeScreenProps) {
+export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo }: HomeScreenProps) {
   return (
     <Box
       flexGrow={1}
@@ -20,6 +22,20 @@ export default function HomeScreen({ query, onQueryChange, onSubmit }: HomeScree
       <Box marginBottom={1}>
         <Text color="gray">{mtcBanner}</Text>
       </Box>
+
+      {updateInfo?.hasUpdate && (
+        <Box marginBottom={1}>
+          <Text color={theme.colors.warning}>
+            {"\u26a1"} Update {updateInfo.latestVersion} available{" "}
+            {updateInfo.downloadUrl ? (
+              <Text>
+                {"\u2014"}{" "}
+                <Text underline>curl -fsSL https://raw.githubusercontent.com/mtm-LazumLyntonTawngYung/metateam-code-agent/main/install.sh | bash</Text>
+              </Text>
+            ) : null}
+          </Text>
+        </Box>
+      )}
 
       <Box
         flexDirection="column"

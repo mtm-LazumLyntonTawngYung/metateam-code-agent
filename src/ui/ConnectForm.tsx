@@ -1,25 +1,39 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { saveConfig } from "../config";
+import { loadLlmConfig, updateProvider } from "../llm/config";
 import { theme } from "./theme";
 
-type Step = "apiKey" | "endpoint" | "done";
+const PROVIDERS = [
+  { id: "deepseek" as const, label: "DeepSeek", defaultUrl: "https://api.deepseek.com/v1" },
+  { id: "openai" as const, label: "OpenAI", defaultUrl: "https://api.openai.com/v1" },
+  { id: "anthropic" as const, label: "Anthropic", defaultUrl: "https://api.anthropic.com/v1" },
+];
+
+type Step = "provider" | "apiKey" | "done";
 
 type ConnectFormProps = {
   onSave: () => void;
 };
 
 export default function ConnectForm({ onSave }: ConnectFormProps) {
-  const [step, setStep] = useState<Step>("apiKey");
+  const [step, setStep] = useState<Step>("provider");
+  const [selectedIdx, setSelectedIdx] = useState(0);
   const [apiKey, setApiKey] = useState("");
-  const [endpoint, setEndpoint] = useState("");
   const [error, setError] = useState("");
 
   useInput((_input, key) => {
     if (step === "done") {
       onSave();
       return;
+    }
+    if (step === "provider") {
+      if (key.downArrow) setSelectedIdx((i) => Math.min(i + 1, PROVIDERS.length - 1));
+      if (key.upArrow) setSelectedIdx((i) => Math.max(i - 1, 0));
+      if (key.return) {
+        setStep("apiKey");
+        setError("");
+      }
     }
     if (key.escape) {
       onSave();
@@ -32,13 +46,15 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
       return;
     }
     setError("");
-    setStep("endpoint");
-  };
-
-  const handleEndpointSubmit = (value: string) => {
-    const ep = value.trim() || "https://api.deepseek.com/v1";
+    const selected = PROVIDERS[selectedIdx];
     try {
-      saveConfig({ apiKey: apiKey.trim(), endpoint: ep });
+      updateProvider({
+        id: selected.id,
+        label: selected.label,
+        apiKey: value.trim(),
+        baseUrl: selected.defaultUrl,
+        models: loadLlmConfig().providers.find((p) => p.id === selected.id)?.models ?? [],
+      });
       setStep("done");
     } catch {
       setError("Failed to save config");
@@ -59,7 +75,7 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
           <Text color={theme.colors.success} bold>
             {"\u2713"} Provider connected
           </Text>
-          <Text color={theme.colors.text}>API key and endpoint saved.</Text>
+          <Text color={theme.colors.text}>{PROVIDERS[selectedIdx].label} API key saved.</Text>
           <Box marginTop={1}>
             <Text color={theme.colors.muted}>Press any key to continue</Text>
           </Box>
@@ -82,30 +98,30 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
           {"\u2699"} Connect AI Provider
         </Text>
         <Box marginTop={1}>
-          {step === "apiKey" ? (
+          {step === "provider" ? (
             <Box flexDirection="column">
-              <Text color={theme.colors.text}>Enter your API Key:</Text>
+              <Text color={theme.colors.text}>Select a provider:</Text>
+              <Box marginTop={1} flexDirection="column">
+                {PROVIDERS.map((p, i) => (
+                  <Text key={p.id} color={i === selectedIdx ? theme.colors.primary : theme.colors.text}>
+                    {i === selectedIdx ? "\u25b6 " : "  "}{p.label}
+                  </Text>
+                ))}
+              </Box>
+            </Box>
+          ) : (
+            <Box flexDirection="column">
+              <Text color={theme.colors.text}>
+                Enter API Key for {PROVIDERS[selectedIdx].label}:
+              </Text>
               <Box marginTop={1}>
                 <Text color="blue">| </Text>
                 <TextInput
                   value={apiKey}
                   onChange={setApiKey}
                   onSubmit={handleApiKeySubmit}
-                  placeholder="sk-..."
+                  placeholder={`${PROVIDERS[selectedIdx].id}-key...`}
                   mask="*"
-                />
-              </Box>
-            </Box>
-          ) : (
-            <Box flexDirection="column">
-              <Text color={theme.colors.text}>Enter API Endpoint (optional):</Text>
-              <Box marginTop={1}>
-                <Text color="blue">| </Text>
-                <TextInput
-                  value={endpoint}
-                  onChange={setEndpoint}
-                  onSubmit={handleEndpointSubmit}
-                  placeholder="https://api.deepseek.com/v1"
                 />
               </Box>
             </Box>
@@ -118,7 +134,9 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
         )}
         <Box marginTop={1}>
           <Text color={theme.colors.muted}>
-            <Text bold>enter</Text> confirm  <Text bold>esc</Text> cancel
+            {step === "provider"
+              ? <Text><Text bold>arrows</Text> navigate  <Text bold>enter</Text> select  <Text bold>esc</Text> cancel</Text>
+              : <Text><Text bold>enter</Text> confirm  <Text bold>esc</Text> cancel</Text>}
           </Text>
         </Box>
       </Box>

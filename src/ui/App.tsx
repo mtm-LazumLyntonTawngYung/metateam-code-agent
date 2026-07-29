@@ -15,13 +15,21 @@ import {
   setActiveAgent,
   getActiveAgent,
   getAllAgents,
-  getPrimaryAgents,
   isToolDenied,
-  getAgentById,
 } from "../agents/index";
+import { checkForUpdates } from "../utils/updater";
+import { ensureTelemetryConfig } from "../config";
+import {
+  trackSessionStart,
+  trackSessionEnd,
+  trackModelUsage,
+  setSessionId,
+} from "../telemetry/tracker";
+import { createSession } from "../session/history";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
+import type { UpdateInfo } from "../utils/updater";
 
 type View = "home" | "chat" | "connect";
 
@@ -37,14 +45,26 @@ export default function App() {
   const { columns, rows } = useWindowSize();
   const [mcpCount, setMcpCount] = useState(0);
   const [activeAgentId, setActiveAgentId] = useState<string>("build");
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
 
   useEffect(() => {
-    const id = initAgents();
-    setActiveAgentId(id);
+    const agentId = initAgents();
+    setActiveAgentId(agentId);
     activeAgentRef.current = getActiveAgent();
+
+    const telem = ensureTelemetryConfig();
+    if (telem.enabled) {
+      const sid = createSession("mtc-session");
+      setSessionId(sid);
+      trackSessionStart();
+      trackModelUsage("deepseek-v4-flash-free", 0);
+    }
+
     startAll().then(() => setMcpCount(getConnectedCount()));
+    checkForUpdates().then(setUpdateInfo);
     return () => {
+      trackSessionEnd();
       stopAll();
     };
   }, []);
@@ -181,6 +201,7 @@ export default function App() {
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSubmit}
+          updateInfo={updateInfo}
         />
       ) : null}
 
@@ -213,6 +234,7 @@ export default function App() {
             activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"
           }
           agentId={activeAgentId}
+          latestVersion={updateInfo?.hasUpdate ? updateInfo.latestVersion : null}
         />
       )}
     </Box>

@@ -1,0 +1,74 @@
+{
+  "name": "vscode-mtc",
+  "displayName": "MTC Code Agent",
+  "description": "MetaTeam Code Agent — AI-powered coding assistant in your editor",
+  "version": "0.1.0",
+  "publisher": "metateam",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages", "Other"],
+  "keywords": ["mtc", "ai", "code-agent", "metateam"],
+  "icon": "images/icon.png",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mtc.connect",
+        "title": "MTC: Connect to Agent Server"
+      },
+      {
+        "command": "mtc.disconnect",
+        "title": "MTC: Disconnect"
+      },
+      {
+        "command": "mtc.focusSidebar",
+        "title": "MTC: Show Agent Sidebar"
+      },
+      {
+        "command": "mtc.sendSelection",
+        "title": "MTC: Send Selected Code as Query"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "mtc-sidebar", "title": "MTC Agent", "icon": "images/icon.png" }
+      ]
+    },
+    "views": {
+      "mtc-sidebar": [
+        { "type": "webview", "id": "mtc.sidebar", "name": "Agent" }
+      ]
+    },
+    "configuration": {
+      "title": "MTC",
+      "properties": {
+        "mtc.serverHost": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "MTC server host"
+        },
+        "mtc.serverPort": {
+          "type": "number",
+          "default": 8080,
+          "description": "MTC server WebSocket port"
+        },
+        "mtc.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-connect to MTC server on startup"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "echo no lint"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}

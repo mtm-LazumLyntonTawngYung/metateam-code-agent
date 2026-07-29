@@ -1,6 +1,7 @@
 import { run, all, get } from "./db";
 import { getMessages, addMessage, type MessageRow } from "./history";
 import { countTokens, estimateContextUsage, DEFAULT_BUDGET } from "./tokens";
+import { redactText } from "../secrets/index";
 
 export type SummaryRow = {
   id: number;
@@ -52,7 +53,7 @@ export function buildContext(
   const usage = estimateContextUsage(allTokenCounts, DEFAULT_BUDGET);
 
   const systemMessages: string[] = [];
-  if (systemPrompt) systemMessages.push(systemPrompt);
+  if (systemPrompt) systemMessages.push(redactText(systemPrompt));
   if (summaries.length > 0) {
     const latest = summaries[summaries.length - 1];
     systemMessages.push(
@@ -79,9 +80,10 @@ export function rotateContext(
 
   if (prunedMessages.length === 0) return { pruned: 0, summary: "" };
 
-  const summaryText = prunedMessages
+  const rawSummary = prunedMessages
     .map((m) => `[${m.role}]: ${truncate(m.content, 200)}`)
     .join("\n");
+  const summaryText = redactText(rawSummary);
 
   const lastPrunedId = prunedMessages[prunedMessages.length - 1].id;
 
