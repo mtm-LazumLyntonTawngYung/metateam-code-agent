@@ -98,7 +98,8 @@ export async function handleQuery(
     const msgs = getMessages(client.sessionId, true);
     send(jsonMsg("result", queryId, { success: true, data: msgs }));
   } else {
-    send(jsonMsg("result", queryId, { success: false, error: `Unknown command: ${cmd}. Try /read, /write, /edit, /bash, /glob, /list-tools, /session, /history` }));
+    const hint = "Try /read, /write, /edit, /bash, /glob, /list-tools, /session, /history";
+    send(jsonMsg("result", queryId, { success: false, error: `Unknown command: ${cmd}. ${hint}` }));
   }
 }
 

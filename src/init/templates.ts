@@ -38,7 +38,11 @@ function codingStandards(tmpl: ProjectTemplate): string {
 - Follow the official style guide for the framework.
 - Use consistent import ordering: external → internal → relative.
 - Use named exports over default exports.
-${tmpl.docLang === "jp" ? "- All code identifiers in English; comments in Japanese.\n- JSDoc/TSDoc in Japanese where public API.\n" : ""}${tmpl.docLang === "both" ? "- Code identifiers in English; JSDoc in both English and Japanese.\n- Use English for technical terms, Japanese for explanations.\n" : ""}
+${tmpl.docLang === "jp"
+    ? "- All code identifiers in English; comments in Japanese.\n- JSDoc/TSDoc in Japanese where public API.\n"
+    : ""}${tmpl.docLang === "both"
+    ? "- Code identifiers in English; JSDoc in both English and Japanese.\n- Use English for technical terms, Japanese for explanations.\n"
+    : ""}
 ## Error Handling
 - Handle errors explicitly; avoid silent catch blocks.
 - Use typed errors where possible.

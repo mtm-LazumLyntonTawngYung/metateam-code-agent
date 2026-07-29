@@ -47,7 +47,9 @@ export function saveConfig(partial: Partial<MtcConfig>): MtcConfig {
 }
 
 export function generateDeviceId(): string {
-  const seed = `${homedir()}-${process.env.USERNAME ?? process.env.USER ?? "unknown"}-${process.env.COMPUTERNAME ?? "unknown"}`;
+  const user = process.env.USERNAME ?? process.env.USER ?? "unknown";
+  const host = process.env.COMPUTERNAME ?? "unknown";
+  const seed = `${homedir()}-${user}-${host}`;
   return createHash("sha256").update(seed).digest("hex").slice(0, 16);
 }
 
