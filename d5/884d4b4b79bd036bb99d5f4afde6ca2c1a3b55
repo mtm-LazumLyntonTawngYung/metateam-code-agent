@@ -1,0 +1,66 @@
+docs/internal/repository-management.md
+  s_403c34f4751866::t_6752357ad478e4 1-96
+docs/internal/security-policy.md
+  s_403c34f4751866::t_6ac7f346c0931e 1-113
+.github/PULL_REQUEST_TEMPLATE.md
+  s_403c34f4751866::t_e373c78c83dcff 1-29
+docs/internal/README.md
+  s_403c34f4751866::t_cfb09f726b2c23 31
+  s_403c34f4751866::t_57d0d8f8e1c76c 1-30,32-58
+docs/internal/governance.md
+  s_403c34f4751866::t_2568cb9c2bb9b0 1-89
+docs/internal/architecture.md
+  s_403c34f4751866::t_7fc56bbd1bbc47 1-141
+CHANGELOG.md
+  s_403c34f4751866::t_0c1e0cb1286212 3-20
+docs/internal/ai-workflows.md
+  s_403c34f4751866::t_ea1101ccc2715f 1-99
+docs/training/knowledge-sharing.md
+  s_403c34f4751866::t_43354887114ec5 1-69
+docs/internal/commands.md
+  s_403c34f4751866::t_687ccb9778357e 1-55
+.github/ISSUE_TEMPLATE/bug-report.md
+  s_403c34f4751866::t_9005acd964d4d5 1-36
+docs/internal/release-process.md
+  s_403c34f4751866::t_1d045ca40f8c1a 1-118
+docs/internal/configuration.md
+  s_403c34f4751866::t_25607edd95163d 1-73
+docs/internal/best-practices.md
+  s_403c34f4751866::t_3595e2638c7f9c 1-49
+docs/internal/development-guidelines.md
+  s_403c34f4751866::t_88fcd5b7ed26cc 1-95
+docs/internal/contributing.md
+  s_403c34f4751866::t_1e1143c63b043d 1-105
+docs/training/workshop-agenda.md
+  s_403c34f4751866::t_0ee8f57f097066 1-75
+docs/internal/mcp-integrations.md
+  s_403c34f4751866::t_1d822899470d3d 1-74
+README.md
+  s_403c34f4751866::t_d6568cc6d168f7 59-64
+docs/internal/troubleshooting.md
+  s_403c34f4751866::t_047f22d8eac74c 1-125
+docs/internal/onboarding.md
+  s_403c34f4751866::t_85ece2b210168b 1-125
+.github/ISSUE_TEMPLATE/plugin-proposal.md
+  s_403c34f4751866::t_4308cd47160f7e 1-35
+.github/ISSUE_TEMPLATE/feature-request.md
+  s_403c34f4751866::t_7731673e9d012a 1-27
+docs/internal/faq.md
+  s_403c34f4751866::t_0e98bd28c5ac6d 1-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "d5884d4b4b79bd036bb99d5f4afde6ca2c1a3b55",
+  "prompts": {},
+  "sessions": {
+    "s_403c34f4751866": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0538db391ffeoAUxFXgzXlxTRb",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
