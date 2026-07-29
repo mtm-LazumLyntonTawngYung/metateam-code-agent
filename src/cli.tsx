@@ -1,6 +1,6 @@
 import { render, renderToString } from "ink";
 import { Command } from "commander";
-import Home from "./ui/Home";
+import App from "./ui/App";
 
 const program = new Command();
 
@@ -10,10 +10,10 @@ program
   .version("1.0.0")
   .action(async () => {
     if (process.stdin.isTTY) {
-      const { waitUntilExit } = render(<Home />);
+      const { waitUntilExit } = render(<App />);
       await waitUntilExit();
     } else {
-      const output = renderToString(<Home />, { columns: 80 });
+      const output = renderToString(<App />, { columns: 80 });
       console.log(output);
     }
   });
