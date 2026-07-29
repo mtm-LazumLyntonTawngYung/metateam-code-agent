@@ -8,6 +8,14 @@ import { generateReport, printReport } from "./telemetry/reporter";
 import { startServer } from "./server/index";
 import { initProject } from "./init/index";
 import { reviewProject, type ReviewResult } from "./review/index";
+import {
+  loadLlmConfig,
+  saveLlmConfig,
+  updateProvider,
+  routeTask,
+  classifyTask,
+  KNOWN_MODELS,
+} from "./llm/index";
 
 const program = new Command();
 
@@ -213,6 +221,100 @@ reviewCmd
 
     printReview(result, options.verbose ?? false);
     process.exit(result.passed ? 0 : 1);
+  });
+
+const llmCmd = program.command("llm").description("Configure LLM providers and routing");
+
+llmCmd
+  .command("status")
+  .description("Show configured providers and routing")
+  .action(() => {
+    const cfg = loadLlmConfig();
+    console.log(`\n  LLM Configuration`);
+    console.log(`  ${"=".repeat(50)}`);
+    console.log(`\n  Providers:`);
+    for (const p of cfg.providers) {
+      const key = p.apiKey ? `${p.apiKey.slice(0, 8)}...` : "not set";
+      console.log(`    ${p.id.padEnd(14)} ${p.label.padEnd(12)} key: ${key}`);
+      console.log(`    ${"".padEnd(14)} ${p.baseUrl}`);
+      console.log(`    ${"".padEnd(14)} models: ${p.models.join(", ")}`);
+    }
+    console.log(`\n  Routing:`);
+    console.log(`    Simple tasks:    ${cfg.routing.simpleModel}`);
+    console.log(`    Default tasks:   ${cfg.routing.defaultModel}`);
+    console.log(`    Complex tasks:   ${cfg.routing.reasoningModel}`);
+    console.log();
+  });
+
+llmCmd
+  .command("set-provider")
+  .description("Configure a provider")
+  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic)")
+  .requiredOption("-k, --key <key>", "API key")
+  .option("-u, --url <url>", "API base URL")
+  .option("-m, --models <models...>", "Model IDs to enable")
+  .action((options: { id: string; key: string; url?: string; models?: string[] }) => {
+    const cfg = loadLlmConfig();
+    const existing = cfg.providers.find((p) => p.id === options.id);
+    const labels: Record<string, string> = {
+      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic",
+    };
+    updateProvider({
+      id: options.id as "deepseek" | "openai" | "anthropic",
+      label: existing?.label ?? labels[options.id] ?? options.id,
+      apiKey: options.key,
+      baseUrl: options.url ?? existing?.baseUrl ?? `https://api.${options.id}.com/v1`,
+      models: options.models ?? existing?.models ?? [],
+    });
+    console.log(`\n  Provider '${options.id}' updated.\n`);
+  });
+
+llmCmd
+  .command("set-routing")
+  .description("Configure routing models")
+  .option("-s, --simple <model>", "Model for simple tasks")
+  .option("-d, --default <model>", "Model for medium tasks")
+  .option("-r, --reasoning <model>", "Model for complex tasks")
+  .action((options: { simple?: string; default?: string; reasoning?: string }) => {
+    const cfg = loadLlmConfig();
+    saveLlmConfig({
+      routing: {
+        simpleModel: options.simple ?? cfg.routing.simpleModel,
+        defaultModel: options.default ?? cfg.routing.defaultModel,
+        reasoningModel: options.reasoning ?? cfg.routing.reasoningModel,
+      },
+    });
+    console.log(`\n  Routing updated.\n`);
+  });
+
+llmCmd
+  .command("classify")
+  .description("Test task classification")
+  .argument("<query>", "Task description to classify")
+  .option("-f, --files <count>", "Number of files involved", "1")
+  .action((query: string, options: { files: string }) => {
+    const fileCount = parseInt(options.files, 10) || 1;
+    const decision = routeTask(query, fileCount);
+    console.log(`\n  Query: ${query}`);
+    console.log(`  Files: ${fileCount}`);
+    console.log(`  Complexity: ${decision.complexity}`);
+    console.log(`  Routed to: ${decision.model.displayName} (${decision.model.id})`);
+    console.log(`  Reason: ${decision.reason}`);
+    console.log();
+  });
+
+llmCmd
+  .command("models")
+  .description("List all known models")
+  .action(() => {
+    console.log(`\n  Known Models:`);
+    console.log(`  ${"=".repeat(50)}`);
+    for (const m of KNOWN_MODELS) {
+      const cost = `\$${m.costPer1kInput.toFixed(5)}/1K in | \$${m.costPer1kOutput.toFixed(5)}/1K out`;
+      console.log(`    ${m.id.padEnd(30)} ${m.tier.padEnd(10)} ${cost}`);
+      console.log(`    ${"".padEnd(30)} ${m.displayName} (ctx: ${(m.contextWindow / 1000).toFixed(0)}K)`);
+    }
+    console.log();
   });
 
 program.parse(process.argv);
