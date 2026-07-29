@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: bun-darwin-arm64
+            os: macos-latest
+            suffix: ""
+          - target: bun-linux-x64
+            os: ubuntu-latest
+            suffix: ""
+          - target: bun-windows-x64
+            os: windows-latest
+            suffix: ".exe"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Compile binary
+        run: bun build --compile --target=${{ matrix.target }} --outfile=bin/mtc-${{ matrix.target }}${{ matrix.suffix }} src/cli.tsx
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtc-${{ matrix.target }}${{ matrix.suffix }}
+          path: bin/mtc-${{ matrix.target }}${{ matrix.suffix }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Compute checksums
+        run: |
+          cd artifacts
+          for f in $(find . -type f); do
+            sha256sum "$f" >> ../checksums.txt
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: mtc ${{ github.ref_name }}
+          body: |
+            ## mtc ${{ github.ref_name }}
+
+            ### Binaries
+
+            | Platform | Download |
+            |----------|----------|
+            | macOS ARM64 | `mtc-bun-darwin-arm64` |
+            | Linux x64 | `mtc-bun-linux-x64` |
+            | Windows x64 | `mtc-bun-windows-x64.exe` |
+
+            ### Install
+
+            ```sh
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | bash
+            ```
+          files: |
+            artifacts/**/*
+            checksums.txt
