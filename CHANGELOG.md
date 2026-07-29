@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0] - 2026-07-29
+
+### Added
+- **QA Tester agent** — generates Cypress/Playwright E2E suites from user stories
+- **Figma MCP Bridge** — converts Figma components to React/Tailwind code via Figma API
+- **DevOps Engineer agent** — infrastructure log analysis, K8s/Terraform diagnostics
+- **DevOps MCP Bridge** — Datadog log/metric queries, CloudWatch Insights, K8s manifest analyzer, Terraform plan analyzer, log diagnosis engine
+- **Product Manager agent** — user stories, sprint plans, release notes, PRD outlines
+- **Multi-department workflows documentation** — setup guides for QA, Design, DevOps, PM
+
 ## [0.3.0] - 2026-07-29
 
 ### Added
