@@ -6,6 +6,7 @@ export type MtcConfig = {
   apiKey?: string;
   endpoint?: string;
   selectedModel?: string;
+  agentId?: string;
 };
 
 const configDir = join(homedir(), ".config", "mtc");
