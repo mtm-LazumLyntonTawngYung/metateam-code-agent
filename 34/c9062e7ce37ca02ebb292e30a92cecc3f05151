@@ -1,0 +1,25 @@
+docs/internal/governance.md
+  s_143c13fffd1462::t_d511eb130ed469 85-91,100
+docs/internal/spin-off.md
+  s_143c13fffd1462::t_eab22003e08161 1-158
+docs/internal/fundraising.md
+  s_143c13fffd1462::t_9cdba0d064e00f 1-171
+docs/internal/README.md
+  s_143c13fffd1462::t_856168e599fb14 21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "34c9062e7ce37ca02ebb292e30a92cecc3f05151",
+  "prompts": {},
+  "sessions": {
+    "s_143c13fffd1462": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05318ca5dffe0wgXpa8eHxqlGk",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
