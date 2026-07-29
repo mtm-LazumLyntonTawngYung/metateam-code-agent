@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { redactText } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
 const runBashTool: ToolDefinition = {
@@ -14,7 +15,8 @@ const runBashTool: ToolDefinition = {
       },
       timeout: {
         type: "number",
-        description: "Optional timeout in milliseconds (default: 30000, max: 120000)",
+        description:
+          "Optional timeout in milliseconds (default: 30000, max: 120000)",
         default: 30000,
       },
       workdir: {
@@ -50,7 +52,12 @@ const runBashTool: ToolDefinition = {
         resolve({
           success: false,
           error: `Command timed out after ${timeout}ms`,
-          data: { stdout: stdoutBuf, stderr: stderrBuf, exitCode: null, timedOut: true },
+          data: {
+            stdout: redactText(stdoutBuf),
+            stderr: redactText(stderrBuf),
+            exitCode: null,
+            timedOut: true,
+          },
         });
       }, timeout);
 
@@ -68,8 +75,14 @@ const runBashTool: ToolDefinition = {
         clearTimeout(timer);
         resolve({
           success: exitCode === 0,
-          data: { stdout: stdoutBuf, stderr: stderrBuf, exitCode, timedOut: false },
-          error: exitCode !== 0 ? `Exit code ${exitCode}` : undefined,
+          data: {
+            stdout: redactText(stdoutBuf),
+            stderr: redactText(stderrBuf),
+            exitCode,
+            timedOut: false,
+          },
+          error:
+            exitCode !== 0 ? `Exit code ${exitCode}` : undefined,
         });
       });
 
@@ -78,7 +91,12 @@ const runBashTool: ToolDefinition = {
         resolve({
           success: false,
           error: `Failed to spawn process: ${err.message}`,
-          data: { stdout: stdoutBuf, stderr: stderrBuf, exitCode: null, timedOut: false },
+          data: {
+            stdout: redactText(stdoutBuf),
+            stderr: redactText(stderrBuf),
+            exitCode: null,
+            timedOut: false,
+          },
         });
       });
     });

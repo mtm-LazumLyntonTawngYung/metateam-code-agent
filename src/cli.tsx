@@ -8,7 +8,16 @@ const program = new Command();
 program
   .name("mtc")
   .description("Metateam Code Agent — AI-powered terminal-first coding assistant")
-  .version("1.0.0");
+  .version("1.0.0")
+  .action(async () => {
+    if (process.stdin.isTTY) {
+      const { waitUntilExit } = render(<App />);
+      await waitUntilExit();
+    } else {
+      const output = renderToString(<App />, { columns: 80 });
+      console.log(output);
+    }
+  });
 
 const evalCmd = program.command("eval").description("Run evaluation tasks");
 

@@ -1,9 +1,11 @@
 import { accessSync, constants, readFileSync } from "fs";
+import { isPathIgnored } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
 const readFileTool: ToolDefinition = {
   name: "read_file",
-  description: "Read file contents with optional line range support. Lines are 1-indexed.",
+  description:
+    "Read file contents with optional line range support. Lines are 1-indexed.",
   parameters: {
     type: "object",
     properties: {
@@ -27,10 +29,20 @@ const readFileTool: ToolDefinition = {
     const offset = args.offset as number | undefined;
     const limit = args.limit as number | undefined;
 
+    if (isPathIgnored(path)) {
+      return {
+        success: false,
+        error: `Cannot read '${path}': path matches .mtcignore patterns`,
+      };
+    }
+
     try {
       accessSync(path, constants.R_OK);
     } catch {
-      return { success: false, error: `File not found or not readable: ${path}` };
+      return {
+        success: false,
+        error: `File not found or not readable: ${path}`,
+      };
     }
 
     const raw = readFileSync(path, "utf-8");
