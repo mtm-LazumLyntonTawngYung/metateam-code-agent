@@ -1,3 +1,12 @@
+/**
+ * PROPRIETARY — MetaTeam Technologies
+ *
+ * This file is part of the Enterprise Edition of Metateam Code Agent.
+ * It is NOT licensed under the MIT License.
+ * Commercial license required. See LICENSE.ENTERPRISE or contact
+ * legal@metateam.io for terms.
+ */
+
 import { createHash, randomUUID } from "crypto";
 import { loadConfig, saveConfig } from "../config/index";
 import type { LicenseInfo, Tier, EnterpriseFeature, LicenseStatus } from "./types";

@@ -1,3 +1,12 @@
+/**
+ * PROPRIETARY — MetaTeam Technologies
+ *
+ * This file is part of the Enterprise Edition of Metateam Code Agent.
+ * It is NOT licensed under the MIT License.
+ * Commercial license required. See LICENSE.ENTERPRISE or contact
+ * legal@metateam.io for terms.
+ */
+
 export { getLicense, activateLicense, deactivateLicense, hasFeature, isEnterprise, getEffectiveTier, formatLicenseInfo, generateLicenseKey } from "./license";
 export type { LicenseInfo } from "./types";
 

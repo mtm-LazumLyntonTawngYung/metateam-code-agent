@@ -78,6 +78,9 @@ All contributions must adhere to:
 3. Existing code style and conventions
 4. Test coverage requirements (see [Development Guidelines](./development-guidelines.md))
 5. No hardcoded secrets or credentials
+6. IP licensing boundaries (see [IP Governance](./ip-governance.md)) — enterprise
+   code in `src/enterprise/` is proprietary and must not be distributed
+   under the MIT license
 
 ## Escalation Path
 
