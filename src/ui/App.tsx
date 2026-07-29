@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Box, useInput, useWindowSize } from "ink";
 import HomeScreen from "./Home";
 import ChatView from "./ChatView";
 import AgentSelector from "./AgentSelector";
 import CommandPalette from "./CommandPalette";
 import ConnectForm from "./ConnectForm";
+import PermissionPrompt from "./PermissionPrompt";
 import Statusbar from "./components/Statusbar";
+import { executeTool } from "../tools/index";
+import { isSensitiveTool } from "../tools/permissions";
+import type { ToolResult } from "../tools/schema";
+import type { PendingPermission } from "../tools/permissions";
 
 type View = "home" | "chat" | "connect";
 
@@ -14,9 +19,12 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [showAgents, setShowAgents] = useState(false);
   const [showCommands, setShowCommands] = useState(false);
+  const [pendingPerm, setPendingPerm] = useState<PendingPermission | null>(null);
+  const alwaysAllow = useRef(new Set<string>());
   const { columns, rows } = useWindowSize();
 
   useInput((_input, key) => {
+    if (pendingPerm) return;
     if (key.escape) {
       if (showAgents) { setShowAgents(false); return; }
       if (showCommands) { setShowCommands(false); return; }
@@ -32,6 +40,34 @@ export default function App() {
       return;
     }
   });
+
+  const requestToolExecution = useCallback(
+    async (name: string, args: Record<string, unknown>): Promise<ToolResult> => {
+      if (!isSensitiveTool(name) || alwaysAllow.current.has(name)) {
+        return executeTool(name, args);
+      }
+      return new Promise<ToolResult>((resolve) => {
+        setPendingPerm({ toolName: name, args, resolve });
+      });
+    },
+    [],
+  );
+
+  const handlePermissionResponse = useCallback(
+    async (response: "accept" | "reject" | "always") => {
+      const p = pendingPerm;
+      if (!p) return;
+      setPendingPerm(null);
+      if (response === "always") alwaysAllow.current.add(p.toolName);
+      if (response === "reject") {
+        p.resolve({ success: false, error: "Permission rejected by user" });
+        return;
+      }
+      const result = await executeTool(p.toolName, p.args);
+      p.resolve(result);
+    },
+    [pendingPerm],
+  );
 
   const handleSubmit = (value: string) => {
     if (value.startsWith("/")) {
@@ -58,20 +94,40 @@ export default function App() {
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
-      {view === "home" && !showAgents && !showCommands && (
+      {pendingPerm ? (
+        <PermissionPrompt
+          pending={{
+            toolName: pendingPerm.toolName,
+            args: pendingPerm.args,
+            onResponse: handlePermissionResponse,
+          }}
+        />
+      ) : view === "home" && !showAgents && !showCommands ? (
         <HomeScreen
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSubmit}
         />
+      ) : null}
+
+      {!pendingPerm && showAgents && (
+        <AgentSelector onSelect={handleSelectAgent} />
       )}
-      {showAgents && <AgentSelector onSelect={handleSelectAgent} />}
-      {showCommands && <CommandPalette onSelect={handleSelectCommand} />}
-      {view === "chat" && (
-        <ChatView query={query} onBack={() => setView("home")} />
+      {!pendingPerm && showCommands && (
+        <CommandPalette onSelect={handleSelectCommand} />
       )}
-      {view === "connect" && <ConnectForm onSave={handleConnectSave} />}
-      <Statusbar />
+      {!pendingPerm && view === "chat" && (
+        <ChatView
+          query={query}
+          onBack={() => setView("home")}
+          requestTool={requestToolExecution}
+        />
+      )}
+      {!pendingPerm && view === "connect" && (
+        <ConnectForm onSave={handleConnectSave} />
+      )}
+
+      {!pendingPerm && <Statusbar />}
     </Box>
   );
 }
