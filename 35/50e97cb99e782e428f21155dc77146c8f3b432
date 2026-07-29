@@ -1,0 +1,68 @@
+tests/evals/fix-broken-test/assert.sh
+  s_44b7650325e744::t_ee9dde1efcd74c 1-12
+tests/evals/refactor-to-typescript/sandbox/math.js
+  s_44b7650325e744::t_9e3b533fd94557 1-24
+tests/evals/refactor-to-typescript/sandbox/tsconfig.json
+  s_44b7650325e744::t_90ab50afedde05 1-8
+tests/evals/fix-broken-test/sandbox/test.js
+  s_44b7650325e744::t_2b192ada128662 1-26
+src/cli.tsx
+  s_44b7650325e744::t_c4ed1a4c69eac8 4,11-41,43-54,58-61
+  s_44b7650325e744::t_359018bc367017 55-57
+tests/evals/fix-broken-test/sandbox/string_utils.js
+  s_44b7650325e744::t_07c7ba7d051994 1-17
+tests/evals/refactor-to-typescript/assert.sh
+  s_44b7650325e744::t_7f31f0b9ee2696 1-27
+tests/evals/fix-broken-test/task.md
+  s_44b7650325e744::t_518e5420d0f6f5 1-15
+tests/evals/add-unit-tests/assert.sh
+  s_44b7650325e744::t_aee66601564066 1-17
+src/eval/types.ts
+  s_44b7650325e744::t_d96ffc6b131690 1-28
+tests/evals/add-unit-tests/sandbox/utils.js
+  s_44b7650325e744::t_8fecea77e7bcd5 1-26
+tests/evals/add-unit-tests/task.md
+  s_44b7650325e744::t_84535f9bcf349d 1-15
+src/eval/runner.ts
+  s_44b7650325e744::t_3826d69d563025 1-2,5,25,41,57-59,65,82,85-98,108,113,124,137,150,164-165,173,179,181
+  s_44b7650325e744::t_f5e5d50962ef70 6,23-24,26,29,32-35,38,121,144,162-163,167-169,172
+  s_44b7650325e744::t_997e52bc51312b 3-4,7-9,12-22,27-28,30-31,36-37,39-40,42-56,60-64,66-79,102-104,110-111,114-120,133,135,138-143,145-149,151-161,166,170-171,174-178,180,182
+  s_44b7650325e744::t_1d1be6acc74b9e 100-101
+  s_44b7650325e744::t_756a73102a5eb3 10-11
+  s_44b7650325e744::t_9e42206661fe62 127-131
+  s_44b7650325e744::t_c412a8729e9551 80-81,83-84,99,105-107,109,112,122-123,125-126,132,134,136
+src/eval/index.ts
+  s_44b7650325e744::t_cf10f4118301b3 1-2
+tests/evals/refactor-to-typescript/task.md
+  s_44b7650325e744::t_0a906920b0f63c 1-15
+tests/evals/fix-broken-test/solution.mtc
+  s_44b7650325e744::t_72b8777c057245 1-2
+tests/evals/add-unit-tests/setup.sh
+  s_44b7650325e744::t_df016115ac9c2e 1-33
+tests/evals/refactor-to-typescript/setup.sh
+  s_44b7650325e744::t_f19881c563bfa2 1-42
+package.json
+  s_44b7650325e744::t_1cf036a6a5e773 12-13
+tests/evals/fix-broken-test/setup.sh
+  s_44b7650325e744::t_8d3fddf88e79b2 1-53
+tests/evals/add-unit-tests/solution.mtc
+  s_44b7650325e744::t_a5dc13ba68ed6c 1-28
+tests/evals/refactor-to-typescript/solution.mtc
+  s_44b7650325e744::t_1d796393b3556e 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "3550e97cb99e782e428f21155dc77146c8f3b432",
+  "prompts": {},
+  "sessions": {
+    "s_44b7650325e744": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053fb1518ffeBpkA4lpcO7Uuw3",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
