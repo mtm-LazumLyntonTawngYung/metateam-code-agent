@@ -1,0 +1,32 @@
+.github/workflows/mtc-review.yml
+  s_e9bd648b1bdd91::t_bdf000e84ac4a2 1-176
+src/init/index.ts
+  s_e9bd648b1bdd91::t_129ebaac7cbfd5 1
+  s_e9bd648b1bdd91::t_fa38f099da8962 2,4-181
+  s_e9bd648b1bdd91::t_82ef88c047e8d6 3
+src/cli.tsx
+  s_e9bd648b1bdd91::t_ec99906273cab9 156-209
+  s_e9bd648b1bdd91::t_1f257dae46786d 10
+  s_e9bd648b1bdd91::t_fe68b4b48812f4 137-155
+  s_e9bd648b1bdd91::t_a8610d36b4294f 9
+src/review/index.ts
+  s_e9bd648b1bdd91::t_53368ddd8cf58d 1-217
+src/init/templates.ts
+  s_e9bd648b1bdd91::t_6731ce6966d8a9 1-260
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "2dbb902bc681916baee0883cfbac5199767278b2",
+  "prompts": {},
+  "sessions": {
+    "s_e9bd648b1bdd91": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053c58c13ffetGhUrRem8TjiOZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
