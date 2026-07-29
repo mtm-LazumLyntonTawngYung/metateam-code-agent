@@ -79,10 +79,21 @@ export default function ChatView({ query, onBack, requestTool }: ChatViewProps) 
           path: rest[1] || undefined,
         });
         setBusy(false);
+      } else if (cmd === "/call" && rest[0]) {
+        const toolName = rest[0];
+        let args: Record<string, unknown>;
+        try {
+          args = rest.slice(1).length ? JSON.parse(rest.slice(1).join(" ")) : {};
+        } catch {
+          args = { input: rest.slice(1).join(" ") };
+        }
+        setBusy(true);
+        result = await requestTool(toolName, args);
+        setBusy(false);
       } else {
         result = {
           success: false,
-          error: "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | /bash cmd | /glob pattern",
+          error: "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | /bash cmd | /glob pattern | /call toolName {jsonArgs}",
         };
       }
 
