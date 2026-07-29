@@ -6,6 +6,8 @@ import { ensureTelemetryConfig, saveConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
 import { generateReport, printReport } from "./telemetry/reporter";
 import { startServer } from "./server/index";
+import { initProject } from "./init/index";
+import { reviewProject, type ReviewResult } from "./review/index";
 
 const program = new Command();
 
@@ -130,6 +132,79 @@ serveCmd
       port: parseInt(options.port, 10) || 8080,
       host: options.host,
     });
+  });
+
+function printReview(result: ReviewResult, verbose: boolean): void {
+  const { summary, findings, passed } = result;
+  console.log(`\n  MTC Review: ${passed ? "PASSED" : "FAILED"}`);
+  console.log(`  ${"=".repeat(50)}`);
+  console.log(`  ${summary.total} findings (${summary.critical} critical, ${summary.major} major, ${summary.minor} minor, ${summary.suggestion} suggestion)`);
+
+  const shownFindings = verbose ? findings : findings.filter((f) => f.severity !== "suggestion");
+  if (shownFindings.length > 0) {
+    console.log();
+    for (const f of shownFindings) {
+      const badge = f.severity === "critical" ? "CRIT" : f.severity === "major" ? "MAJ" : f.severity === "minor" ? "MIN" : "SUG";
+      const loc = f.line ? `:${f.line}` : "";
+      console.log(`  [${badge}] ${f.file}${loc}`);
+      console.log(`         ${f.message}`);
+    }
+  }
+  console.log();
+}
+
+const initCmd = program.command("init").description("Initialize MTC project configuration");
+
+initCmd
+  .argument("[dir]", "Project directory (default: current directory)", ".")
+  .option("-f, --framework <framework>", "Project framework (typescript, python, react, nextjs)", "typescript")
+  .option("-d, --docs <lang>", "Documentation language: en, jp, both", "en")
+  .option("-s, --sqa <level>", "SQA compliance level: basic, strict", "basic")
+  .option("-o, --offshore", "Add offshore collaboration rules")
+  .option("--force", "Overwrite existing files")
+  .action((dir: string, options: { framework: string; docs: string; sqa: string; offshore?: boolean; force?: boolean }) => {
+    const result = initProject({
+      dir,
+      framework: options.framework,
+      docs: options.docs,
+      sqa: options.sqa,
+      offshore: options.offshore ?? false,
+      force: options.force ?? false,
+    });
+
+    if (result.errors.length > 0) {
+      console.log("\n  Errors:");
+      for (const e of result.errors) console.log(`    ${e}`);
+    }
+    if (result.created.length > 0) {
+      console.log(`\n  Created ${result.created.length} files:`);
+      for (const f of result.created.sort()) console.log(`    ${f}`);
+    }
+    console.log();
+  });
+
+const reviewCmd = program.command("review").description("Run project review against SQA and coding standards");
+
+reviewCmd
+  .option("-d, --dir <dir>", "Project directory (default: current directory)")
+  .option("-f, --files <files...>", "Specific files to review (default: all)")
+  .option("-v, --verbose", "Show all findings including suggestions")
+  .option("--json", "Output as JSON")
+  .action((options: { dir?: string; files?: string[]; verbose?: boolean; json?: boolean }) => {
+    const result = reviewProject({
+      dir: options.dir,
+      files: options.files,
+      verbose: options.verbose,
+    });
+
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+      process.exit(result.passed ? 0 : 1);
+      return;
+    }
+
+    printReview(result, options.verbose ?? false);
+    process.exit(result.passed ? 0 : 1);
   });
 
 program.parse(process.argv);
