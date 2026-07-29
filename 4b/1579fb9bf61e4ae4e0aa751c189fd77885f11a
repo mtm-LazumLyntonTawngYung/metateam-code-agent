@@ -1,0 +1,25 @@
+src/agents/rules.ts
+  s_44b7650325e744::t_74fb74fc1ad7e6 1-66
+src/session/summary.ts
+  s_44b7650325e744::t_3529d46cfa03b3 41-44,55
+src/agents/index.ts
+  s_44b7650325e744::t_5b54b617f71123 74
+  s_44b7650325e744::t_400ecf50fb622d 4
+  s_44b7650325e744::t_cca8ba85a896b1 14,18,34-41,58-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "4b1579fb9bf61e4ae4e0aa751c189fd77885f11a",
+  "prompts": {},
+  "sessions": {
+    "s_44b7650325e744": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053fb1518ffeBpkA4lpcO7Uuw3",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
