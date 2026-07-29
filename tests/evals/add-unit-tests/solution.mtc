@@ -1,0 +1,28 @@
+/write test.js const assert = require("assert");
+const { isPalindrome, factorial, fibonacci } = require("./utils");
+
+// isPalindrome tests
+assert.strictEqual(isPalindrome("racecar"), true, "racecar");
+assert.strictEqual(isPalindrome("hello"), false, "hello");
+assert.strictEqual(isPalindrome("A man a plan a canal Panama"), true, "panama");
+assert.strictEqual(isPalindrome(""), true, "empty string");
+assert.strictEqual(isPalindrome(123), false, "number input");
+
+// factorial tests
+assert.strictEqual(factorial(0), 1, "factorial(0)");
+assert.strictEqual(factorial(1), 1, "factorial(1)");
+assert.strictEqual(factorial(5), 120, "factorial(5)");
+assert.strictEqual(factorial(10), 3628800, "factorial(10)");
+assert.throws(() => factorial(-1), /Negative/, "factorial negative");
+assert.throws(() => factorial(1.5), /Integer/, "factorial float");
+
+// fibonacci tests
+assert.strictEqual(fibonacci(0), 0, "fib(0)");
+assert.strictEqual(fibonacci(1), 1, "fib(1)");
+assert.strictEqual(fibonacci(10), 55, "fib(10)");
+assert.strictEqual(fibonacci(20), 6765, "fib(20)");
+assert.throws(() => fibonacci(-5), /Negative/, "fib negative");
+assert.throws(() => fibonacci("a"), /Integer/, "fib string");
+
+console.log("All tests passed!");
+/bash node test.js

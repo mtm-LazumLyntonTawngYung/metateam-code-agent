@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "bun run src/cli.tsx",
     "build": "bun build --compile --outfile bin/mtc src/cli.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:eval": "bun run src/cli.tsx eval"
   },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
