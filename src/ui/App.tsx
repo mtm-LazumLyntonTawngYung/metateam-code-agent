@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Box, useInput, useWindowSize } from "ink";
 import HomeScreen from "./Home";
-import ActiveSession from "./ActiveSession";
+import ChatView from "./ChatView";
 import AgentSelector from "./AgentSelector";
 import CommandPalette from "./CommandPalette";
 import ConnectForm from "./ConnectForm";
@@ -31,7 +31,7 @@ import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
 import type { UpdateInfo } from "../utils/updater";
 
-type View = "home" | "chat" | "connect" | "session";
+type View = "home" | "chat" | "connect";
 
 export default function App() {
   const [view, setView] = useState<View>("home");
@@ -92,7 +92,6 @@ export default function App() {
         setView("home");
         return;
       }
-      return;
       return;
     }
     if (key.tab && view === "home" && !showAgents && !showCommands) {
@@ -167,7 +166,7 @@ export default function App() {
       }
     }
     if (value.trim()) {
-      setView("session");
+      setView("chat");
     }
   };
 
@@ -216,13 +215,12 @@ export default function App() {
       {!pendingPerm && showCommands && (
         <CommandPalette onSelect={handleSelectCommand} />
       )}
-      {!pendingPerm && view === "session" && (
-        <ActiveSession
+      {!pendingPerm && view === "chat" && (
+        <ChatView
           query={query}
           onBack={() => setView("home")}
+          requestTool={requestToolExecution}
           activeAgentId={activeAgentId}
-          agentName={activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"}
-          mcpCount={mcpCount}
         />
       )}
       {!pendingPerm && view === "connect" && (
