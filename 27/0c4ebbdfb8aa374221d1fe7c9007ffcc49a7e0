@@ -1,0 +1,21 @@
+docs/internal/nextgen-agents.md
+  s_143c13fffd1462::t_e73cc2a149138c 1-264
+docs/internal/README.md
+  s_143c13fffd1462::t_af86144399f3a8 38-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "270c4ebbdfb8aa374221d1fe7c9007ffcc49a7e0",
+  "prompts": {},
+  "sessions": {
+    "s_143c13fffd1462": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05318ca5dffe0wgXpa8eHxqlGk",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
