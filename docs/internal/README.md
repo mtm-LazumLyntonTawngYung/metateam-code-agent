@@ -16,6 +16,7 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | [Configuration Guide](./configuration.md) | MCP servers, custom agents, project rules |
 | [AI Workflows](./ai-workflows.md) | Prompt patterns, Plan/Build workflow, refactoring |
 | [MCP Integrations](./mcp-integrations.md) | Adding and building MCP plugins |
+| [Daemon & Autonomous Mode](./daemon.md) | Headless background workers, webhooks, autofix |
 | [Best Practices](./best-practices.md) | Code style, prompt design, session management |
 | [Troubleshooting](./troubleshooting.md) | Common issues and resolutions |
 | [FAQ](./faq.md) | Frequently asked questions |
