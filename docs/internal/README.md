@@ -18,6 +18,8 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | [MCP Integrations](./mcp-integrations.md) | Adding and building MCP plugins |
 | [Daemon & Autonomous Mode](./daemon.md) | Headless background workers, webhooks, autofix |
 | [Commercialization](./commercialization.md) | Enterprise tiers, licensing, control plane dashboard |
+| [Spin-Off Strategy](./spin-off.md) | MetaTeam AI Labs entity structure, IP transfer, timeline |
+| [Fundraising](./fundraising.md) | Market traction, investor targeting, use of funds, data room |
 | [Best Practices](./best-practices.md) | Code style, prompt design, session management |
 | [Multi-Dept Workflows](./multi-department-workflows.md) | QA, Design, DevOps, PM agents & plugins |
 | [Troubleshooting](./troubleshooting.md) | Common issues and resolutions |
