@@ -2,6 +2,9 @@ import { render, renderToString } from "ink";
 import { Command } from "commander";
 import App from "./ui/App";
 import { listTasks, runTask } from "./eval/index";
+import { ensureTelemetryConfig, saveConfig } from "./config";
+import { isTelemetryEnabled } from "./telemetry/store";
+import { generateReport, printReport } from "./telemetry/reporter";
 
 const program = new Command();
 
@@ -68,6 +71,49 @@ evalCmd
     }
 
     process.exit(result.passed ? 0 : 1);
+  });
+
+const analyticsCmd = program.command("analytics").description("View telemetry and usage analytics");
+
+analyticsCmd
+  .command("report")
+  .description("Show analytics report")
+  .option("-d, --days <days>", "Number of days to report", "30")
+  .action((options: { days: string }) => {
+    if (!isTelemetryEnabled()) {
+      console.log("\n  Telemetry is disabled. Enable it with: mtc analytics enable\n");
+      return;
+    }
+    const days = parseInt(options.days, 10) || 30;
+    const report = generateReport(days);
+    printReport(report, days);
+  });
+
+analyticsCmd
+  .command("enable")
+  .description("Enable telemetry and usage tracking")
+  .action(() => {
+    const { deviceId } = ensureTelemetryConfig();
+    saveConfig({ telemetry: { enabled: true, deviceId } });
+    console.log("\n  Telemetry enabled. Usage data will be collected locally.\n");
+  });
+
+analyticsCmd
+  .command("disable")
+  .description("Disable telemetry")
+  .action(() => {
+    saveConfig({ telemetry: { enabled: false, deviceId: ensureTelemetryConfig().deviceId } });
+    console.log("\n  Telemetry disabled.\n");
+  });
+
+analyticsCmd
+  .command("status")
+  .description("Show telemetry status")
+  .action(() => {
+    const enabled = isTelemetryEnabled();
+    const cfg = ensureTelemetryConfig();
+    console.log(`\n  Telemetry: ${enabled ? "enabled" : "disabled"}`);
+    console.log(`  Device ID: ${cfg.deviceId}\n`);
   });
 
 program.parse(process.argv);
