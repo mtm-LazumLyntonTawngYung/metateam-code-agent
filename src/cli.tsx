@@ -5,6 +5,7 @@ import { listTasks, runTask } from "./eval/index";
 import { ensureTelemetryConfig, saveConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
 import { generateReport, printReport } from "./telemetry/reporter";
+import { startServer } from "./server/index";
 
 const program = new Command();
 
@@ -114,6 +115,21 @@ analyticsCmd
     const cfg = ensureTelemetryConfig();
     console.log(`\n  Telemetry: ${enabled ? "enabled" : "disabled"}`);
     console.log(`  Device ID: ${cfg.deviceId}\n`);
+  });
+
+const serveCmd = program.command("serve").description("Start headless WebSocket server");
+
+serveCmd
+  .option("-p, --port <port>", "Port to listen on", "8080")
+  .option("-H, --host <host>", "Host to bind to", "127.0.0.1")
+  .action((options: { port: string; host: string }) => {
+    if (!process.stdin.isTTY) {
+      console.log("mtc serve: starting headless server...");
+    }
+    startServer({
+      port: parseInt(options.port, 10) || 8080,
+      host: options.host,
+    });
   });
 
 program.parse(process.argv);
