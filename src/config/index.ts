@@ -16,6 +16,7 @@ export type MtcConfig = {
   agentId?: string;
   telemetry?: TelemetryConfig;
   llm?: Record<string, unknown>;
+  license?: Record<string, unknown>;
 };
 
 const configDir = join(homedir(), ".config", "mtc");

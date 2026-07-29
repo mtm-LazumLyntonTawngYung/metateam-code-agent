@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0] - 2026-07-29
+
+### Added
+- **Enterprise license system** — key generation, activation/deactivation, tier gating (community/enterprise/enterprise-plus)
+- **Enterprise audit logging** — immutable event log with actor/action/resource, queryable via CLI and API
+- **Organization management** — multi-tenant orgs with RBAC, settings, seat tracking
+- **Feature flag system** — `hasFeature()` and `gateEnterprise()` for tier-based feature gating
+- **Web dashboard** — self-hosted admin control plane with overview, license, audit, analytics, orgs, and connections views
+- **Enterprise CLI commands** — `mtc enterprise status`, `activate`, `deactivate`, `generate`, `dashboard`, `audit`, `org`
+- **Commercialization documentation** — tier comparison, deployment options, SOC2 compliance overview
+
 ## [0.4.0] - 2026-07-29
 
 ### Added

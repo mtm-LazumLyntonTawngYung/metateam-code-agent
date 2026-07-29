@@ -17,6 +17,7 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | [AI Workflows](./ai-workflows.md) | Prompt patterns, Plan/Build workflow, refactoring |
 | [MCP Integrations](./mcp-integrations.md) | Adding and building MCP plugins |
 | [Daemon & Autonomous Mode](./daemon.md) | Headless background workers, webhooks, autofix |
+| [Commercialization](./commercialization.md) | Enterprise tiers, licensing, control plane dashboard |
 | [Best Practices](./best-practices.md) | Code style, prompt design, session management |
 | [Multi-Dept Workflows](./multi-department-workflows.md) | QA, Design, DevOps, PM agents & plugins |
 | [Troubleshooting](./troubleshooting.md) | Common issues and resolutions |
