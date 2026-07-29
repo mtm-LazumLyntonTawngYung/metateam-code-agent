@@ -48,20 +48,25 @@ export function printReport(report: Report, days: number): void {
     console.log(`\n  Tool Usage:`);
     for (const t of report.toolStats) {
       const status = t.failure_rate > 0 ? `  ${t.failure_rate}% fail` : "  0% fail";
-      console.log(
-        `    ${t.tool_name.padEnd(22)} ${String(t.call_count).padStart(6)} calls${status.padStart(14)}  ${String(t.avg_duration_ms).padStart(6)}ms avg`,
-      );
+      const name = t.tool_name.padEnd(22);
+      const calls = String(t.call_count).padStart(6);
+      const avg = String(t.avg_duration_ms).padStart(6);
+      console.log(`    ${name} ${calls} calls${status.padStart(14)}  ${avg}ms avg`);
     }
   }
 
   if (report.dailyStats.length > 0) {
     console.log(`\n  Daily Activity:`);
-    console.log(`    ${"Date".padEnd(14)} ${"Calls".padStart(6)} ${"Failures".padStart(9)} ${"Fail%".padStart(6)} ${"Sessions".padStart(9)}`);
+    const hdr = `    ${"Date".padEnd(14)} ${"Calls".padStart(6)} ${"Failures".padStart(9)} ${"Fail%".padStart(6)} ${"Sessions".padStart(9)}`;
+    console.log(hdr);
     console.log(`    ${"-".repeat(46)}`);
     for (const d of report.dailyStats) {
-      console.log(
-        `    ${d.date.padEnd(14)} ${String(d.total_tool_calls).padStart(6)} ${String(d.tool_failures).padStart(9)} ${String(d.failure_rate).padStart(6)}% ${String(d.unique_sessions).padStart(9)}`,
-      );
+      const date = d.date.padEnd(14);
+      const calls = String(d.total_tool_calls).padStart(6);
+      const fails = String(d.tool_failures).padStart(9);
+      const rate = String(d.failure_rate).padStart(6);
+      const sess = String(d.unique_sessions).padStart(9);
+      console.log(`    ${date} ${calls} ${fails} ${rate}% ${sess}`);
     }
   }
 

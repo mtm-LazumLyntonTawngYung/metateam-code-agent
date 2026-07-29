@@ -165,7 +165,9 @@ This file defines how MTC agents should behave when working on this project.
 - Follow the coding standards defined in .mtc/rules/coding-standards.md
 - Follow SQA guidelines defined in .mtc/rules/sqa-guidelines.md
 - Use the review checklist in .mtc/rules/review-checklist.md for PR reviews
-${tmpl.offshore ? "- Consider timezone differences for offshore collaboration.\n- Use English for all code-related communication.\n- See .mtc/rules/offshore-collaboration.md for details." : ""}
+${tmpl.offshore
+    ? "- Consider timezone differences for offshore collaboration.\n- Use English for all code-related communication.\n- See .mtc/rules/offshore-collaboration.md for details."
+    : ""}
 ## Quality Requirements
 - All code must pass type checking and linting.
 - Tests must be provided for new functionality.

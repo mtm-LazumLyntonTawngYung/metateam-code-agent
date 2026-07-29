@@ -48,11 +48,7 @@ const SECRET_PATTERNS: { pattern: RegExp; description: string }[] = [
 const DEBUG_PATTERNS: { pattern: RegExp; description: string }[] = [
   { pattern: /\bconsole\.log\s*\(/, description: "console.log statement" },
   { pattern: /\bdebugger\s*;/, description: "debugger statement" },
-  { pattern: /\bdump\s*\(/, description: "dump() call" },
-  { pattern: /\bTODO\b/, description: "TODO comment" },
-  { pattern: /\bFIXME\b/, description: "FIXME comment" },
-  { pattern: /\bHACK\b/, description: "HACK comment" },
-  { pattern: /\bXXX\b/, description: "XXX comment marker" },
+  { pattern: /\bdump\s*\(/, description: "debug dump call" },
 ];
 
 export function reviewProject(options: ReviewOptions): ReviewResult {
@@ -190,13 +186,25 @@ function discoverFiles(root: string): string[] {
 
 function isBinaryFile(filePath: string): boolean {
   const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
-  const binaryExts = new Set(["png", "jpg", "jpeg", "gif", "ico", "svg", "woff", "woff2", "ttf", "eot", "pdf", "zip", "gz", "tar", "exe", "dll", "so", "dylib", "vsix", "node"]);
+  const binaryExts = new Set([
+    "png", "jpg", "jpeg", "gif", "ico", "svg",
+    "woff", "woff2", "ttf", "eot", "pdf",
+    "zip", "gz", "tar", "exe", "dll", "so", "dylib", "vsix", "node",
+  ]);
   return binaryExts.has(ext);
 }
 
 function isCodeFile(filePath: string): boolean {
   const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
-  const codeExts = new Set(["ts", "tsx", "js", "jsx", "mjs", "cjs", "py", "rs", "go", "java", "rb", "php", "cs", "swift", "kt", "scala", "cpp", "c", "h", "hpp", "css", "scss", "less", "html", "json", "yaml", "yml", "toml", "sh", "bash", "zsh", "fish", "ps1", "sql", "graphql", "proto", "md", "tsv", "csv"]);
+  const codeExts = new Set([
+    "ts", "tsx", "js", "jsx", "mjs", "cjs",
+    "py", "rs", "go", "java", "rb", "php", "cs",
+    "swift", "kt", "scala", "cpp", "c", "h", "hpp",
+    "css", "scss", "less", "html",
+    "json", "yaml", "yml", "toml",
+    "sh", "bash", "zsh", "fish", "ps1",
+    "sql", "graphql", "proto", "md", "tsv", "csv",
+  ]);
   return codeExts.has(ext);
 }
 

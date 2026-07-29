@@ -138,13 +138,18 @@ function printReview(result: ReviewResult, verbose: boolean): void {
   const { summary, findings, passed } = result;
   console.log(`\n  MTC Review: ${passed ? "PASSED" : "FAILED"}`);
   console.log(`  ${"=".repeat(50)}`);
-  console.log(`  ${summary.total} findings (${summary.critical} critical, ${summary.major} major, ${summary.minor} minor, ${summary.suggestion} suggestion)`);
+  const { critical, major, minor, suggestion } = summary;
+  console.log(
+    `  ${summary.total} findings (${critical} critical, ${major} major, ${minor} minor, ${suggestion} suggestion)`,
+  );
 
   const shownFindings = verbose ? findings : findings.filter((f) => f.severity !== "suggestion");
   if (shownFindings.length > 0) {
     console.log();
     for (const f of shownFindings) {
-      const badge = f.severity === "critical" ? "CRIT" : f.severity === "major" ? "MAJ" : f.severity === "minor" ? "MIN" : "SUG";
+      const badge = f.severity === "critical" ? "CRIT"
+        : f.severity === "major" ? "MAJ"
+        : f.severity === "minor" ? "MIN" : "SUG";
       const loc = f.line ? `:${f.line}` : "";
       console.log(`  [${badge}] ${f.file}${loc}`);
       console.log(`         ${f.message}`);
@@ -162,7 +167,10 @@ initCmd
   .option("-s, --sqa <level>", "SQA compliance level: basic, strict", "basic")
   .option("-o, --offshore", "Add offshore collaboration rules")
   .option("--force", "Overwrite existing files")
-  .action((dir: string, options: { framework: string; docs: string; sqa: string; offshore?: boolean; force?: boolean }) => {
+  .action((
+    dir: string,
+    options: { framework: string; docs: string; sqa: string; offshore?: boolean; force?: boolean },
+  ) => {
     const result = initProject({
       dir,
       framework: options.framework,
