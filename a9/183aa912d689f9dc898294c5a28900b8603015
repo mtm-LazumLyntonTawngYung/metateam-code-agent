@@ -1,0 +1,41 @@
+.gitignore
+  s_a207eaeda5534a::t_30d176f9dd8795 18-27
+src/ui/App.tsx
+  s_a207eaeda5534a::t_43ade6d0e0a600 243,276-279,298,300
+  s_a207eaeda5534a::t_806cefae088483 121-126,140-145
+  s_a207eaeda5534a::t_580b5cd6f181cb 480
+  s_a207eaeda5534a::t_cef12941198b2b 735
+  s_a207eaeda5534a::t_5745993f35805d 632-638
+  s_a207eaeda5534a::t_a446d417260a3b 454-458,470-474
+  s_a207eaeda5534a::t_d0095c30a095b8 66-67
+  s_a207eaeda5534a::t_4a7835a7865bb9 245
+  s_a207eaeda5534a::t_c92bed27a38f48 102
+  s_a207eaeda5534a::t_46af9c7ac4ff99 308
+  s_a207eaeda5534a::t_bde381ee33a84b 71-72,74-75,120
+  s_a207eaeda5534a::t_18043b2729e980 303-307,309-311
+src/ui/ChatView.tsx
+  s_a207eaeda5534a::t_68ea5a2847183a 23-24
+  s_a207eaeda5534a::t_dc69b9af1b2ee4 1-2,16,25-102,112,115,126,129-138,143-147,171,206-216,218-225,242,267,291-293,301,311
+  s_a207eaeda5534a::t_a59de561e38adb 235,240,255,262,271-277,286-290
+  s_a207eaeda5534a::t_a876859f3eeb60 241,244-251,256-261
+src/agents/agent-loop.ts
+  s_a207eaeda5534a::t_1fa3fcd13bfa63 72
+  s_a207eaeda5534a::t_466f5a2b111b97 17
+  s_a207eaeda5534a::t_a9f596843fea87 132-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a9183aa912d689f9dc898294c5a28900b8603015",
+  "prompts": {},
+  "sessions": {
+    "s_a207eaeda5534a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04de5aa5bffecjBtdoE7NHMja7",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
