@@ -9,9 +9,10 @@ type HomeScreenProps = {
   onQueryChange: (value: string) => void;
   onSubmit: (value: string) => void;
   updateInfo?: UpdateInfo | null;
+  agentName: string;
 };
 
-export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo }: HomeScreenProps) {
+export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo, agentName }: HomeScreenProps) {
   return (
     <Box
       flexGrow={1}
@@ -54,7 +55,7 @@ export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo 
 
         <Box gap={1} marginBottom={1}>
           <Text color="cyan" bold>
-            Build
+            {agentName}
           </Text>
           <Text color="gray">{"\u2022"}</Text>
           <Text bold>DeepSeek V4 Flash Free</Text>

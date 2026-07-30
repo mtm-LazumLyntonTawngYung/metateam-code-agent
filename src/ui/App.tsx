@@ -15,6 +15,7 @@ import {
   setActiveAgent,
   getActiveAgent,
   getAllAgents,
+  getAgentById,
   isToolDenied,
   runAgentLoop,
 } from "../agents/index";
@@ -272,7 +273,12 @@ export default function App() {
   );
 
   const handleSelectAgent = (id: string) => {
-    switchAgent(id);
+    const agent = getAgentById(id);
+    if (agent && agent.mode === "subagent") {
+      setQuery(`/subagent ${id} `);
+    } else {
+      switchAgent(id);
+    }
     setShowAgents(false);
   };
 
@@ -304,6 +310,7 @@ export default function App() {
           onQueryChange={handleQueryChange}
           onSubmit={handleSubmit}
           updateInfo={updateInfo}
+          agentName={activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"}
         />
       ) : null}
 
