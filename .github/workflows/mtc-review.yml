@@ -1,5 +1,4 @@
 name: MTC Automated PR Review
-name: MTC Automated PR Review
 
 on:
   pull_request:
