@@ -1,6 +1,7 @@
 import { render, renderToString } from "ink";
 import { Command } from "commander";
 import App from "./ui/App";
+import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
 import { listTasks, runTask } from "./eval/index";
 import { ensureTelemetryConfig, saveConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
@@ -509,6 +510,21 @@ llmCmd
       console.log(`    ${"".padEnd(30)} ${m.displayName} (ctx: ${(m.contextWindow / 1000).toFixed(0)}K)`);
     }
     console.log();
+  });
+
+const authCmd = program.command("auth").description("Microsoft Entra ID SSO authentication");
+
+authCmd
+  .command("logout")
+  .description("Clear local auth session and log out")
+  .action(() => {
+    const auth = getAuth();
+    if (auth) {
+      clearAuth();
+      console.log(`\n  Logged out ${auth.userEmail}. Auth session cleared.\n`);
+    } else {
+      console.log("\n  No active auth session found.\n");
+    }
   });
 
 program.parse(process.argv);

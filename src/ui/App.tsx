@@ -32,6 +32,8 @@ import {
 import { createSession } from "../session/history";
 import { countTokens, DEFAULT_BUDGET } from "../session/tokens";
 import { getCurrentBranch } from "./git";
+import LoginScreen from "./LoginScreen";
+import { isAuthenticated, getAuth } from "../auth/index";
 import { theme } from "./theme";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
@@ -64,6 +66,9 @@ export default function App() {
   const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
   const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
+  const [authenticated, setAuthenticated] = useState(isAuthenticated);
+  const [authEmail, setAuthEmail] = useState(() => getAuth()?.userEmail ?? "");
+  const [authName, setAuthName] = useState(() => getAuth()?.userName ?? "");
 
   useEffect(() => {
     const agentId = initAgents();
@@ -303,6 +308,19 @@ export default function App() {
 
   const handleConnectSave = () => setView("home");
 
+  const handleLogin = useCallback(() => {
+    setAuthenticated(true);
+    const auth = getAuth();
+    if (auth) {
+      setAuthEmail(auth.userEmail);
+      setAuthName(auth.userName ?? "");
+    }
+  }, []);
+
+  const handleSkip = useCallback(() => {
+    setAuthenticated(true);
+  }, []);
+
   const sidebarData = useMemo(() => {
     const tokenSum = agentLogs.reduce((acc, entry) => {
       if (entry.kind === "message" || entry.kind === "query") {
@@ -324,8 +342,10 @@ export default function App() {
       lspStatus: { enabled: false, activeCount: 0 },
       currentPath: process.cwd(),
       gitBranch,
+      authEmail: authEmail || undefined,
+      authName: authName || undefined,
     };
-  }, [agentLogs, query, gitBranch]);
+  }, [agentLogs, query, gitBranch, authEmail, authName]);
 
   const footerRight = `${sidebarData.tokenCount.toLocaleString()} (${Math.round((sidebarData.tokenCount / sidebarData.maxContextTokens) * 100)}%)  ctrl+p commands`;
 
@@ -333,7 +353,9 @@ export default function App() {
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
-      {pendingPerm ? (
+      {!authenticated ? (
+        <LoginScreen onLogin={handleLogin} onSkip={handleSkip} />
+      ) : pendingPerm ? (
         <PermissionPrompt
           pending={{
             toolName: pendingPerm.toolName,
