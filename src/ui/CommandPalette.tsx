@@ -9,6 +9,7 @@ const commands = [
   { id: "agent", label: "Switch agent", category: "chat" },
   { id: "help", label: "Show help", category: "info" },
   { id: "exit", label: "Exit mtc", category: "system" },
+  { id: "logout", label: "/logout - Log out of MetaTeam SSO", category: "system" },
 ];
 
 function fuzzyMatch(text: string, query: string): boolean {
