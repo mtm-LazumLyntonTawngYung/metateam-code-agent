@@ -100,7 +100,6 @@ jobs:
             try {
               reviewResult = JSON.parse(fs.readFileSync('/tmp/review_result.json', 'utf8'));
             } catch {
-              console.log('No review result file');
               return;
             }
 
