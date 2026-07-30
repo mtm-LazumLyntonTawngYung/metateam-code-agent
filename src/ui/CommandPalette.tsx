@@ -8,6 +8,7 @@ const commands = [
   { id: "clear", label: "Clear conversation", category: "chat" },
   { id: "agent", label: "Switch agent", category: "chat" },
   { id: "help", label: "Show help", category: "info" },
+  { id: "logout", label: "/logout - Log out of MetaTeam SSO", category: "system" },
   { id: "exit", label: "Exit mtc", category: "system" },
 ];
 

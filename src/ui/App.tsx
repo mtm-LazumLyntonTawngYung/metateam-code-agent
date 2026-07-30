@@ -33,7 +33,7 @@ import { createSession } from "../session/history";
 import { countTokens, DEFAULT_BUDGET } from "../session/tokens";
 import { getCurrentBranch } from "./git";
 import LoginScreen from "./LoginScreen";
-import { isAuthenticated, getAuth } from "../auth/index";
+import { isAuthenticated, getAuth, clearAuth } from "../auth/index";
 import { theme } from "./theme";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
@@ -258,6 +258,10 @@ export default function App() {
         setShowAgents(true);
         return;
       }
+      if (value === "/logout") {
+        handleLogout();
+        return;
+      }
       setShowCommands(true);
       return;
     }
@@ -301,6 +305,7 @@ export default function App() {
     setQuery("");
     if (id === "connect") setView("connect");
     if (id === "exit") process.exit(0);
+    if (id === "logout") { handleLogout(); return; }
     if (id.startsWith("agent-")) {
       switchAgent(id.slice(6));
     }
@@ -319,6 +324,15 @@ export default function App() {
 
   const handleSkip = useCallback(() => {
     setAuthenticated(true);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    clearAuth();
+    setAuthenticated(false);
+    setAuthEmail("");
+    setAuthName("");
+    setView("home");
+    setQuery("");
   }, []);
 
   const sidebarData = useMemo(() => {
