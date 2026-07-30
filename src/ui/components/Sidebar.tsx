@@ -21,6 +21,8 @@ interface SidebarProps {
   lspStatus: LspStatusInfo;
   currentPath: string;
   gitBranch?: string;
+  authEmail?: string;
+  authName?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -32,6 +34,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   lspStatus,
   currentPath,
   gitBranch,
+  authEmail,
+  authName,
 }) => {
   const contextPercent = Math.round((tokenCount / maxContextTokens) * 100) || 0;
 
@@ -40,6 +44,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <Text bold color="white" wrap="truncate-end">
         {sessionTitle}
       </Text>
+
+      {authEmail && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold color="gray">User</Text>
+          <Text color="green">● {authName || authEmail}</Text>
+          {authName && <Text color="gray">{authEmail}</Text>}
+        </Box>
+      )}
 
       <Box flexDirection="column" marginTop={1}>
         <Text bold color="gray">Context</Text>
