@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Box, useInput, useWindowSize } from "ink";
 import HomeScreen from "./Home";
 import ChatView from "./ChatView";
@@ -7,9 +7,11 @@ import CommandPalette from "./CommandPalette";
 import ConnectForm from "./ConnectForm";
 import PermissionPrompt from "./PermissionPrompt";
 import Statusbar from "./components/Statusbar";
+import { AppLayout } from "./AppLayout";
+import { Sidebar } from "./components/Sidebar";
 import { executeTool } from "../tools/index";
 import { isSensitiveTool } from "../tools/permissions";
-import { startAll, stopAll, getConnectedCount } from "../mcp/index";
+import { startAll, stopAll, getConnectedCount, getConnectedServers } from "../mcp/index";
 import {
   initAgents,
   setActiveAgent,
@@ -28,6 +30,8 @@ import {
   setSessionId,
 } from "../telemetry/tracker";
 import { createSession } from "../session/history";
+import { countTokens, DEFAULT_BUDGET } from "../session/tokens";
+import { getCurrentBranch } from "./git";
 import { theme } from "./theme";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
@@ -59,6 +63,7 @@ export default function App() {
   const [agentBusy, setAgentBusy] = useState(false);
   const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
+  const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const agentId = initAgents();
@@ -75,6 +80,7 @@ export default function App() {
 
     startAll().then(() => setMcpCount(getConnectedCount()));
     checkForUpdates().then(setUpdateInfo);
+    setGitBranch(getCurrentBranch() ?? undefined);
     return () => {
       trackSessionEnd();
       stopAll();
@@ -294,6 +300,34 @@ export default function App() {
 
   const handleConnectSave = () => setView("home");
 
+  const sidebarData = useMemo(() => {
+    const tokenSum = agentLogs.reduce((acc, entry) => {
+      if (entry.kind === "message" || entry.kind === "query") {
+        return acc + countTokens(entry.text);
+      }
+      return acc;
+    }, 0);
+    const mcpServers = getConnectedServers().map((name) => ({
+      name,
+      status: "connected" as const,
+    }));
+    const contextPercent = Math.round((tokenSum / DEFAULT_BUDGET.maxTokens) * 100) || 0;
+    return {
+      sessionTitle: query || "New Session",
+      tokenCount: tokenSum,
+      maxContextTokens: DEFAULT_BUDGET.maxTokens,
+      costSpent: 0,
+      mcpServers,
+      lspStatus: { enabled: false, activeCount: 0 },
+      currentPath: process.cwd(),
+      gitBranch,
+    };
+  }, [agentLogs, query, gitBranch]);
+
+  const footerRight = `${sidebarData.tokenCount.toLocaleString()} (${Math.round((sidebarData.tokenCount / sidebarData.maxContextTokens) * 100)}%)  ctrl+p commands`;
+
+  const sidebar = <Sidebar {...sidebarData} />;
+
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       {pendingPerm ? (
@@ -305,52 +339,55 @@ export default function App() {
           }}
         />
       ) : view === "home" && !showAgents && !showCommands ? (
-        <HomeScreen
-          query={query}
-          onQueryChange={handleQueryChange}
-          onSubmit={handleSubmit}
-          updateInfo={updateInfo}
-          agentName={activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"}
-        />
-      ) : null}
-
-      {!pendingPerm && showAgents && (
-        <AgentSelector
-          agents={getAllAgents()}
-          currentId={activeAgentId}
-          onSelect={handleSelectAgent}
-        />
-      )}
-      {!pendingPerm && showCommands && (
-        <CommandPalette
-          onSelect={handleSelectCommand}
-          initialFilter={query.startsWith("/") ? query.slice(1) : undefined}
-        />
-      )}
-      {!pendingPerm && view === "chat" && (
-        <ChatView
-          query={query}
-          onBack={() => setView("home")}
-          requestTool={requestToolExecution}
-          activeAgentId={activeAgentId}
-          isAgentRunning={agentBusy}
-          agentLogs={agentLogs}
-          onFreeformInput={handleFreeformInput}
-        />
-      )}
-      {!pendingPerm && view === "connect" && (
-        <ConnectForm onSave={handleConnectSave} />
-      )}
-
-      {!pendingPerm && (
-        <Statusbar
-          mcpCount={mcpCount}
-          agentName={
-            activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"
-          }
-          agentId={activeAgentId}
-          latestVersion={updateInfo?.hasUpdate ? updateInfo.latestVersion : null}
-        />
+        <>
+          <HomeScreen
+            query={query}
+            onQueryChange={handleQueryChange}
+            onSubmit={handleSubmit}
+            updateInfo={updateInfo}
+            agentName={activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"}
+          />
+          <Statusbar
+            mcpCount={mcpCount}
+            agentName={activeAgentRef.current?.name ?? getActiveAgent()?.name ?? "Build"}
+            agentId={activeAgentId}
+            latestVersion={updateInfo?.hasUpdate ? updateInfo.latestVersion : null}
+          />
+        </>
+      ) : (
+        <AppLayout
+          sidebarComponent={sidebar}
+          footerLeft={process.cwd()}
+          footerRight={footerRight}
+        >
+          {showAgents && (
+            <AgentSelector
+              agents={getAllAgents()}
+              currentId={activeAgentId}
+              onSelect={handleSelectAgent}
+            />
+          )}
+          {!showAgents && showCommands && (
+            <CommandPalette
+              onSelect={handleSelectCommand}
+              initialFilter={query.startsWith("/") ? query.slice(1) : undefined}
+            />
+          )}
+          {!showAgents && !showCommands && view === "chat" && (
+            <ChatView
+              query={query}
+              onBack={() => setView("home")}
+              requestTool={requestToolExecution}
+              activeAgentId={activeAgentId}
+              isAgentRunning={agentBusy}
+              agentLogs={agentLogs}
+              onFreeformInput={handleFreeformInput}
+            />
+          )}
+          {!showAgents && !showCommands && view === "connect" && (
+            <ConnectForm onSave={handleConnectSave} />
+          )}
+        </AppLayout>
       )}
     </Box>
   );
