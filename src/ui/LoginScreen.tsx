@@ -8,9 +8,10 @@ type LoginState = "init" | "no_secret" | "waiting" | "success" | "error";
 interface LoginScreenProps {
   onLogin: () => void;
   onSkip: () => void;
+  onExit: () => never;
 }
 
-export default function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, onSkip, onExit }: LoginScreenProps) {
   const [loginState, setLoginState] = useState<LoginState>("init");
   const [userCode, setUserCode] = useState("");
   const [verifyUri, setVerifyUri] = useState("");
@@ -59,7 +60,7 @@ export default function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
         startLogin();
       }
       if (_input === "q" || _input === "Q") {
-        process.exit(0);
+        onExit();
       }
     }
   });
