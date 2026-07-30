@@ -9,6 +9,19 @@ type WebhookPayload = {
   platform: "github" | "gitlab";
 };
 
+const whRateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function whCheckRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const bucket = whRateBuckets.get(ip);
+  if (!bucket || now > bucket.resetAt) {
+    whRateBuckets.set(ip, { count: 1, resetAt: now + 60000 });
+    return true;
+  }
+  bucket.count++;
+  return bucket.count <= 30;
+}
+
 export function startWebhookServer(config: DaemonConfig): void {
   Bun.serve({
     port: config.port,
@@ -18,24 +31,38 @@ export function startWebhookServer(config: DaemonConfig): void {
         return new Response("Method not allowed", { status: 405 });
       }
 
+      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+      if (!whCheckRateLimit(clientIp)) {
+        return new Response("Rate limit exceeded", { status: 429 });
+      }
+
       const url = new URL(req.url);
       if (url.pathname !== "/webhook") {
         return new Response("Not found", { status: 404 });
       }
 
-      const body = await req.text();
+      const rawBody = await req.text();
+      if (rawBody.length > 1024 * 1024) {
+        return new Response("Payload too large", { status: 413 });
+      }
+
+      const body = rawBody;
       const contentType = req.headers.get("content-type") ?? "";
       const githubEvent = req.headers.get("x-github-event");
       const gitlabEvent = req.headers.get("x-gitlab-event");
       const signature = req.headers.get("x-hub-signature-256") ?? undefined;
 
       let wh: WebhookPayload;
-      if (githubEvent) {
-        wh = { event: githubEvent, payload: JSON.parse(body), signature, platform: "github" };
-      } else if (gitlabEvent) {
-        wh = { event: gitlabEvent, payload: JSON.parse(body), signature, platform: "gitlab" };
-      } else {
-        return new Response("Unknown webhook source", { status: 400 });
+      try {
+        if (githubEvent) {
+          wh = { event: githubEvent, payload: JSON.parse(body), signature, platform: "github" };
+        } else if (gitlabEvent) {
+          wh = { event: gitlabEvent, payload: JSON.parse(body), signature, platform: "gitlab" };
+        } else {
+          return new Response("Unknown webhook source", { status: 400 });
+        }
+      } catch {
+        return new Response("Invalid JSON", { status: 400 });
       }
 
       if (config.webhookSecret && wh.signature) {

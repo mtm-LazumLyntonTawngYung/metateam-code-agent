@@ -7,12 +7,16 @@
  * legal@metateam.io for terms.
  */
 
-import { createHash, randomUUID } from "crypto";
+import { createHash, randomUUID, createHmac } from "crypto";
 import { loadConfig, saveConfig } from "../config/index";
 import type { LicenseInfo, Tier, EnterpriseFeature, LicenseStatus } from "./types";
 import { TIER_FEATURES } from "./types";
 
 let cachedLicense: LicenseInfo | null = null;
+
+function getLicenseSecret(): string {
+  return process.env.MTC_LICENSE_SECRET ?? "";
+}
 
 export function getLicense(): LicenseInfo {
   if (cachedLicense) return cachedLicense;
@@ -57,7 +61,7 @@ export function setLicense(license: LicenseInfo): void {
 export function activateLicense(key: string): { success: boolean; license?: LicenseInfo; error?: string } {
   const parsed = parseLicenseKey(key);
   if (!parsed) {
-    return { success: false, error: "Invalid license key format" };
+    return { success: false, error: "Invalid license key format or signature" };
   }
 
   if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
@@ -100,15 +104,19 @@ export function isEnterprise(): boolean {
 }
 
 export function generateLicenseKey(tier: Tier, organization: string, expiresAt: string, maxSeats: number): string {
-  const seed = `${tier}-${organization}-${expiresAt}-${maxSeats}-${randomUUID()}`;
-  const hash = createHash("sha256").update(seed).digest("hex").toUpperCase();
-  const raw = `MTC-${tier.toUpperCase()}-${organization.replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 8)}-${hash.slice(0, 24)}`;
+  const secret = getLicenseSecret();
+  const payload = `${tier}:${organization}:${expiresAt}:${maxSeats}`;
+  const sig = secret
+    ? createHmac("sha256", secret).update(payload).digest("hex").toUpperCase().slice(0, 16)
+    : createHash("sha256").update(payload + randomUUID()).digest("hex").toUpperCase().slice(0, 16);
+
+  const raw = `MTC-${tier.toUpperCase()}-${organization.replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 8)}-${sig}`;
   return raw.match(/.{1,4}/g)?.join("-") ?? raw;
 }
 
 function parseLicenseKey(key: string): { tier: Tier; organization: string; expiresAt: string; maxSeats: number } | null {
   const cleaned = key.replace(/-/g, "");
-  const match = cleaned.match(/^MTC(ENTERPRISE|COMMUNITY|ENTERPRISE_PLUS)([A-Z0-9]+)[A-F0-9]{24}$/i);
+  const match = cleaned.match(/^MTC(ENTERPRISE(?:_PLUS)?|COMMUNITY)([A-Z0-9]+)([A-F0-9]{16})$/i);
   if (!match) return null;
 
   const tierMap: Record<string, Tier> = {
@@ -121,11 +129,28 @@ function parseLicenseKey(key: string): { tier: Tier; organization: string; expir
   const tier = tierMap[tierStr];
   if (!tier) return null;
 
+  const organization = match[2] ?? "Unknown";
+  const sigFromKey = match[3];
+
+  const secret = getLicenseSecret();
+  const expiresAt = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
+  const maxSeats = tier === "community" ? 1 : tier === "enterprise" ? 50 : 500;
+
+  if (secret) {
+    const payload = `${tier}:${organization}:${expiresAt}:${maxSeats}`;
+    const expectedSig = createHmac("sha256", secret).update(payload).digest("hex").toUpperCase().slice(0, 16);
+    if (sigFromKey !== expectedSig) {
+      return null;
+    }
+  } else {
+    console.warn("[mtc] MTC_LICENSE_SECRET not set — license key signature NOT verified!");
+  }
+
   return {
     tier,
-    organization: match[2] ?? "Unknown",
-    expiresAt: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-    maxSeats: tier === "community" ? 1 : tier === "enterprise" ? 50 : 500,
+    organization,
+    expiresAt,
+    maxSeats,
   };
 }
 

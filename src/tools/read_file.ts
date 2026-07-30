@@ -1,4 +1,4 @@
-import { accessSync, constants, readFileSync } from "fs";
+import { accessSync, constants, readFileSync, statSync } from "fs";
 import { isPathIgnored } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
@@ -42,6 +42,15 @@ const readFileTool: ToolDefinition = {
       return {
         success: false,
         error: `File not found or not readable: ${path}`,
+      };
+    }
+
+    const stat = statSync(path);
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (stat.size > MAX_FILE_SIZE) {
+      return {
+        success: false,
+        error: `File too large (${(stat.size / 1024 / 1024).toFixed(1)} MB). Max: 10 MB.`,
       };
     }
 
