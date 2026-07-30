@@ -1,14 +1,38 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { loadConfig } from "../config";
 
 const AUTH_FILE = path.join(os.homedir(), ".config", "mtc", "auth.json");
 
-const AZURE_CLIENT_ID = process.env.MTC_AZURE_CLIENT_ID ?? "159fbf0f-82f2-4b4e-a1b5-e4734cf9ffc6";
-const AZURE_TENANT_ID = process.env.MTC_AZURE_TENANT_ID ?? "30102b23-c817-43f8-b2de-e77962e3a3e0";
-const AZURE_CLIENT_SECRET = process.env.MTC_AZURE_CLIENT_SECRET ?? "";
+function readEnvVar(name: string): string | undefined {
+  const fromEnv = process.env[name];
+  if (fromEnv) return fromEnv;
+  try {
+    const cfg = loadConfig() as Record<string, unknown>;
+    const auth = cfg.auth as Record<string, string> | undefined;
+    if (auth?.[name]) return auth[name];
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
+const AZURE_CLIENT_ID =
+  readEnvVar("MTC_AZURE_CLIENT_ID") ?? "159fbf0f-82f2-4b4e-a1b5-e4734cf9ffc6";
+const AZURE_TENANT_ID =
+  readEnvVar("MTC_AZURE_TENANT_ID") ?? "30102b23-c817-43f8-b2de-e77962e3a3e0";
+const AZURE_CLIENT_SECRET =
+  readEnvVar("MTC_AZURE_CLIENT_SECRET") ?? "";
 
 const AUTHORITY = `https://login.microsoftonline.com/${AZURE_TENANT_ID}`;
+
+function withSecret(body: URLSearchParams): URLSearchParams {
+  if (AZURE_CLIENT_SECRET) {
+    body.set("client_secret", AZURE_CLIENT_SECRET);
+  }
+  return body;
+}
 
 export interface AuthData {
   accessToken: string;
@@ -35,7 +59,8 @@ export function getAuthFilePath(): string {
 export function getAuth(): AuthData | null {
   try {
     if (!fs.existsSync(AUTH_FILE)) return null;
-    return JSON.parse(fs.readFileSync(AUTH_FILE, "utf-8")) as AuthData;
+    const raw = fs.readFileSync(AUTH_FILE, "utf-8");
+    return JSON.parse(raw) as AuthData;
   } catch {
     return null;
   }
@@ -44,7 +69,8 @@ export function getAuth(): AuthData | null {
 export function isAuthenticated(): boolean {
   const auth = getAuth();
   if (!auth) return false;
-  return Date.now() < new Date(auth.expiresOn).getTime();
+  const expires = new Date(auth.expiresOn).getTime();
+  return Date.now() < expires;
 }
 
 export function clearAuth(): void {
@@ -55,39 +81,51 @@ export function clearAuth(): void {
   }
 }
 
-export async function initiateSSOLogin(
-  onCodeGenerated: (code: string, uri: string) => void,
-): Promise<AuthData> {
-  const dc = await requestDeviceCode();
-  onCodeGenerated(dc.user_code, dc.verification_uri);
-  return pollForToken(dc.device_code, dc.interval, dc.expires_in);
-}
+export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
+  const body = withSecret(new URLSearchParams({
+    client_id: AZURE_CLIENT_ID,
+    scope: "openid profile email User.Read",
+  }));
 
-async function requestDeviceCode(): Promise<DeviceCodeResponse> {
-  const body = new URLSearchParams({ client_id: AZURE_CLIENT_ID, scope: "openid profile email User.Read" });
-  if (AZURE_CLIENT_SECRET) body.set("client_secret", AZURE_CLIENT_SECRET);
+  const url = `${AUTHORITY}/oauth2/v2.0/devicecode`;
+  console.error(`[mtc auth] POST ${url}`);
 
-  const res = await fetch(`${AUTHORITY}/oauth2/v2.0/devicecode`, {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
 
-  if (!res.ok) throw new Error(`Device code request failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as DeviceCodeResponse;
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[mtc auth] device code error: ${res.status} ${text}`);
+    throw new Error(`Device code request failed: ${res.status} ${text}`);
+  }
+
+  const data = (await res.json()) as DeviceCodeResponse;
+  console.error(`[mtc auth] device code obtained: ${data.user_code}, expires in ${data.expires_in}s`);
+  return data;
 }
 
-async function pollForToken(deviceCode: string, interval: number, expiresIn: number): Promise<AuthData> {
-  const body = new URLSearchParams({
+export async function pollForToken(
+  deviceCode: string,
+  interval: number,
+  expiresIn: number,
+  onPoll?: () => void,
+): Promise<AuthData> {
+  const body = withSecret(new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
     client_id: AZURE_CLIENT_ID,
     device_code: deviceCode,
-  });
-  if (AZURE_CLIENT_SECRET) body.set("client_secret", AZURE_CLIENT_SECRET);
+  }));
 
   const deadline = Date.now() + expiresIn * 1000;
+  let pollCount = 0;
 
   while (Date.now() < deadline) {
+    if (onPoll) onPoll();
+    pollCount++;
+
     const res = await fetch(`${AUTHORITY}/oauth2/v2.0/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -96,20 +134,60 @@ async function pollForToken(deviceCode: string, interval: number, expiresIn: num
 
     if (res.status === 400) {
       const err = (await res.json()) as { error: string; error_description?: string };
-      if (err.error === "authorization_pending") { await sleep(interval * 1000); continue; }
-      if (err.error === "slow_down") { interval += 5; await sleep(interval * 1000); continue; }
+      if (err.error === "authorization_pending") {
+        console.error(`[mtc auth] poll #${pollCount}: pending, waiting ${interval}s`);
+        await sleep(interval * 1000);
+        continue;
+      }
+      if (err.error === "slow_down") {
+        interval += 5;
+        console.error(`[mtc auth] poll #${pollCount}: slow_down, new interval ${interval}s`);
+        await sleep(interval * 1000);
+        continue;
+      }
+      console.error(`[mtc auth] poll #${pollCount} error: ${err.error} - ${err.error_description}`);
       throw new Error(err.error_description ?? err.error);
     }
 
-    if (!res.ok) throw new Error(`Token polling failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`[mtc auth] poll #${pollCount} HTTP ${res.status}: ${text}`);
+      throw new Error(`Token polling failed: ${res.status} ${text}`);
+    }
 
-    const tokenRes = (await res.json()) as { access_token: string; id_token?: string; expires_in: number; scope: string };
-    const claims = decodeJwt(tokenRes.id_token ?? tokenRes.access_token);
-    const userEmail = String(claims?.email ?? claims?.preferred_username ?? claims?.unique_name ?? claims?.upn ?? "");
-    const userName = String(claims?.name ?? claims?.given_name ?? "");
+    const tokenRes = (await res.json()) as {
+      access_token: string;
+      id_token?: string;
+      expires_in: number;
+      scope: string;
+    };
+
+    console.error(`[mtc auth] poll #${pollCount}: tokens received, decoding claims`);
+
+    const rawIdToken = tokenRes.id_token ?? tokenRes.access_token;
+    const decodedId = decodeJwtPayload(rawIdToken);
+    console.error(`[mtc auth] decoded claims:`, JSON.stringify(decodedId, null, 2));
+
+    const userEmail = String(
+      decodedId?.email ??
+      decodedId?.preferred_username ??
+      decodedId?.unique_name ??
+      decodedId?.upn ??
+      "",
+    );
+    const userName = String(
+      decodedId?.name ??
+      decodedId?.given_name ??
+      decodedId?.family_name ??
+      "",
+    );
+
+    console.error(`[mtc auth] extracted email: "${userEmail}", name: "${userName}"`);
 
     if (!userEmail.endsWith("@metateammyanmar.com")) {
-      throw new Error(`Access denied: Must use @metateammyanmar.com account. "${userEmail}" is not allowed.`);
+      throw new Error(
+        `Access denied: You must log in with an @metateammyanmar.com account. "${userEmail}" is not allowed.`,
+      );
     }
 
     const authData: AuthData = {
@@ -123,20 +201,33 @@ async function pollForToken(deviceCode: string, interval: number, expiresIn: num
 
     fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
     fs.writeFileSync(AUTH_FILE, JSON.stringify(authData, null, 2));
+    console.error(`[mtc auth] saved to ${AUTH_FILE}`);
+
     return authData;
   }
 
   throw new Error("Device code expired. Please try again.");
 }
 
-function decodeJwt(token: string): Record<string, unknown> {
+export async function initiateSSOLogin(
+  onCodeGenerated: (code: string, uri: string) => void,
+): Promise<AuthData> {
+  const deviceCode = await requestDeviceCode();
+  onCodeGenerated(deviceCode.user_code, deviceCode.verification_uri);
+  return pollForToken(deviceCode.device_code, deviceCode.interval, deviceCode.expires_in);
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
-    return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()) as Record<string, unknown>;
+    const parts = token.split(".");
+    if (parts.length !== 3) return {};
+    const payload = Buffer.from(parts[1], "base64url").toString("utf-8");
+    return JSON.parse(payload) as Record<string, unknown>;
   } catch {
     return {};
   }
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
