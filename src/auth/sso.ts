@@ -209,6 +209,10 @@ export async function pollForToken(
   throw new Error("Device code expired. Please try again.");
 }
 
+export async function verifyWithDeviceCode(deviceCode: string): Promise<AuthData> {
+  return pollForToken(deviceCode, 5, 900);
+}
+
 export async function initiateSSOLogin(
   onCodeGenerated: (code: string, uri: string) => void,
 ): Promise<AuthData> {

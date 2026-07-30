@@ -3,6 +3,7 @@ import { executeTool, getAllTools } from "../tools/index";
 import type { CompletionMessage, CompletionResponse } from "../llm/types";
 import type { AgentDefinition } from "./types";
 import type { ToolResult } from "../tools/schema";
+import { loadConfig } from "../config";
 
 export type ToolCall = {
   name: string;
@@ -98,11 +99,13 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
   for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
     let response: CompletionResponse;
     try {
+      const cfg = loadConfig();
+      const model = cfg.selectedModel ?? "deepseek-chat";
       response = await complete({
-        model: "deepseek-chat",
+        model,
         messages,
         temperature: 0.7,
-        maxTokens: 4096,
+        maxTokens: 200,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

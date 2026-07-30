@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { loadLlmConfig, updateProvider } from "../llm/config";
-import { theme } from "./theme";
+import { loadLlmConfig, updateProvider, saveLlmConfig } from "../llm/config";
+import { useTheme } from "./theme";
 
 const PROVIDERS = [
   { id: "deepseek" as const, label: "DeepSeek", defaultUrl: "https://api.deepseek.com/v1" },
   { id: "openai" as const, label: "OpenAI", defaultUrl: "https://api.openai.com/v1" },
   { id: "anthropic" as const, label: "Anthropic", defaultUrl: "https://api.anthropic.com/v1" },
+  { id: "openrouter" as const, label: "OpenRouter", defaultUrl: "https://openrouter.ai/api/v1" },
 ];
 
 type Step = "provider" | "apiKey" | "done";
@@ -17,6 +18,7 @@ type ConnectFormProps = {
 };
 
 export default function ConnectForm({ onSave }: ConnectFormProps) {
+  const theme = useTheme();
   const [step, setStep] = useState<Step>("provider");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [apiKey, setApiKey] = useState("");
@@ -55,6 +57,16 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
         baseUrl: selected.defaultUrl,
         models: loadLlmConfig().providers.find((p) => p.id === selected.id)?.models ?? [],
       });
+      if (selected.id === "openrouter") {
+        const cfg = loadLlmConfig();
+        saveLlmConfig({
+          routing: {
+            simpleModel: "openai/gpt-4o-mini",
+            defaultModel: "openai/gpt-4o",
+            reasoningModel: "anthropic/claude-sonnet-4",
+          },
+        });
+      }
       setStep("done");
     } catch {
       setError("Failed to save config");

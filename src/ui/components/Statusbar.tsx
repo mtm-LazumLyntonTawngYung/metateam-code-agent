@@ -1,14 +1,16 @@
 import { Box, Text } from "ink";
-import { theme } from "../theme";
+import { useTheme } from "../theme";
 
 type StatusbarProps = {
   mcpCount: number;
   agentName: string;
   agentId: string;
   latestVersion?: string | null;
+  activeSkillName?: string | null;
 };
 
-export default function Statusbar({ mcpCount, agentName, latestVersion }: StatusbarProps) {
+export default function Statusbar({ mcpCount, agentName, latestVersion, activeSkillName }: StatusbarProps) {
+  const theme = useTheme();
   return (
     <Box
       width="100%"
@@ -19,6 +21,9 @@ export default function Statusbar({ mcpCount, agentName, latestVersion }: Status
       <Box flexGrow={1}>
         <Text color={theme.colors.muted}>
           {"\u2699"} {mcpCount} MCP  |  <Text bold>{agentName}</Text>
+          {activeSkillName && (
+            <Text color={theme.colors.success}>  |  \u25c9 {activeSkillName}</Text>
+          )}
         </Text>
       </Box>
       <Box>

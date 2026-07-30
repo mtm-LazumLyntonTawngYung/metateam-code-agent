@@ -32,6 +32,13 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
     baseUrl: "https://api.anthropic.com/v1",
     models: ["claude-sonnet-4-20250514", "claude-haiku-3-5-20241022"],
   },
+  {
+    id: "openrouter",
+    label: "OpenRouter",
+    apiKey: "",
+    baseUrl: "https://openrouter.ai/api/v1",
+    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"],
+  },
 ];
 
 const CONFIG_KEY = "llm";

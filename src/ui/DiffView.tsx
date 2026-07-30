@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { Box, Text } from "ink";
-import { theme } from "./theme";
+import { useTheme } from "./theme";
 
 type DiffLine = { kind: "same" | "add" | "remove"; text: string };
 
@@ -47,6 +47,7 @@ export default function DiffView({
   replacement,
   contextLines = 3,
 }: DiffViewProps) {
+  const theme = useTheme();
   let oldContent: string;
   try {
     oldContent = readFileSync(filePath, "utf-8");

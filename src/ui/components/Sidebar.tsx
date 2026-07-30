@@ -23,6 +23,7 @@ interface SidebarProps {
   gitBranch?: string;
   authEmail?: string;
   authName?: string;
+  activeSkillName?: string | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -36,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   gitBranch,
   authEmail,
   authName,
+  activeSkillName,
 }) => {
   const contextPercent = Math.round((tokenCount / maxContextTokens) * 100) || 0;
 
@@ -72,6 +74,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Text color="gray">No MCP connected</Text>
         )}
       </Box>
+
+      {activeSkillName && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold color="gray">Active Skill</Text>
+          <Text color="green">● {activeSkillName}</Text>
+        </Box>
+      )}
 
       <Box flexDirection="column" marginTop={1}>
         <Text bold color="gray">LSP</Text>

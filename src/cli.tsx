@@ -446,7 +446,7 @@ llmCmd
 llmCmd
   .command("set-provider")
   .description("Configure a provider")
-  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic)")
+  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter)")
   .requiredOption("-k, --key <key>", "API key")
   .option("-u, --url <url>", "API base URL")
   .option("-m, --models <models...>", "Model IDs to enable")
@@ -454,13 +454,19 @@ llmCmd
     const cfg = loadLlmConfig();
     const existing = cfg.providers.find((p) => p.id === options.id);
     const labels: Record<string, string> = {
-      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic",
+      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter",
+    };
+    const defaultUrls: Record<string, string> = {
+      deepseek: "https://api.deepseek.com/v1",
+      openai: "https://api.openai.com/v1",
+      anthropic: "https://api.anthropic.com/v1",
+      openrouter: "https://openrouter.ai/api/v1",
     };
     updateProvider({
-      id: options.id as "deepseek" | "openai" | "anthropic",
+      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter",
       label: existing?.label ?? labels[options.id] ?? options.id,
       apiKey: options.key,
-      baseUrl: options.url ?? existing?.baseUrl ?? `https://api.${options.id}.com/v1`,
+      baseUrl: options.url ?? existing?.baseUrl ?? defaultUrls[options.id] ?? `https://api.${options.id}.com/v1`,
       models: options.models ?? existing?.models ?? [],
     });
     console.log(`\n  Provider '${options.id}' updated.\n`);
