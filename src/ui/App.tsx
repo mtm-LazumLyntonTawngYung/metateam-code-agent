@@ -97,6 +97,7 @@ export default function App() {
       }
       if (showCommands) {
         setShowCommands(false);
+        setQuery("");
         return;
       }
       if (view !== "home") {
@@ -120,6 +121,13 @@ export default function App() {
       return;
     }
   });
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (value.startsWith("/") && !showCommands) {
+      setShowCommands(true);
+    }
+  }, [showCommands]);
 
   const requestToolExecution = useCallback(
     async (
@@ -235,6 +243,8 @@ export default function App() {
         setShowAgents(true);
         return;
       }
+      setShowCommands(true);
+      return;
     }
     const trimmed = value.trim();
     if (trimmed) {
@@ -268,6 +278,7 @@ export default function App() {
 
   const handleSelectCommand = (id: string) => {
     setShowCommands(false);
+    setQuery("");
     if (id === "connect") setView("connect");
     if (id === "exit") process.exit(0);
     if (id.startsWith("agent-")) {
@@ -290,7 +301,7 @@ export default function App() {
       ) : view === "home" && !showAgents && !showCommands ? (
         <HomeScreen
           query={query}
-          onQueryChange={setQuery}
+          onQueryChange={handleQueryChange}
           onSubmit={handleSubmit}
           updateInfo={updateInfo}
         />
@@ -304,7 +315,10 @@ export default function App() {
         />
       )}
       {!pendingPerm && showCommands && (
-        <CommandPalette onSelect={handleSelectCommand} />
+        <CommandPalette
+          onSelect={handleSelectCommand}
+          initialFilter={query.startsWith("/") ? query.slice(1) : undefined}
+        />
       )}
       {!pendingPerm && view === "chat" && (
         <ChatView

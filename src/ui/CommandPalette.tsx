@@ -23,10 +23,11 @@ function fuzzyMatch(text: string, query: string): boolean {
 
 type CommandPaletteProps = {
   onSelect: (id: string) => void;
+  initialFilter?: string;
 };
 
-export default function CommandPalette({ onSelect }: CommandPaletteProps) {
-  const [query, setQuery] = useState("");
+export default function CommandPalette({ onSelect, initialFilter = "" }: CommandPaletteProps) {
+  const [query, setQuery] = useState(initialFilter);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const filtered = useMemo(
