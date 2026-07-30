@@ -1,0 +1,25 @@
+src/ui/Home.tsx
+  s_70178f3810600a::t_838514f23ee3dc 58
+  s_70178f3810600a::t_e1cdf6e0df4373 15
+  s_70178f3810600a::t_b811507306fa79 12
+src/ui/App.tsx
+  s_70178f3810600a::t_3e618d91efed48 276-281
+  s_70178f3810600a::t_5c6d4cd8e1efa2 313
+  s_70178f3810600a::t_977c27e486c650 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a106cd140caf59c63cd911156b17ff91c611e943",
+  "prompts": {},
+  "sessions": {
+    "s_70178f3810600a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04f4436e2ffeWFo7xWcak3RyHe",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
