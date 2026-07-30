@@ -10,25 +10,37 @@ type ChatViewProps = {
   onBack: () => void;
   requestTool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
   activeAgentId: string;
+  isAgentRunning: boolean;
+  agentLogs: LogEntry[];
+  onFreeformInput: (text: string) => void;
 };
 
 type LogEntry =
   | { kind: "query"; text: string }
-  | { kind: "tool_call"; toolName: string; args: Record<string, unknown> }
+  | { kind: "tool_call"; toolName: string; args: Record<string, unknown>; agent?: boolean }
   | { kind: "tool_result"; result: ToolResult }
   | { kind: "message"; text: string; color?: string };
 
-export default function ChatView({ query, onBack, requestTool, activeAgentId }: ChatViewProps) {
+export default function ChatView({
+  query,
+  onBack,
+  requestTool,
+  activeAgentId,
+  isAgentRunning,
+  agentLogs,
+  onFreeformInput,
+}: ChatViewProps) {
   const [logs, setLogs] = useState<LogEntry[]>([
     { kind: "query", text: query },
     {
       kind: "message",
-      text: "Commands: /read /write /edit /bash /glob /call /subagent /agent",
+      text: isAgentRunning ? "Agent is thinking..." : "Commands: /read /write /edit /bash /glob /call /subagent /agent",
       color: theme.colors.muted,
     },
   ]);
   const [toolInput, setToolInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const showingAgent = isAgentRunning || agentLogs.length > 0;
 
   useInput((_input, key) => {
     if (key.escape && !busy) onBack();
@@ -37,7 +49,13 @@ export default function ChatView({ query, onBack, requestTool, activeAgentId }: 
   const handleToolSubmit = useCallback(
     async (line: string) => {
       const trimmed = line.trim();
-      if (!trimmed || busy) return;
+      if (!trimmed || busy || isAgentRunning) return;
+
+      if (!trimmed.startsWith("/")) {
+        setToolInput("");
+        onFreeformInput(trimmed);
+        return;
+      }
 
       setLogs((prev) => [
         ...prev,
@@ -141,10 +159,11 @@ export default function ChatView({ query, onBack, requestTool, activeAgentId }: 
 
       setLogs((prev) => [...prev, { kind: "tool_result", result }]);
     },
-    [busy, requestTool],
+    [busy, isAgentRunning, requestTool, onFreeformInput],
   );
 
-  const results = logs.filter(
+  const allEntries = showingAgent ? agentLogs : logs;
+  const displayEntries = allEntries.filter(
     (l) => l.kind === "tool_result" || l.kind === "query" || l.kind === "message",
   );
 
@@ -164,10 +183,10 @@ export default function ChatView({ query, onBack, requestTool, activeAgentId }: 
         paddingY={1}
         flexGrow={1}
       >
-        {results.length === 1 ? (
-          <Text color={theme.colors.muted}>{"\u25b0"} streaming...</Text>
+        {displayEntries.length === 0 || (displayEntries.length === 1 && isAgentRunning) ? (
+          <Text color={theme.colors.muted}>{"\u25b0"} thinking...</Text>
         ) : (
-          results.slice(1).map((entry, i) => {
+          displayEntries.slice(1).map((entry, i) => {
             if (entry.kind === "message") {
               return (
                 <Box key={i}>
@@ -209,9 +228,9 @@ export default function ChatView({ query, onBack, requestTool, activeAgentId }: 
         )}
       </Box>
 
-      {busy && (
+      {(busy || isAgentRunning) && (
         <Box marginTop={1}>
-          <Text color={theme.colors.warning}>{"\u25b0"} executing...</Text>
+          <Text color={theme.colors.warning}>{"\u25b0"} {isAgentRunning ? "agent is thinking..." : "executing..."}</Text>
         </Box>
       )}
 
@@ -221,7 +240,7 @@ export default function ChatView({ query, onBack, requestTool, activeAgentId }: 
           value={toolInput}
           onChange={setToolInput}
           onSubmit={handleToolSubmit}
-          placeholder={busy ? "working..." : "/read path offset limit"}
+          placeholder={isAgentRunning ? "agent is thinking..." : busy ? "working..." : "type a message or /command"}
         />
       </Box>
 

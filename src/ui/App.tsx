@@ -16,6 +16,7 @@ import {
   getActiveAgent,
   getAllAgents,
   isToolDenied,
+  runAgentLoop,
 } from "../agents/index";
 import { checkForUpdates } from "../utils/updater";
 import { ensureTelemetryConfig } from "../config";
@@ -26,10 +27,18 @@ import {
   setSessionId,
 } from "../telemetry/tracker";
 import { createSession } from "../session/history";
+import { theme } from "./theme";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
 import type { UpdateInfo } from "../utils/updater";
+import type { AgentUpdate } from "../agents/agent-loop";
+
+type LogEntry =
+  | { kind: "query"; text: string }
+  | { kind: "tool_call"; toolName: string; args: Record<string, unknown>; agent?: boolean }
+  | { kind: "tool_result"; result: ToolResult }
+  | { kind: "message"; text: string; color?: string };
 
 type View = "home" | "chat" | "connect";
 
@@ -46,6 +55,8 @@ export default function App() {
   const [mcpCount, setMcpCount] = useState(0);
   const [activeAgentId, setActiveAgentId] = useState<string>("build");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [agentBusy, setAgentBusy] = useState(false);
+  const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
 
   useEffect(() => {
@@ -148,6 +159,66 @@ export default function App() {
     [pendingPerm],
   );
 
+  const startAgentLoop = useCallback(
+    async (text: string, agent: AgentDefinition) => {
+      setAgentBusy(true);
+      setAgentLogs([{ kind: "query", text }]);
+
+      const onUpdate = (update: AgentUpdate) => {
+        switch (update.kind) {
+          case "text":
+            setAgentLogs((prev) => [
+              ...prev,
+              { kind: "message", text: update.content, color: theme.colors.text },
+            ]);
+            break;
+          case "tool_call":
+            setAgentLogs((prev) => [
+              ...prev,
+              {
+                kind: "tool_call",
+                toolName: update.toolCall.name,
+                args: update.toolCall.args,
+                agent: true,
+              },
+            ]);
+            break;
+          case "tool_result":
+            setAgentLogs((prev) => [
+              ...prev,
+              { kind: "tool_result", result: update.result },
+            ]);
+            break;
+          case "done":
+            setAgentLogs((prev) => [
+              ...prev,
+              {
+                kind: "message",
+                text: `Completed in ${update.duration}ms (${update.toolCalls} tool calls)`,
+                color: theme.colors.muted,
+              },
+            ]);
+            setAgentBusy(false);
+            break;
+          case "error":
+            setAgentLogs((prev) => [
+              ...prev,
+              {
+                kind: "message",
+                text: `Error: ${update.error}`,
+                color: theme.colors.error,
+              },
+            ]);
+            setAgentBusy(false);
+            break;
+        }
+      };
+
+      await runAgentLoop(text, agent, [], onUpdate, requestToolExecution);
+    },
+    [requestToolExecution],
+  );
+
   const handleSubmit = (value: string) => {
     if (value.startsWith("/")) {
       if (value === "/connect" || value.startsWith("/connect ")) {
@@ -165,10 +236,30 @@ export default function App() {
         return;
       }
     }
-    if (value.trim()) {
+    const trimmed = value.trim();
+    if (trimmed) {
+      setQuery(trimmed);
       setView("chat");
+      const agent = activeAgentRef.current ?? getActiveAgent();
+      if (agent) {
+        startAgentLoop(trimmed, agent);
+      }
     }
   };
+
+  const handleFreeformInput = useCallback(
+    (text: string) => {
+      const agent = activeAgentRef.current ?? getActiveAgent();
+      if (agent) {
+        setAgentLogs((prev) => [
+          ...prev,
+          { kind: "query", text },
+        ]);
+        startAgentLoop(text, agent);
+      }
+    },
+    [startAgentLoop],
+  );
 
   const handleSelectAgent = (id: string) => {
     switchAgent(id);
@@ -221,6 +312,9 @@ export default function App() {
           onBack={() => setView("home")}
           requestTool={requestToolExecution}
           activeAgentId={activeAgentId}
+          isAgentRunning={agentBusy}
+          agentLogs={agentLogs}
+          onFreeformInput={handleFreeformInput}
         />
       )}
       {!pendingPerm && view === "connect" && (
