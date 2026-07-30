@@ -113,17 +113,20 @@ export default function App() {
       }
       return;
     }
-    if (key.tab && view === "home" && !showAgents && !showCommands) {
+    if (key.tab && !showAgents && !showCommands) {
       setShowAgents(true);
       return;
     }
     if (
       key.ctrl &&
       _input === "p" &&
-      view === "home" &&
       !showAgents &&
       !showCommands
     ) {
+      setShowCommands(true);
+      return;
+    }
+    if (_input === "/" && !showAgents && !showCommands) {
       setShowCommands(true);
       return;
     }
