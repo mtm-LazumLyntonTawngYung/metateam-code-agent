@@ -1,0 +1,14 @@
+.github/workflows/mtc-review.yml
+  h_10671eecd6b5d0 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "bd59ddd81f088b346f67400c8f3bd094f8032a48",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
