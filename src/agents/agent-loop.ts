@@ -47,6 +47,9 @@ export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText
 function buildToolDescriptions(): string {
   return getAllTools()
     .map((t) => {
+      if (!t.parameters || !t.parameters.properties) {
+        return `  - ${t.name}: ${t.description} (no parameters)`;
+      }
       const props = t.parameters.properties;
       const required = t.parameters.required ?? [];
       const paramStr = Object.entries(props)
@@ -58,6 +61,14 @@ function buildToolDescriptions(): string {
       return `  - ${t.name}: ${t.description}\n${paramStr}`;
     })
     .join("\n");
+}
+
+function truncateResult(data: unknown, maxLen = 2000): string {
+  if (data === null || data === undefined) return "(completed)";
+  if (typeof data === "string") return data.length > maxLen ? data.slice(0, maxLen) + "\n... (truncated)" : data;
+  const str = JSON.stringify(data);
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen) + "\n... (truncated)";
 }
 
 export async function runAgentLoop(
@@ -152,7 +163,7 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
       onUpdate({ kind: "tool_result", toolCall: tc, result });
 
       const resultContent = result.success
-        ? `[Tool ${tc.name} result]\n${JSON.stringify(result.data ?? "(completed)")}`
+        ? `[Tool ${tc.name} result]\n${truncateResult(result.data)}`
         : `[Tool ${tc.name} error]\n${result.error}`;
 
       messages.push({ role: "user", content: resultContent });
