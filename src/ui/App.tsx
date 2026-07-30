@@ -63,11 +63,16 @@ type LogEntry =
   | { kind: "query"; text: string }
   | { kind: "tool_call"; toolName: string; args: Record<string, unknown>; agent?: boolean }
   | { kind: "tool_result"; result: ToolResult }
-  | { kind: "message"; text: string; color?: string };
+  | { kind: "message"; text: string; color?: string }
+  | { kind: "status"; agentName: string; modelName: string; duration: number };
 
 type View = "home" | "chat" | "connect" | "diff";
 
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 export default function App() {
+  const [booted, setBooted] = useState(false);
+  const [spinnerFrame, setSpinnerFrame] = useState(0);
   const [view, setView] = useState<View>("home");
   const [query, setQuery] = useState("");
   const [showAgents, setShowAgents] = useState(false);
@@ -94,6 +99,7 @@ export default function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
   const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
+  const promptQueueRef = useRef<string[]>([]);
   const activeAgentRef = useRef<AgentDefinition | null>(null);
   const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
   const [authenticated, setAuthenticated] = useState(isAuthenticated);
@@ -112,6 +118,13 @@ export default function App() {
   }, [notification]);
 
   useEffect(() => {
+    const t = setInterval(() => {
+      setSpinnerFrame((f) => (f + 1) % SPINNER_FRAMES.length);
+    }, 80);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
     const agentId = initAgents();
     setActiveAgentId(agentId);
     activeAgentRef.current = getActiveAgent();
@@ -124,8 +137,12 @@ export default function App() {
       trackModelUsage("deepseek-v4-flash-free", 0);
     }
 
-    startAll().then(() => setMcpCount(getConnectedCount()));
-    checkForUpdates().then(setUpdateInfo);
+    Promise.all([
+      startAll().then(() => setMcpCount(getConnectedCount())),
+      checkForUpdates().then(setUpdateInfo),
+    ]).then(() => {
+      setBooted(true);
+    });
     setGitBranch(getCurrentBranch() ?? undefined);
     const onExit = () => {
       try { process.stdout.write('\x1b[2J\x1b[3J\x1b[H'); } catch {}
@@ -223,8 +240,9 @@ export default function App() {
   const startAgentLoop = useCallback(
     async (text: string, agent: AgentDefinition) => {
       const t = themeRef.current;
+      const modelName = findModel(modelId)?.displayName ?? modelId;
       setAgentBusy(true);
-      setAgentLogs([{ kind: "query", text }]);
+      setAgentLogs((prev) => [...prev, { kind: "query", text }]);
 
       const onUpdate = (update: AgentUpdate) => {
         switch (update.kind) {
@@ -255,9 +273,10 @@ export default function App() {
             setAgentLogs((prev) => [
               ...prev,
               {
-                kind: "message",
-                text: `Completed in ${update.duration}ms (${update.toolCalls} tool calls)`,
-                color: t.colors.muted,
+                kind: "status",
+                agentName: update.agentName,
+                modelName: update.modelName,
+                duration: update.duration,
               },
             ]);
             setAgentBusy(false);
@@ -276,10 +295,19 @@ export default function App() {
         }
       };
 
-      await runAgentLoop(text, agent, [], onUpdate, requestToolExecution);
+      await runAgentLoop(text, agent, [], onUpdate, requestToolExecution, modelName);
     },
-    [requestToolExecution, themeRef],
+    [requestToolExecution, themeRef, modelId],
   );
+
+  useEffect(() => {
+    if (agentBusy || promptQueueRef.current.length === 0) return;
+    const next = promptQueueRef.current.shift()!;
+    const agent = activeAgentRef.current ?? getActiveAgent();
+    if (agent) {
+      startAgentLoop(next, agent);
+    }
+  }, [agentBusy, startAgentLoop]);
 
   const handleSubmit = (value: string) => {
     if (value.startsWith("/")) {
@@ -423,6 +451,11 @@ export default function App() {
     }
     const trimmed = value.trim();
     if (trimmed) {
+      if (agentBusy) {
+        promptQueueRef.current.push(trimmed);
+        setNotification(`Queued (${promptQueueRef.current.length})`);
+        return;
+      }
       setQuery(trimmed);
       setView("chat");
       const agent = activeAgentRef.current ?? getActiveAgent();
@@ -434,16 +467,17 @@ export default function App() {
 
   const handleFreeformInput = useCallback(
     (text: string) => {
+      if (agentBusy) {
+        promptQueueRef.current.push(text);
+        setNotification(`Queued (${promptQueueRef.current.length})`);
+        return;
+      }
       const agent = activeAgentRef.current ?? getActiveAgent();
       if (agent) {
-        setAgentLogs((prev) => [
-          ...prev,
-          { kind: "query", text },
-        ]);
         startAgentLoop(text, agent);
       }
     },
-    [startAgentLoop],
+    [startAgentLoop, agentBusy],
   );
 
   const handleSelectAgent = (id: string) => {
@@ -595,7 +629,13 @@ export default function App() {
   return (
     <ThemeProvider>
     <Box flexDirection="column" width={columns} height={rows}>
-      {!authenticated ? (
+      {!booted ? (
+        <Box flexGrow={1} alignItems="center" justifyContent="center" flexDirection="column">
+          <Text color={theme.colors.primary}>
+            {SPINNER_FRAMES[spinnerFrame]} Starting MTC...
+          </Text>
+        </Box>
+      ) : !authenticated ? (
         <LoginScreen onLogin={handleLogin} onSkip={handleSkip} onExit={cleanExit} />
       ) : pendingPerm ? (
         <PermissionPrompt
@@ -692,6 +732,7 @@ export default function App() {
               isAgentRunning={agentBusy}
               agentLogs={agentLogs}
               onFreeformInput={handleFreeformInput}
+              queuedCount={promptQueueRef.current.length}
             />
           )}
           {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "diff" && (

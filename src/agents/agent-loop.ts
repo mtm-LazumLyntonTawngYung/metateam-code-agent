@@ -14,7 +14,7 @@ export type AgentUpdate =
   | { kind: "text"; content: string }
   | { kind: "tool_call"; toolCall: ToolCall }
   | { kind: "tool_result"; toolCall: ToolCall; result: ToolResult }
-  | { kind: "done"; content: string; toolCalls: number; duration: number }
+  | { kind: "done"; content: string; toolCalls: number; duration: number; agentName: string; modelName: string }
   | { kind: "error"; error: string };
 
 export const MAX_AGENT_ITERATIONS = 25;
@@ -69,6 +69,7 @@ export async function runAgentLoop(
     name: string,
     args: Record<string, unknown>,
   ) => Promise<ToolResult>,
+  modelName = "unknown",
 ): Promise<string> {
   const startTime = performance.now();
   let toolCalls = 0;
@@ -128,6 +129,8 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
         content: cleanText || content,
         toolCalls,
         duration: Math.round(performance.now() - startTime),
+        agentName: agent.name,
+        modelName,
       });
       return cleanText || content;
     }

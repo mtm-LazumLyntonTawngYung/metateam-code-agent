@@ -15,5 +15,15 @@ Thumbs.db
 .vscode/
 .idea/
 *.tsbuildinfo
+# Test coverage
+coverage/
+
+# Temp files
+tmp/
+.tmp/
+
+# Pencil design files
+*.pen
+
 # MTC agent config
 .mtc/
