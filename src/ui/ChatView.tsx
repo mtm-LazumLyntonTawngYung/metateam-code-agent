@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { theme } from "./theme";
+import { useTheme } from "./theme";
 import { getSubagents, runSubagent, getAgentById } from "../agents/index";
 import type { ToolResult } from "../tools/schema";
 
@@ -30,6 +30,7 @@ export default function ChatView({
   agentLogs,
   onFreeformInput,
 }: ChatViewProps) {
+  const theme = useTheme();
   const [logs, setLogs] = useState<LogEntry[]>([
     { kind: "query", text: query },
     {

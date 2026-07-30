@@ -1,7 +1,8 @@
 import { Box, Text } from "ink";
-import { theme } from "../theme";
+import { useTheme } from "../theme";
 
 export default function Header() {
+  const theme = useTheme();
   return (
     <Box
       borderStyle="single"

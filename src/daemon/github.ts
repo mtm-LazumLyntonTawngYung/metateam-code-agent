@@ -63,7 +63,7 @@ export function createGithubClient(token: string) {
     owner: string,
     repo: string,
     baseTreeSha: string,
-    treeEntries: Array<{ path: string; mode: "100644" | "100755" | "040000" | "160000" | "120000"; type: "blob" | "tree" | "commit"; sha: string | null; content?: string }>,
+    treeEntries: Array<{ path: string; mode: "100644" | "100755" | "02000" | "160000" | "120000"; type: "blob" | "tree" | "commit"; sha: string | null; content?: string }>,
   ): Promise<string> {
     const result = await rest<{ sha: string }>("POST", `/repos/${owner}/${repo}/git/trees`, {
       base_tree: baseTreeSha,

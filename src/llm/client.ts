@@ -23,6 +23,8 @@ export async function complete(
       return completeAnthropic(provider, req);
     case "deepseek":
       return completeDeepSeek(provider, req);
+    case "openrouter":
+      return completeOpenRouter(provider, req);
     default:
       return completeOpenAI(provider, req);
   }
@@ -69,7 +71,7 @@ async function completeOpenAI(
     model: req.model,
     messages: req.messages.map(simplifyMessage),
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 4096,
+    max_tokens: req.maxTokens ?? 200,
     stream: false,
   };
 
@@ -120,7 +122,7 @@ async function completeAnthropic(
 
   const body: Record<string, unknown> = {
     model: req.model,
-    max_tokens: req.maxTokens ?? 4096,
+    max_tokens: req.maxTokens ?? 200,
     messages,
   };
   if (systemMsg) body.system = systemMsg.content;
@@ -166,6 +168,55 @@ async function completeDeepSeek(
   req: CompletionRequest,
 ): Promise<CompletionResponse> {
   return completeOpenAI(provider, req);
+}
+
+async function completeOpenRouter(
+  provider: { apiKey: string; baseUrl: string },
+  req: CompletionRequest,
+): Promise<CompletionResponse> {
+  const url = `${provider.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const body = {
+    model: req.model,
+    messages: req.messages.map(simplifyMessage),
+    temperature: req.temperature ?? 0.7,
+    max_tokens: req.maxTokens ?? 200,
+    stream: false,
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${provider.apiKey}`,
+      "HTTP-Referer": "https://github.com/metateam-code-agent",
+      "X-Title": "MetaTeam Code Agent",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new ResponseError(res.status, `OpenRouter ${res.status}: ${text}`);
+  }
+
+  const data = (await res.json()) as {
+    choices: { message: { content: string } }[];
+    usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+    model: string;
+  };
+
+  trackModelUsage(req.model, data.usage.total_tokens);
+
+  return {
+    model: data.model,
+    content: data.choices[0]?.message?.content ?? "",
+    usage: {
+      inputTokens: data.usage.prompt_tokens,
+      outputTokens: data.usage.completion_tokens,
+      totalTokens: data.usage.total_tokens,
+    },
+    provider: "openrouter",
+  };
 }
 
 function simplifyMessage(msg: CompletionMessage): { role: string; content: string } {
