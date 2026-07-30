@@ -9,17 +9,14 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   checks: write
-  statuses: write          # <-- FIX 1: missing write permission
+  statuses: write
 
 jobs:
   review:
     name: MTC Code Review
     runs-on: ubuntu-latest
-
-    # FIX 2: Skip forks unless you have a PAT in the upstream repo
-    # Remove this line if you are NOT on a fork
-    # if: ${{ !github.event.pull_request.head.repo.fork }}
 
     steps:
       - name: Checkout code
@@ -27,10 +24,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install MTC
+      - name: Install MTC from source
         run: |
-          curl -fsSL https://raw.githubusercontent.com/mtm-LazumLyntonTawngYung/metateam-code-agent/main/install.sh | bash
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          curl -fsSL https://bun.sh/install | bash
+          export BUN_INSTALL="$HOME/.bun"
+          export PATH="$BUN_INSTALL/bin:$PATH"
+
+          cd "$GITHUB_WORKSPACE"
+          bun install
+          bun run build
+
+          echo "$GITHUB_WORKSPACE/bin" >> "$GITHUB_PATH"
 
       - name: Verify MTC installation
         run: mtc --version
