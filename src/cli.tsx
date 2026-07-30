@@ -1,4 +1,5 @@
 import { render, renderToString } from "ink";
+import { registerCleanup } from "./ui/clean-exit";
 import { Command } from "commander";
 import App from "./ui/App";
 import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
@@ -44,7 +45,8 @@ program
   .version("1.0.0")
   .action(async () => {
     if (process.stdin.isTTY) {
-      const { waitUntilExit } = render(<App />);
+      const { waitUntilExit, cleanup } = render(<App />);
+      registerCleanup(cleanup);
       await waitUntilExit();
     } else {
       const output = renderToString(<App />, { columns: 80 });

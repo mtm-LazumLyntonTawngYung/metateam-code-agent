@@ -35,6 +35,7 @@ import { getCurrentBranch } from "./git";
 import LoginScreen from "./LoginScreen";
 import { isAuthenticated, getAuth, clearAuth } from "../auth/index";
 import { theme } from "./theme";
+import { cleanExit } from "./clean-exit";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
@@ -86,7 +87,12 @@ export default function App() {
     startAll().then(() => setMcpCount(getConnectedCount()));
     checkForUpdates().then(setUpdateInfo);
     setGitBranch(getCurrentBranch() ?? undefined);
+    const onExit = () => {
+      try { process.stdout.write('\x1b[2J\x1b[3J\x1b[H'); } catch {}
+    };
+    process.on('exit', onExit);
     return () => {
+      process.off('exit', onExit);
       trackSessionEnd();
       stopAll();
     };
@@ -309,7 +315,7 @@ export default function App() {
     setShowCommands(false);
     setQuery("");
     if (id === "connect") setView("connect");
-    if (id === "exit") process.exit(0);
+    if (id === "exit") cleanExit();
     if (id.startsWith("agent-")) {
       switchAgent(id.slice(6));
     }
@@ -369,7 +375,7 @@ export default function App() {
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       {!authenticated ? (
-        <LoginScreen onLogin={handleLogin} onSkip={handleSkip} />
+        <LoginScreen onLogin={handleLogin} onSkip={handleSkip} onExit={cleanExit} />
       ) : pendingPerm ? (
         <PermissionPrompt
           pending={{
