@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "1b4c07d5a8464e6a1d66b3244dce9aaa52d54429",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
