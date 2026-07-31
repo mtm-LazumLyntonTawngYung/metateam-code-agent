@@ -591,10 +591,214 @@ function renderView(view) {
   }
 }
 
-(function initMobileNav() {
-  const m = document.getElementById('mobileNav');
-  if (m) m.innerHTML = '<div class="brand-mark">M</div>' + document.querySelector('.sidebar .nav').innerHTML;
-})();
+function renderOverview() {
+  const s = state.status;
+  if (!s) return '<div class="loading">Loading...</div>';
+  const tierBadge = '<span class="badge ' + s.tier + '">' + s.tier + '</span>';
+  return \`
+    <div class="header">
+      <h2>Overview</h2>
+      \${tierBadge}
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>License Status</h3>
+        <div class="value \${s.licenseStatus === 'active' ? 'green' : 'red'}">\${s.licenseStatus}</div>
+      </div>
+      <div class="card">
+        <h3>MCP Connections</h3>
+        <div class="value blue">\${s.connectedMcpServers}</div>
+      </div>
+      <div class="card">
+        <h3>Active Agents</h3>
+        <div class="value blue">\${state.agents?.agents?.length ?? 0}</div>
+      </div>
+      <div class="card">
+        <h3>Features Available</h3>
+        <div class="value green">\${s.features?.filter(f => f.available).length ?? 0} / \${s.features?.length ?? 0}</div>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Feature Availability</h3>
+      <div class="feature-grid">
+        \${(s.features ?? []).map(f => \`
+          <div class="feature-item">
+            <span class="icon">\${f.available ? '\u2705' : '\u274C'}</span>
+            <span>\${f.feature.replace(/_/g, ' ')}</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">\${f.tier}</span>
+          </div>
+        \`).join('')}
+      </div>
+    </div>
+  \`;
+}
+
+function renderLicense() {
+  const l = state.license;
+  if (!l) return '<div class="loading">Loading...</div>';
+  const tierBadge = '<span class="badge ' + l.license.tier + '">' + l.license.tier + '</span>';
+  return \`
+    <div class="header">
+      <h2>License</h2>
+      \${tierBadge}
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>Status</h3>
+        <div class="value \${l.license.status === 'active' ? 'green' : 'red'}">\${l.license.status}</div>
+      </div>
+      <div class="card">
+        <h3>Seats</h3>
+        <div class="value blue">\${l.license.currentSeats} / \${l.license.maxSeats}</div>
+      </div>
+      <div class="card">
+        <h3>Expires</h3>
+        <div class="value yellow">\${l.license.expiresAt?.slice(0, 10) ?? 'N/A'}</div>
+      </div>
+      <div class="card">
+        <h3>Organization</h3>
+        <div class="value">\${l.license.organization}</div>
+      </div>
+    </div>
+    <div class="section">
+      <h3>License Details</h3>
+      <div class="license-box">\${l.formatted}</div>
+    </div>
+    <div class="section">
+      <h3>Enterprise Features</h3>
+      <div class="feature-grid">
+        \${(l.license.features ?? []).map(f => \`
+          <div class="feature-item">
+            <span class="icon">\u2705</span>
+            <span>\${f.replace(/_/g, ' ')}</span>
+          </div>
+        \`).join('')}
+        \${l.license.features?.length === 0 ? '<div style="color:var(--text-muted);padding:8px">No enterprise features (community tier)</div>' : ''}
+      </div>
+    </div>
+  \`;
+}
+
+function renderAudit() {
+  const a = state.audit;
+  if (!a) return '<div class="loading">Loading...</div>';
+  return \`
+    <div class="header"><h2>Audit Logs</h2></div>
+    <div class="cards">
+      <div class="card"><h3>Total Events</h3><div class="value blue">\${a.stats?.total ?? 0}</div></div>
+      <div class="card"><h3>Unique Actors</h3><div class="value blue">\${a.stats?.uniqueActors ?? 0}</div></div>
+    </div>
+    \${a.stats?.topActions?.length ? \`
+      <div class="section">
+        <h3>Top Actions</h3>
+        <table>
+          <tr><th>Action</th><th>Count</th></tr>
+          \${a.stats.topActions.map(act => \`<tr><td>\${act.action}</td><td>\${act.count}</td></tr>\`).join('')}
+        </table>
+      </div>
+    \` : ''}
+    <div class="section">
+      <h3>Recent Events</h3>
+      \${a.logs?.length ? \`
+        <table>
+          <tr><th>Time</th><th>Actor</th><th>Action</th><th>Resource</th><th>Detail</th></tr>
+          \${a.logs.map(log => \`
+            <tr>
+              <td style="white-space:nowrap">\${new Date(log.timestamp).toLocaleString()}</td>
+              <td>\${log.actor}</td>
+              <td><span class="badge" style="background:var(--surface-2);padding:2px 8px">\${log.action}</span></td>
+              <td>\${log.resource}</td>
+              <td style="color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis">\${log.detail}</td>
+            </tr>
+          \`).join('')}
+        </table>
+      \` : '<div style="color:var(--text-muted)">No audit events recorded yet.</div>'}
+    </div>
+  \`;
+}
+
+function renderAnalytics() {
+  const r = state.analytics?.report;
+  if (!r) return '<div class="loading">Loading...</div>';
+  return \`
+    <div class="header"><h2>Analytics (30 days)</h2></div>
+    <div class="cards">
+      <div class="card"><h3>Total Sessions</h3><div class="value blue">\${r.totalSessions ?? 0}</div></div>
+      <div class="card"><h3>Tool Calls</h3><div class="value blue">\${r.totalToolCalls ?? 0}</div></div>
+      <div class="card"><h3>Total Tokens</h3><div class="value yellow">\${(r.totalTokens ?? 0).toLocaleString()}</div></div>
+      <div class="card"><h3>Active Devices</h3><div class="value green">\${r.activeDevices ?? 0}</div></div>
+    </div>
+    \${r.modelStats?.length ? \`
+      <div class="section">
+        <h3>Model Usage</h3>
+        <table>
+          <tr><th>Model</th><th>Tokens</th><th>Calls</th></tr>
+          \${r.modelStats.map(m => \`<tr><td>\${m.model}</td><td>\${(m.total_tokens ?? 0).toLocaleString()}</td><td>\${m.call_count ?? 0}</td></tr>\`).join('')}
+        </table>
+      </div>
+    \` : ''}
+    \${r.toolStats?.length ? \`
+      <div class="section">
+        <h3>Tool Usage</h3>
+        <table>
+          <tr><th>Tool</th><th>Calls</th><th>Success Rate</th></tr>
+          \${r.toolStats.map(t => \`<tr><td>\${t.tool_name}</td><td>\${t.call_count}</td><td>\${((100 - (t.failure_rate ?? 0))).toFixed(0)}%</td></tr>\`).join('')}
+        </table>
+      </div>
+    \` : ''}
+  \`;
+}
+
+function renderOrganizations() {
+  const o = state.orgs;
+  if (!o) return '<div class="loading">Loading...</div>';
+  return \`
+    <div class="header"><h2>Organizations</h2></div>
+    \${o.organizations?.length ? \`
+      <table>
+        <tr><th>Name</th><th>Slug</th><th>Tier</th><th>Created</th></tr>
+        \${o.organizations.map(org => \`
+          <tr>
+            <td>\${org.name}</td>
+            <td>\${org.slug}</td>
+            <td><span class="badge \${org.tier}">\${org.tier}</span></td>
+            <td>\${new Date(org.createdAt).toLocaleDateString()}</td>
+          </tr>
+        \`).join('')}
+      </table>
+    \` : '<div style="color:var(--text-muted)">No organizations configured.</div>'}
+  \`;
+}
+
+function renderServers() {
+  const s = state.servers;
+  const a = state.agents;
+  return \`
+    <div class="header"><h2>Connections</h2></div>
+    <div class="cards">
+      <div class="card"><h3>MCP Servers</h3><div class="value blue">\${s?.servers?.length ?? 0}</div></div>
+      <div class="card"><h3>Agents</h3><div class="value blue">\${a?.agents?.length ?? 0}</div></div>
+    </div>
+    \${s?.servers?.length ? \`
+      <div class="section">
+        <h3>Connected MCP Servers</h3>
+        <table>
+          <tr><th>Name</th><th>Status</th></tr>
+          \${s.servers.map(name => \`<tr><td>\${name}</td><td><span class="status-dot active"></span>Connected</td></tr>\`).join('')}
+        </table>
+      </div>
+    \` : ''}
+    \${a?.agents?.length ? \`
+      <div class="section">
+        <h3>Available Agents</h3>
+        <table>
+          <tr><th>ID</th><th>Name</th><th>Mode</th></tr>
+          \${a.agents.map(agent => \`<tr><td>\${agent.id}</td><td>\${agent.name}</td><td><span class="badge" style="background:var(--surface-2)">\${agent.mode}</span></td></tr>\`).join('')}
+        </table>
+      </div>
+    \` : ''}
+  \`;
+}
 
 document.addEventListener('click', function (e) {
   const li = e.target.closest('.nav li');

@@ -60,7 +60,7 @@ export function ensureTelemetryConfig(): { enabled: boolean; deviceId: string } 
     return { enabled: cfg.telemetry.enabled, deviceId: cfg.telemetry.deviceId };
   }
   const deviceId = generateDeviceId();
-  const telemetry = { enabled: cfg.telemetry?.enabled ?? false, deviceId };
+  const telemetry = { enabled: cfg.telemetry?.enabled ?? true, deviceId };
   saveConfig({ telemetry });
   return telemetry;
 }
