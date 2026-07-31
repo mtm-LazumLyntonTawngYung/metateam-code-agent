@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { loadConfig } from "../config";
+import { ensureUserProvisioned } from "../enterprise/user";
 
 const AUTH_FILE = path.join(os.homedir(), ".config", "mtc", "auth.json");
 
@@ -209,6 +210,9 @@ export async function pollForToken(
     fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
     fs.writeFileSync(AUTH_FILE, JSON.stringify(authData, null, 2));
     console.error(`[mtc auth] saved to ${AUTH_FILE}`);
+
+    const result = ensureUserProvisioned(userEmail);
+    console.error(`[mtc auth] user provisioned: ${result.userId} in org ${result.orgId} (new: ${result.isNew})`);
 
     return authData;
   }

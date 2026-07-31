@@ -62,6 +62,7 @@ export type OrgMember = {
   email: string;
   role: "admin" | "member" | "viewer";
   joinedAt: string;
+  lastActiveAt?: string;
 };
 
 export type OrgSettings = {

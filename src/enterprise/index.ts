@@ -13,8 +13,10 @@ export type { LicenseInfo } from "./types";
 export { recordAuditEvent, queryAuditLogs, getAuditStats, clearAuditLogs } from "./audit";
 export type { AuditEvent } from "./types";
 
-export { createOrganization, getOrganization, listOrganizations, addOrgMember, removeOrgMember, updateOrgTier, updateOrgSettings } from "./org";
+export { createOrganization, getOrganization, listOrganizations, addOrgMember, removeOrgMember, updateOrgTier, updateOrgSettings, touchOrgMember } from "./org";
 export type { Organization, OrgMember, OrgSettings } from "./types";
+
+export { ensureUserProvisioned, getAllUsers } from "./user";
 
 export { getAvailableFeatures, getSystemStatus, gateEnterprise } from "./tier";
 export type { FeatureCheck } from "./tier";

@@ -33,9 +33,14 @@ function ensureOrgDb(): void {
       email TEXT NOT NULL,
       role TEXT DEFAULT 'member' CHECK(role IN ('admin','member','viewer')),
       joined_at TEXT DEFAULT (datetime('now')),
+      last_active_at TEXT,
       PRIMARY KEY (user_id, org_id)
     )
   `);
+  const cols = db.query("PRAGMA table_info(org_members)").all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === "last_active_at")) {
+    db.exec("ALTER TABLE org_members ADD COLUMN last_active_at TEXT");
+  }
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_org_members_org
     ON org_members(org_id)
@@ -74,8 +79,8 @@ export function getOrganization(orgId: string): Organization | null {
   if (!row) return null;
 
   const members = db.query(
-    "SELECT user_id, email, role, joined_at FROM org_members WHERE org_id = ? ORDER BY joined_at",
-  ).all(orgId) as Array<{ user_id: string; email: string; role: string; joined_at: string }>;
+    "SELECT user_id, email, role, joined_at, last_active_at FROM org_members WHERE org_id = ? ORDER BY joined_at",
+  ).all(orgId) as Array<{ user_id: string; email: string; role: string; joined_at: string; last_active_at: string | null }>;
 
   return {
     id: row.id as string,
@@ -88,6 +93,7 @@ export function getOrganization(orgId: string): Organization | null {
       email: m.email,
       role: m.role as "admin" | "member" | "viewer",
       joinedAt: m.joined_at,
+      lastActiveAt: m.last_active_at ?? undefined,
     })),
     settings: row.settings ? { ...defaultSettings(), ...JSON.parse(row.settings as string) as Partial<OrgSettings> } : defaultSettings(),
   };
@@ -123,6 +129,15 @@ export function addOrgMember(orgId: string, userId: string, email: string, role:
   } catch {
     return false;
   }
+}
+
+export function touchOrgMember(orgId: string, userId: string): void {
+  ensureOrgDb();
+  const db = getDb();
+  db.run(
+    "UPDATE org_members SET last_active_at = datetime('now') WHERE org_id = ? AND user_id = ?",
+    [orgId, userId],
+  );
 }
 
 export function removeOrgMember(orgId: string, userId: string): boolean {
