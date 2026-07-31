@@ -1,14 +1,30 @@
 import { useState, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { theme } from "./theme";
+import { getInstalledSkills } from "../skills";
+import { useTheme } from "./theme";
 
-const commands = [
+const BUILTIN_COMMANDS = [
   { id: "connect", label: "/connect - Add an AI provider", category: "config" },
   { id: "clear", label: "Clear conversation", category: "chat" },
-  { id: "agent", label: "Switch agent", category: "chat" },
-  { id: "help", label: "Show help", category: "info" },
-  { id: "exit", label: "Exit mtc", category: "system" },
+  { id: "agent", label: "/agent - Switch agent", category: "chat" },
+  { id: "agents", label: "/agents - Switch agent", category: "chat" },
+  { id: "diff", label: "/diff - Open diff viewer", category: "tools" },
+  { id: "editor", label: "/editor - Open editor", category: "tools" },
+  { id: "help", label: "/help - Show help", category: "info" },
+  { id: "init", label: "/init - Guided Agents.md setup", category: "config" },
+  { id: "mcps", label: "/mcps - Toggle MCPs", category: "tools" },
+  { id: "models", label: "/models - Switch model", category: "chat" },
+  { id: "move", label: "/move - Move to another project dir", category: "nav" },
+  { id: "new", label: "/new - New session", category: "chat" },
+  { id: "review", label: "/review - Review changes", category: "tools" },
+  { id: "sessions", label: "/sessions - Switch session", category: "chat" },
+  { id: "skills", label: "/skills - Skills", category: "info" },
+  { id: "status", label: "/status - View status", category: "info" },
+  { id: "themes", label: "/themes - Switch theme", category: "config" },
+  { id: "variants", label: "/variants - Switch model variant", category: "chat" },
+  { id: "exit", label: "/exit - Exit mtc", category: "system" },
+  { id: "logout", label: "/logout - Log out of MetaTeam SSO", category: "system" },
 ];
 
 function fuzzyMatch(text: string, query: string): boolean {
@@ -23,18 +39,30 @@ function fuzzyMatch(text: string, query: string): boolean {
 
 type CommandPaletteProps = {
   onSelect: (id: string) => void;
+  initialFilter?: string;
 };
 
-export default function CommandPalette({ onSelect }: CommandPaletteProps) {
-  const [query, setQuery] = useState("");
+export default function CommandPalette({ onSelect, initialFilter = "" }: CommandPaletteProps) {
+  const theme = useTheme();
+  const [query, setQuery] = useState(initialFilter);
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const allCommands = useMemo(() => {
+    const skills = getInstalledSkills();
+    const skillCmds = skills.map((s) => ({
+      id: s.id,
+      label: `/${s.id} - ${s.name} (skill)`,
+      category: "skills" as const,
+    }));
+    return [...BUILTIN_COMMANDS, ...skillCmds];
+  }, []);
 
   const filtered = useMemo(
     () =>
       query.trim()
-        ? commands.filter((c) => fuzzyMatch(c.label, query))
-        : commands,
-    [query],
+        ? allCommands.filter((c) => fuzzyMatch(c.label, query))
+        : allCommands,
+    [query, allCommands],
   );
 
   useInput((_input, key) => {

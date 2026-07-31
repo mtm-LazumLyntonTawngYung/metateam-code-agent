@@ -1,7 +1,7 @@
 import { homedir } from "os";
 import { join, dirname } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { createHash, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 
 export type TelemetryConfig = {
   enabled: boolean;
@@ -14,8 +14,11 @@ export type MtcConfig = {
   endpoint?: string;
   selectedModel?: string;
   agentId?: string;
+  installedSkills?: string[];
   telemetry?: TelemetryConfig;
   llm?: Record<string, unknown>;
+  license?: Record<string, unknown>;
+  themeId?: string;
 };
 
 const configDir = join(homedir(), ".config", "mtc");
@@ -48,10 +51,7 @@ export function saveConfig(partial: Partial<MtcConfig>): MtcConfig {
 }
 
 export function generateDeviceId(): string {
-  const user = process.env.USERNAME ?? process.env.USER ?? "unknown";
-  const host = process.env.COMPUTERNAME ?? "unknown";
-  const seed = `${homedir()}-${user}-${host}`;
-  return createHash("sha256").update(seed).digest("hex").slice(0, 16);
+  return randomUUID().replace(/-/g, "").slice(0, 16);
 }
 
 export function ensureTelemetryConfig(): { enabled: boolean; deviceId: string } {

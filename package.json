@@ -2,6 +2,7 @@
   "name": "metateam-code-agent",
   "version": "0.1.0",
   "description": "AI-powered, terminal-first coding assistant for MetaTeam engineers",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "mtc": "./bin/mtc.js"

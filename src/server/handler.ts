@@ -16,6 +16,7 @@ import {
 export type ServerConfig = {
   port: number;
   host?: string;
+  authToken?: string;
 };
 
 export type WsClient = {

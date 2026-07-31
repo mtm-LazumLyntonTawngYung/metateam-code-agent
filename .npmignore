@@ -1,0 +1,26 @@
+# Exclude enterprise/proprietary code from npm distribution
+src/enterprise/
+
+# Internal documentation (not for public package consumers)
+docs/internal/
+
+# Source maps
+*.tsbuildinfo
+
+# Development files
+src/
+tests/
+tsconfig.json
+bun.lock
+install.sh
+CHANGELOG.md
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+bin/
+dist/
+out/

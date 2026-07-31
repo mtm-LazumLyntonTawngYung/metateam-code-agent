@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import DiffView from "./DiffView";
-import { theme } from "./theme";
+import { useTheme } from "./theme";
 
 type PendingPermission = {
   toolName: string;
@@ -14,6 +14,7 @@ type PermissionPromptProps = {
 };
 
 export default function PermissionPrompt({ pending }: PermissionPromptProps) {
+  const theme = useTheme();
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
   useInput((_input) => {

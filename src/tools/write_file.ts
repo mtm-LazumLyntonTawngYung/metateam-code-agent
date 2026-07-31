@@ -2,6 +2,25 @@ import { mkdirSync, writeFileSync } from "fs";
 import { dirname, resolve, normalize } from "path";
 import type { ToolDefinition } from "./schema";
 
+const BLOCKED_PATHS = [
+  /[/\\]etc[/\\]((shadow|passwd|sudoers|hosts|hostname|resolv\.conf)(\b|$))/i,
+  /[/\\]windows[/\\]system32[/\\]/i,
+  /[/\\]\.ssh[/\\]/,
+  /[/\\]\.gnupg[/\\]/,
+  /[/\\]\.aws[/\\]credentials/i,
+  /[/\\]\.config[/\\]mtc[/\\]/i,
+  /[/\\]\.git[/\\]config/i,
+];
+
+function isPathBlocked(absolutePath: string): string | null {
+  for (const pattern of BLOCKED_PATHS) {
+    if (pattern.test(absolutePath)) {
+      return `Writing to this location is blocked for security: ${absolutePath}`;
+    }
+  }
+  return null;
+}
+
 const writeFileTool: ToolDefinition = {
   name: "write_file",
   description: "Create a new file or overwrite an existing file with the given content.",
@@ -22,6 +41,11 @@ const writeFileTool: ToolDefinition = {
   execute(args) {
     const path = resolve(normalize(args.path as string));
     const content = args.content as string;
+
+    const blocked = isPathBlocked(path);
+    if (blocked) {
+      return { success: false, error: blocked };
+    }
 
     try {
       mkdirSync(dirname(path), { recursive: true });

@@ -1,6 +1,8 @@
 import { render, renderToString } from "ink";
+import { registerCleanup } from "./ui/clean-exit";
 import { Command } from "commander";
 import App from "./ui/App";
+import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
 import { listTasks, runTask } from "./eval/index";
 import { ensureTelemetryConfig, saveConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
@@ -16,6 +18,24 @@ import {
   classifyTask,
   KNOWN_MODELS,
 } from "./llm/index";
+import { startDaemon } from "./daemon/index";
+import { loadDaemonConfig } from "./daemon/config";
+import {
+  activateLicense,
+  deactivateLicense,
+  getLicense,
+  formatLicenseInfo,
+  generateLicenseKey,
+  hasFeature,
+  isEnterprise,
+  queryAuditLogs,
+  getSystemStatus,
+  startDashboard,
+  createOrganization,
+  listOrganizations,
+  type LicenseInfo,
+  type Tier,
+} from "./enterprise/index";
 
 const program = new Command();
 
@@ -25,7 +45,8 @@ program
   .version("1.0.0")
   .action(async () => {
     if (process.stdin.isTTY) {
-      const { waitUntilExit } = render(<App />);
+      const { waitUntilExit, cleanup } = render(<App />);
+      registerCleanup(cleanup);
       await waitUntilExit();
     } else {
       const output = renderToString(<App />, { columns: 80 });
@@ -132,14 +153,195 @@ const serveCmd = program.command("serve").description("Start headless WebSocket 
 serveCmd
   .option("-p, --port <port>", "Port to listen on", "8080")
   .option("-H, --host <host>", "Host to bind to", "127.0.0.1")
-  .action((options: { port: string; host: string }) => {
+  .option("-t, --ws-token <token>", "Auth token (prefer MTC_WS_TOKEN env var over CLI flag)")
+  .action((options: { port: string; host: string; wsToken?: string }) => {
     if (!process.stdin.isTTY) {
       console.log("mtc serve: starting headless server...");
+    }
+    if (options.wsToken) {
+      console.error("[mtc] WARNING: --ws-token passed via CLI — visible in process listings. Use MTC_WS_TOKEN env var instead.");
     }
     startServer({
       port: parseInt(options.port, 10) || 8080,
       host: options.host,
+      authToken: options.wsToken,
     });
+  });
+
+const daemonCmd = program.command("daemon").description("Start headless daemon with webhook listener for autonomous autofix");
+
+daemonCmd
+  .option("-p, --port <port>", "Port to listen on", "8080")
+  .option("-H, --host <host>", "Host to bind to", "0.0.0.0")
+  .option("-s, --webhook-secret <secret>", "Webhook secret for signature verification")
+  .option("-t, --github-token <token>", "GitHub personal access token")
+  .option("-g, --gitlab-token <token>", "GitLab personal access token")
+  .option("--slack-webhook <url>", "Slack webhook URL for notifications")
+  .option("--teams-webhook <url>", "Teams webhook URL for notifications")
+  .option("-l, --autofix-label <label>", "Issue label that triggers autofix", "autofix")
+  .action((options: {
+    port: string;
+    host: string;
+    webhookSecret?: string;
+    githubToken?: string;
+    gitlabToken?: string;
+    slackWebhook?: string;
+    teamsWebhook?: string;
+    autofixLabel: string;
+  }) => {
+    if (!options.githubToken && !options.gitlabToken) {
+      console.error("Error: --github-token or --gitlab-token is required");
+      process.exit(1);
+    }
+    const config = loadDaemonConfig(options);
+    startDaemon(config);
+  });
+
+const enterpriseCmd = program.command("enterprise").description("Enterprise license management and control plane");
+
+enterpriseCmd
+  .command("status")
+  .description("Show enterprise license and system status")
+  .action(() => {
+    const status = getSystemStatus();
+    const license = getLicense();
+    console.log(`\n  MTC Enterprise Status`);
+    console.log(`  ${"=".repeat(50)}`);
+    console.log(`  Tier:           ${status.tier}`);
+    console.log(`  License:        ${status.licenseStatus}`);
+    console.log(`  Organization:   ${license.organization}`);
+    console.log(`  Seats:          ${license.currentSeats}/${license.maxSeats}`);
+    console.log(`  Expires:        ${license.expiresAt.slice(0, 10)}`);
+    console.log(`  MCP Servers:    ${status.connectedMcpServers} connected`);
+    console.log(`  Features:`);
+    for (const f of status.features) {
+      console.log(`    ${f.available ? "\u2705" : "\u274C"} ${f.feature.replace(/_/g, " ")} (${f.tier})`);
+    }
+    console.log();
+  });
+
+enterpriseCmd
+  .command("activate")
+  .description("Activate an enterprise license key")
+  .argument("<key>", "License key")
+  .action((key: string) => {
+    const result = activateLicense(key);
+    if (result.success) {
+      console.log(`\n  License activated successfully!`);
+      console.log(`  Tier: ${result.license!.tier}`);
+      console.log(`  Features: ${result.license!.features.join(", ")}\n`);
+    } else {
+      console.error(`\n  Activation failed: ${result.error}\n`);
+      process.exit(1);
+    }
+  });
+
+enterpriseCmd
+  .command("deactivate")
+  .description("Deactivate the current license")
+  .action(() => {
+    deactivateLicense();
+    console.log("\n  License deactivated. Reverted to community tier.\n");
+  });
+
+enterpriseCmd
+  .command("generate")
+  .description("Generate a new license key")
+  .requiredOption("-t, --tier <tier>", "License tier: community, enterprise, enterprise-plus")
+  .requiredOption("-o, --org <name>", "Organization name")
+  .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
+  .option("-s, --seats <number>", "Max seats", "50")
+  .action((options: { tier: string; org: string; expires: string; seats: string }) => {
+    const key = generateLicenseKey(
+      options.tier as Tier,
+      options.org,
+      options.expires,
+      parseInt(options.seats, 10) || 50,
+    );
+    console.log(`\n  Generated License Key:`);
+    console.log(`  ${key}`);
+    console.log(`  Tier:    ${options.tier}`);
+    console.log(`  Org:     ${options.org}`);
+    console.log(`  Expires: ${options.expires.slice(0, 10)}`);
+    console.log(`  Seats:   ${options.seats}\n`);
+  });
+
+enterpriseCmd
+  .command("dashboard")
+  .description("Start the enterprise control plane web dashboard")
+  .option("-p, --port <port>", "Port to listen on", "3000")
+  .option("-H, --host <host>", "Host to bind to", "127.0.0.1")
+  .action((options: { port: string; host: string }) => {
+    if (!isEnterprise()) {
+      console.error("\n  Enterprise dashboard requires an enterprise license.");
+      console.error("  Activate one with: mtc enterprise activate <key>\n");
+      process.exit(1);
+    }
+    console.log(`\n  Starting MTC Enterprise Control Plane...\n`);
+    startDashboard(parseInt(options.port, 10) || 3000, options.host);
+  });
+
+enterpriseCmd
+  .command("audit")
+  .description("Query enterprise audit logs")
+  .option("-l, --limit <count>", "Number of entries", "20")
+  .option("-a, --actor <name>", "Filter by actor")
+  .option("-s, --since <date>", "Show entries after this date")
+  .action((options: { limit: string; actor?: string; since?: string }) => {
+    if (!isEnterprise()) {
+      console.error("\n  Audit logs require an enterprise license.\n");
+      process.exit(1);
+    }
+    const logs = queryAuditLogs({
+      limit: parseInt(options.limit, 10) || 20,
+      actor: options.actor,
+      since: options.since,
+    });
+    if (logs.length === 0) {
+      console.log("\n  No audit entries found.\n");
+      return;
+    }
+    console.log(`\n  Audit Log (${logs.length} entries):`);
+    console.log(`  ${"=".repeat(60)}`);
+    for (const log of logs) {
+      console.log(`  ${log.timestamp.slice(0, 19)}  ${log.actor.padEnd(16)} ${log.action.padEnd(20)} ${log.resource}`);
+    }
+    console.log();
+  });
+
+enterpriseCmd
+  .command("org")
+  .description("Manage organizations")
+  .argument("<action>", "Action: list, create")
+  .argument("[name]", "Organization name (for create)")
+  .argument("[slug]", "Organization slug (for create)")
+  .action((action: string, name?: string, slug?: string) => {
+    if (action === "list") {
+      const orgs = listOrganizations();
+      if (orgs.length === 0) {
+        console.log("\n  No organizations found.\n");
+        return;
+      }
+      console.log(`\n  Organizations (${orgs.length}):`);
+      console.log(`  ${"=".repeat(50)}`);
+      for (const org of orgs) {
+        console.log(`  ${org.name.padEnd(20)} ${org.tier.padEnd(15)} ${org.members.length} members`);
+      }
+      console.log();
+    } else if (action === "create") {
+      if (!name || !slug) {
+        console.error("\n  Usage: mtc enterprise org create <name> <slug>\n");
+        process.exit(1);
+      }
+      const org = createOrganization(name, slug);
+      console.log(`\n  Organization created:`);
+      console.log(`  ID:   ${org.id}`);
+      console.log(`  Name: ${org.name}`);
+      console.log(`  Slug: ${org.slug}\n`);
+    } else {
+      console.error(`\n  Unknown action: ${action}. Use: list, create\n`);
+      process.exit(1);
+    }
   });
 
 function printReview(result: ReviewResult, verbose: boolean): void {
@@ -249,7 +451,7 @@ llmCmd
 llmCmd
   .command("set-provider")
   .description("Configure a provider")
-  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic)")
+  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter)")
   .requiredOption("-k, --key <key>", "API key")
   .option("-u, --url <url>", "API base URL")
   .option("-m, --models <models...>", "Model IDs to enable")
@@ -257,13 +459,19 @@ llmCmd
     const cfg = loadLlmConfig();
     const existing = cfg.providers.find((p) => p.id === options.id);
     const labels: Record<string, string> = {
-      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic",
+      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter",
+    };
+    const defaultUrls: Record<string, string> = {
+      deepseek: "https://api.deepseek.com/v1",
+      openai: "https://api.openai.com/v1",
+      anthropic: "https://api.anthropic.com/v1",
+      openrouter: "https://openrouter.ai/api/v1",
     };
     updateProvider({
-      id: options.id as "deepseek" | "openai" | "anthropic",
+      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter",
       label: existing?.label ?? labels[options.id] ?? options.id,
       apiKey: options.key,
-      baseUrl: options.url ?? existing?.baseUrl ?? `https://api.${options.id}.com/v1`,
+      baseUrl: options.url ?? existing?.baseUrl ?? defaultUrls[options.id] ?? `https://api.${options.id}.com/v1`,
       models: options.models ?? existing?.models ?? [],
     });
     console.log(`\n  Provider '${options.id}' updated.\n`);
@@ -315,6 +523,21 @@ llmCmd
       console.log(`    ${"".padEnd(30)} ${m.displayName} (ctx: ${(m.contextWindow / 1000).toFixed(0)}K)`);
     }
     console.log();
+  });
+
+const authCmd = program.command("auth").description("Microsoft Entra ID SSO authentication");
+
+authCmd
+  .command("logout")
+  .description("Clear local auth session and log out")
+  .action(() => {
+    const auth = getAuth();
+    if (auth) {
+      clearAuth();
+      console.log(`\n  Logged out ${auth.userEmail}. Auth session cleared.\n`);
+    } else {
+      console.log("\n  No active auth session found.\n");
+    }
   });
 
 program.parse(process.argv);

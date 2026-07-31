@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { theme } from "./theme";
+import { useTheme } from "./theme";
 import type { AgentDefinition } from "../agents/types";
 
 type AgentSelectorProps = {
@@ -14,6 +14,7 @@ export default function AgentSelector({
   currentId,
   onSelect,
 }: AgentSelectorProps) {
+  const theme = useTheme();
   const startIndex = Math.max(0, agents.findIndex((a) => a.id === currentId));
   const [selectedIndex, setSelectedIndex] = useState(startIndex);
 

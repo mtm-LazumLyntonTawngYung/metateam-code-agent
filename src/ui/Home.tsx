@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import { mtcBanner } from "./banner";
-import { theme } from "./theme";
+import { useTheme } from "./theme";
 import InputBox from "./components/InputBox";
 import type { UpdateInfo } from "../utils/updater";
 
@@ -9,9 +9,12 @@ type HomeScreenProps = {
   onQueryChange: (value: string) => void;
   onSubmit: (value: string) => void;
   updateInfo?: UpdateInfo | null;
+  agentName: string;
+  modelName?: string;
 };
 
-export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo }: HomeScreenProps) {
+export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo, agentName, modelName = "DeepSeek V4 Flash Free" }: HomeScreenProps) {
+  const theme = useTheme();
   return (
     <Box
       flexGrow={1}
@@ -54,10 +57,10 @@ export default function HomeScreen({ query, onQueryChange, onSubmit, updateInfo 
 
         <Box gap={1} marginBottom={1}>
           <Text color="cyan" bold>
-            Build
+            {agentName}
           </Text>
           <Text color="gray">{"\u2022"}</Text>
-          <Text bold>DeepSeek V4 Flash Free</Text>
+          <Text bold>{modelName}</Text>
           <Text color="gray">MetaTeam Zen</Text>
         </Box>
 
