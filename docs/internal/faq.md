@@ -33,8 +33,9 @@ There is no per-engineer cost.
 
 ### What LLM provider should I use?
 
-Your choice. mtc supports OpenAI and Anthropic. For most tasks we recommend
-GPT-4o or Claude 3.5 Sonnet for the best balance of speed and quality.
+Your choice. mtc supports **DeepSeek, OpenAI, Anthropic, and OpenRouter**.
+For most tasks we recommend DeepSeek Chat or GPT-4o for the best balance of
+speed and quality. Configure providers with `mtc llm set-provider`.
 
 ### Do I need to install anything besides Bun?
 
@@ -79,8 +80,8 @@ You can configure agents to auto-approve specific operations.
 
 ### Is session history stored securely?
 
-Session history is stored locally in `~/.mtc/history.db`. API keys and secrets
-are redacted before storage. The database is not encrypted at rest (yet).
+Session history is stored locally in `~/.config/mtc/history.db`. API keys and
+secrets are redacted before storage. The database is not encrypted at rest (yet).
 
 ## Troubleshooting
 

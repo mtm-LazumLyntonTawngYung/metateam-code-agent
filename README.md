@@ -10,6 +10,9 @@ AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to a
 - **Smart Tool Permissions** — Granular control over which tools each agent can use, with user-facing permission prompts for sensitive operations.
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
+- **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter providers with automatic task classification and fallback.
+- **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes.
+- **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard.
 
 ## Installation
 
@@ -36,25 +39,47 @@ The CLI binary is `mtc`.
 
 | Key | Action |
 |-----|--------|
-| `Tab` | Switch agents |
-| `Ctrl+P` | Open command palette |
-| `Esc` | Go back / close overlays |
+| `Tab` | Open agent selector |
+| `Ctrl+P` / `/` | Open command palette |
+| `Esc` | Close overlay / go back to home |
+| `↑` / `↓` | Scroll log or navigate lists |
+| `PageUp` / `PageDown` | Scroll by one viewport |
+| `Home` / `End` | Jump to top / bottom |
+| `Enter` | Submit input |
+| `d` | Delete highlighted session (Sessions view) |
+| `Space` | Toggle MCP server (MCP view) |
+| `y` / `n` / `a` | Accept / reject / always-allow permission |
 
 ## Configuration
+
+### LLM Providers
+
+LLM provider keys and routing are managed through the CLI (stored in `~/.config/mtc/config.json`), not environment variables:
+
+```bash
+mtc llm status
+mtc llm set-provider --id deepseek --key sk-...
+mtc llm set-routing --simple deepseek-chat --default deepseek-chat --reasoning claude-sonnet-4-20250514
+```
 
 ### MCP Servers
 
 MCP servers are loaded from:
 1. `.mtc/mcp.json` in the current working directory
 2. `~/.config/mtc/mcp.json` globally
+3. OpenCode configuration files (`~/.config/opencode/opencode.json`, `~/.opencode/config.json`, `.opencode.json`)
 
 ### Custom Agents
 
-Custom agents can be defined in your project configuration. Each agent has a system prompt, permissions, and can operate as a primary or subagent.
+Custom agents can be defined in `.mtc/agents/*.md` or `~/.config/mtc/agents/*.md`. Each agent has a system prompt, permissions (`read`, `bash`, `edit`, `execute`), and can operate as a primary or subagent.
 
 ### Rules
 
-Project-specific rules can be loaded and are appended to the active agent's system prompt.
+Project-specific rules in `.mtc/rules/` (and `AGENTS.md` at the project root) are loaded and appended to the active agent's system prompt.
+
+### Skills
+
+Skills can be installed from the built-in catalog or from `.mtc/skills/<id>/SKILL.md` (workspace) and `~/.mtc/skills/<id>/SKILL.md` (global). Open them with `/skills`.
 
 ## Documentation
 

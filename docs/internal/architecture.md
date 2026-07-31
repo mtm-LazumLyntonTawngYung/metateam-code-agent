@@ -39,36 +39,46 @@ System design, module structure, and data flow for **mtc**.
 src/
 ├── cli.tsx              # Entry point, CLI setup with Commander
 ├── agents/              # Agent definitions and execution
-│   ├── PlanAgent        # Read-only exploration agent
-│   ├── BuildAgent       # Full-access implementation agent
-│   └── custom.ts        # Custom agent loader
-├── config/              # Configuration loading (mcp.json, agents, rules)
-├── eval/                # Eval/test runner
+│   ├── builtin.ts       # Plan, Build, Explore agents
+│   ├── custom.ts        # Custom agent loader (.mtc/agents/*.md)
+│   ├── agent-loop.ts    # LLM agent loop (tool-call parsing, permissions)
+│   ├── subagent.ts      # Subagent runner (/subagent)
+│   ├── rules.ts         # Project rules (.mtc/rules, AGENTS.md)
+│   └── frontmatter.ts   # Markdown frontmatter parser
+├── auth/                # Microsoft Entra ID SSO (device-code flow)
+├── config/              # Global config (~/.config/mtc/config.json)
+├── daemon/              # Headless autofix daemon, webhooks, notifiers
+├── enterprise/          # License, audit logs, orgs, web dashboard
+├── eval/                # Eval runner (mtc eval)
 ├── init/                # Project scaffolding (mtc init)
-├── llm/                 # LLM client (OpenAI, Anthropic)
-├── mcp/                 # MCP client and server management
-│   ├── client.ts        # JSON-RPC MCP client
-│   ├── config.ts        # MCP server configuration
-│   └── registry.ts      # Tool registry from MCP servers
-├── review/              # PR review (mtc review)
+├── llm/                 # LLM clients, routing, fallback
+├── mcp/                 # MCP client, config, tool registry
+├── mcp-plugins/         # Bundled bridges (figma, devops)
+├── review/              # SQA review (mtc review)
 ├── secrets/             # Secret redaction patterns
 ├── server/              # WebSocket server (mtc serve)
-├── session/             # Session management + history (SQLite)
-├── telemetry/           # Usage analytics
+├── session/             # SQLite session history, tokens, summaries
+├── skills/              # Skill catalog, registry, install state
+├── telemetry/           # Local telemetry store (mtc analytics)
 ├── tools/               # Built-in tool implementations
-│   ├── read.ts
-│   ├── write.ts
-│   ├── edit.ts
-│   ├── glob.ts
-│   ├── bash.ts
-│   └── subagent.ts
+│   ├── read_file.ts
+│   ├── write_file.ts
+│   ├── edit_file.ts
+│   ├── glob_files.ts
+│   ├── run_bash.ts
+│   └── permissions.ts
 ├── ui/                  # Ink/React UI components
-│   ├── app.tsx          # Main app component
-│   ├── chat.tsx         # Chat view
-│   ├── command-palette  # Ctrl+P command palette
-│   └── permission.tsx   # Permission prompt UI
-└── utils/               # Shared utilities
+│   ├── App.tsx          # Main app component
+│   ├── ChatView.tsx     # Chat view
+│   ├── CommandPalette.tsx
+│   ├── PermissionPrompt.tsx
+│   └── components/      # Header, Sidebar, Statusbar, InputBox
+└── utils/               # Shared utilities (updater, etc.)
 ```
+
+In addition to the terminal UI, `src/` contains headless subsystems driven by
+the CLI: `mtc serve` (WebSocket), `mtc daemon` (autofix webhook server), and
+`mtc enterprise dashboard` (web control plane).
 
 ## Data Flow
 
