@@ -1,0 +1,14 @@
+src/agents/agent-loop.ts
+  h_10671eecd6b5d0 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "1717bca25a748dbeeb0175885d658b0f9c5f7266",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
