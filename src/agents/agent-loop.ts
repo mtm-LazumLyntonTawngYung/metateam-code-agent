@@ -109,10 +109,8 @@ You are an autonomous agent in a CLI environment. Be direct and terse:
   for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
     let response: CompletionResponse;
     try {
-      const cfg = loadConfig();
-      const model = cfg.selectedModel ?? "deepseek-chat";
       response = await complete({
-        model,
+        model: modelName,
         messages,
         temperature: 0.7,
         maxTokens: DEFAULT_MAX_TOKENS,

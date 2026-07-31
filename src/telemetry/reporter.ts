@@ -10,6 +10,8 @@ import {
 export type Report = {
   activeDevices: number;
   totalTokens: number;
+  totalSessions: number;
+  totalToolCalls: number;
   dailyStats: ReturnType<typeof queryDailyStats>;
   modelStats: ReturnType<typeof queryModelStats>;
   toolStats: ReturnType<typeof queryToolStats>;
@@ -17,10 +19,15 @@ export type Report = {
 };
 
 export function generateReport(days = 30): Report {
+  const dailyStats = queryDailyStats(days);
+  const totalSessions = dailyStats.reduce((sum, d) => sum + (d.unique_sessions ?? 0), 0);
+  const totalToolCalls = dailyStats.reduce((sum, d) => sum + (d.total_tool_calls ?? 0), 0);
   return {
     activeDevices: queryActiveDevices(days),
     totalTokens: queryTotalTokens(days),
-    dailyStats: queryDailyStats(days),
+    totalSessions,
+    totalToolCalls,
+    dailyStats,
     modelStats: queryModelStats(days),
     toolStats: queryToolStats(days),
     recentEvents: queryRecentEvents(20),

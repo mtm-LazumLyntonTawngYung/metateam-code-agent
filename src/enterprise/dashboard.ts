@@ -349,7 +349,7 @@ function renderAnalytics() {
         <h3>Model Usage</h3>
         <table>
           <tr><th>Model</th><th>Tokens</th><th>Calls</th></tr>
-          \${r.modelStats.map(m => \`<tr><td>\${m.model}</td><td>\${(m.tokens ?? 0).toLocaleString()}</td><td>\${m.calls ?? 0}</td></tr>\`).join('')}
+          \${r.modelStats.map(m => \`<tr><td>\${m.model}</td><td>\${(m.total_tokens ?? 0).toLocaleString()}</td><td>\${m.call_count ?? 0}</td></tr>\`).join('')}
         </table>
       </div>
     \` : ''}
@@ -358,7 +358,7 @@ function renderAnalytics() {
         <h3>Tool Usage</h3>
         <table>
           <tr><th>Tool</th><th>Calls</th><th>Success Rate</th></tr>
-          \${r.toolStats.map(t => \`<tr><td>\${t.tool}</td><td>\${t.calls}</td><td>\${t.successRate ? (t.successRate * 100).toFixed(0) : 0}%</td></tr>\`).join('')}
+          \${r.toolStats.map(t => \`<tr><td>\${t.tool_name}</td><td>\${t.call_count}</td><td>\${((100 - (t.failure_rate ?? 0))).toFixed(0)}%</td></tr>\`).join('')}
         </table>
       </div>
     \` : ''}

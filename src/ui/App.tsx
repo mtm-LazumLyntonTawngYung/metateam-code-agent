@@ -33,7 +33,6 @@ import { ensureTelemetryConfig } from "../config";
 import {
   trackSessionStart,
   trackSessionEnd,
-  trackModelUsage,
   setSessionId,
   getSessionId,
 } from "../telemetry/tracker";
@@ -161,7 +160,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     const telem = ensureTelemetryConfig();
     if (telem.enabled) {
       trackSessionStart();
-      trackModelUsage("deepseek-v4-flash-free", 0);
     }
 
     Promise.all([
