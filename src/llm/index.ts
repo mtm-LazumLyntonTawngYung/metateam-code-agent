@@ -14,5 +14,8 @@ export type {
   ProviderError,
   TaskComplexity,
   RoutingDecision,
+  ToolDefinition,
+  ToolCallInfo,
+  ToolChoice,
 } from "./types";
 export type { FallbackResult } from "./fallback";

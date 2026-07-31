@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Text, useInput } from "ink";
-import { getConnectedCount, getServerStates } from "../mcp";
-import type { ServerState } from "../mcp";
+import { getConnectedCount, getServerStates, toggleServerAndRefresh, type ServerState } from "../mcp";
 import { useTheme } from "./theme";
 
 type McpsViewProps = {
@@ -12,17 +11,32 @@ export default function McpsView({ onClose }: McpsViewProps) {
   const [states, setStates] = useState<ServerState[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const mountedRef = useRef(true);
   const theme = useTheme();
 
-  useEffect(() => {
+  const refresh = async () => {
     setStates(getServerStates());
     setLoading(false);
+  };
+
+  useEffect(() => {
+    refresh();
     return () => { mountedRef.current = false; };
   }, []);
 
-  useInput((_input, key) => {
+  useInput(async (input, key) => {
     if (key.escape) { onClose(); return; }
+    if (input === " " && !loading && states.length > 0) {
+      const server = states[selectedIndex];
+      if (server && server.status !== "errored") {
+        setRefreshing(true);
+        await toggleServerAndRefresh(server.name);
+        await refresh();
+        setRefreshing(false);
+      }
+      return;
+    }
     if (key.downArrow) {
       setSelectedIndex((i) => Math.min(i + 1, states.length - 1));
     }
@@ -32,8 +46,21 @@ export default function McpsView({ onClose }: McpsViewProps) {
   });
 
   const connected = states.filter((s) => s.status === "connected");
+  const disabled = states.filter((s) => s.status === "disabled");
   const errored = states.filter((s) => s.status === "errored");
   const hasServers = states.length > 0;
+
+  const statusColor = (status: ServerState["status"]) => {
+    if (status === "connected") return theme.colors.success;
+    if (status === "disabled") return theme.colors.muted;
+    return theme.colors.error;
+  };
+
+  const statusLabel = (s: ServerState) => {
+    if (s.status === "connected") return "\u25cf Connected";
+    if (s.status === "disabled") return "\u25cb Disabled";
+    return "\u25cf Error";
+  };
 
   return (
     <Box flexGrow={1} flexDirection="column">
@@ -44,6 +71,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
         </Text>
         <Text color={theme.colors.muted}>
           {"  "}{connected.length} connected
+          {disabled.length > 0 && <Text color={theme.colors.muted}>  {disabled.length} disabled</Text>}
           {errored.length > 0 && (
             <Text color={theme.colors.error}>  {errored.length} failed</Text>
           )}
@@ -91,7 +119,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
               <Box width={22}>
                 <Text bold color={theme.colors.muted}>Server</Text>
               </Box>
-              <Box width={14}>
+              <Box width={18}>
                 <Text bold color={theme.colors.muted}>Status</Text>
               </Box>
               <Box width={10}>
@@ -110,7 +138,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
             {/* Server rows */}
             {states.map((s, i) => {
               const selected = i === selectedIndex;
-              const ok = s.status === "connected";
+              const color = statusColor(s.status);
               return (
                 <Box key={s.name} flexDirection="column">
                   <Box>
@@ -118,13 +146,13 @@ export default function McpsView({ onClose }: McpsViewProps) {
                       {selected ? "\u25b6 " : "  "}
                     </Text>
                     <Box width={20}>
-                      <Text bold color={ok ? theme.colors.success : theme.colors.error} wrap="truncate-end">
+                      <Text bold color={color} wrap="truncate-end">
                         {s.name}
                       </Text>
                     </Box>
-                    <Box width={14}>
-                      <Text color={ok ? theme.colors.success : theme.colors.error}>
-                        {ok ? "\u25cf Connected" : "\u25cf Error"}
+                    <Box width={18}>
+                      <Text color={color}>
+                        {statusLabel(s)}
                       </Text>
                     </Box>
                     <Box width={10}>
@@ -134,7 +162,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
                       <Text color={theme.colors.muted}>stdio</Text>
                     </Box>
                   </Box>
-                  {!ok && s.error && (
+                  {s.status === "errored" && s.error && (
                     <Box marginLeft={4} marginTop={0}>
                       <Text color={theme.colors.error}>{s.error}</Text>
                     </Box>
@@ -150,10 +178,10 @@ export default function McpsView({ onClose }: McpsViewProps) {
       <Box borderStyle="single" borderColor={theme.colors.muted} borderTop={false} borderBottom={false}>
         <Box paddingX={1} paddingY={0} justifyContent="space-between" width="100%">
           <Text color={theme.colors.muted}>
-            {"\u2191\u2193"} Navigate  <Text bold>esc</Text> Close
+            {"\u2191\u2193"} Navigate  <Text bold>Space</Text> Toggle  <Text bold>esc</Text> Close
           </Text>
           <Text color={theme.colors.muted}>
-            {hasServers ? `${connected.length} connected, ${errored.length} failed` : "No servers"}
+            {refreshing ? "Refreshing..." : hasServers ? `${connected.length} connected, ${disabled.length} disabled` : "No servers"}
           </Text>
         </Box>
       </Box>
