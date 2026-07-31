@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
 import { useTheme } from "./theme";
-import { listSessions, countSessionTokens } from "../session/history";
+import { listSessions, countSessionTokens, deleteSession } from "../session/history";
 import type { SessionRow } from "../session/history";
 
 type SessionsViewProps = {
   onClose: () => void;
   currentSessionId: string | null;
   onSelect: (sessionId: string) => void;
+  onNewSession: () => void;
+  onDelete: (sessionId: string) => void;
 };
 
 function formatTokens(n: number): string {
@@ -22,13 +24,19 @@ function formatDate(iso: string): string {
   return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
 }
 
+const NEW_SESSION_ID = "__new__";
+
 export default function SessionsView({
   onClose,
   currentSessionId,
   onSelect,
+  onNewSession,
+  onDelete,
 }: SessionsViewProps) {
   const theme = useTheme();
-  const sessions = useMemo(() => listSessions(50), []);
+  const [version, setVersion] = useState(0);
+  const sessions = useMemo(() => listSessions(50), [version]);
+  const entries: (SessionRow | { id: string })[] = [...sessions, { id: NEW_SESSION_ID }];
   const [selectedIndex, setSelectedIndex] = useState(() => {
     const idx = sessions.findIndex((s) => s.id === currentSessionId);
     return idx >= 0 ? idx : 0;
@@ -39,37 +47,30 @@ export default function SessionsView({
       onClose();
     }
     if (key.upArrow) {
-      setSelectedIndex((i) => (i > 0 ? i - 1 : sessions.length - 1));
+      setSelectedIndex((i) => (i > 0 ? i - 1 : entries.length - 1));
     }
     if (key.downArrow) {
-      setSelectedIndex((i) => (i < sessions.length - 1 ? i + 1 : 0));
+      setSelectedIndex((i) => (i < entries.length - 1 ? i + 1 : 0));
     }
-    if (key.return && sessions[selectedIndex]) {
-      onSelect(sessions[selectedIndex].id);
+    if (key.return) {
+      const entry = entries[selectedIndex];
+      if (!entry) return;
+      if (entry.id === NEW_SESSION_ID) {
+        onNewSession();
+      } else {
+        onSelect(entry.id);
+      }
+    }
+    if (_input?.toLowerCase() === "d" && selectedIndex < sessions.length) {
+      const session = sessions[selectedIndex];
+      if (session) {
+        deleteSession(session.id);
+        setVersion((v) => v + 1);
+        setSelectedIndex((i) => Math.max(0, i - 1));
+        onDelete(session.id);
+      }
     }
   });
-
-  if (sessions.length === 0) {
-    return (
-      <Box flexGrow={1} flexDirection="column" alignItems="center" justifyContent="center">
-        <Box
-          flexDirection="column"
-          borderStyle="round"
-          borderColor={theme.colors.secondary}
-          paddingX={2}
-          paddingY={1}
-          width={60}
-        >
-          <Text color={theme.colors.muted}>No sessions yet.</Text>
-          <Box marginTop={1}>
-            <Text color={theme.colors.muted}>
-              <Text bold>esc</Text> back
-            </Text>
-          </Box>
-        </Box>
-      </Box>
-    );
-  }
 
   return (
     <Box flexGrow={1} flexDirection="column" alignItems="center" justifyContent="center">
@@ -87,8 +88,21 @@ export default function SessionsView({
           </Text>
         </Box>
 
-        {sessions.map((session, i) => {
+        {entries.map((entry, i) => {
           const isSelected = i === selectedIndex;
+          if (entry.id === NEW_SESSION_ID) {
+            return (
+              <Box key={NEW_SESSION_ID}>
+                <Text color={isSelected ? theme.colors.primary : theme.colors.muted}>
+                  {isSelected ? "\u25b6 " : "  "}
+                </Text>
+                <Text bold={isSelected} color={isSelected ? theme.colors.success : theme.colors.muted}>
+                  + New Session
+                </Text>
+              </Box>
+            );
+          }
+          const session = entry as SessionRow;
           const isCurrent = session.id === currentSessionId;
           const label = session.label ?? "(untitled)";
           const tokens = countSessionTokens(session.id);
@@ -124,7 +138,7 @@ export default function SessionsView({
 
         <Box marginTop={1}>
           <Text color={theme.colors.muted}>
-            {"\u2191\u2193"} navigate  {"\u23ce"} switch  <Text bold>esc</Text> back
+            {"\u2191\u2193"} navigate  {"\u23ce"} switch  <Text bold>d</Text> delete  <Text bold>esc</Text> back
           </Text>
         </Box>
       </Box>

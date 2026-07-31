@@ -135,8 +135,8 @@ export default function GitDiffView({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     try {
-      const staged = execSync("git diff --cached --no-color", { encoding: "utf-8", maxBuffer: 1024 * 1024 }).trim();
-      const unstaged = execSync("git diff --no-color", { encoding: "utf-8", maxBuffer: 1024 * 1024 }).trim();
+      const staged = execSync("git diff --cached --no-color", { encoding: "utf-8", maxBuffer: 200 * 200 }).trim();
+      const unstaged = execSync("git diff --no-color", { encoding: "utf-8", maxBuffer: 200 * 200 }).trim();
       let combined = "";
       if (staged) combined += "STAGED CHANGES:\n" + staged + "\n";
       if (unstaged) combined += "UNSTAGED CHANGES:\n" + unstaged;

@@ -4,7 +4,7 @@ import { registerTool } from "../tools/index";
 
 export type ServerState = {
   name: string;
-  status: "connected" | "errored";
+  status: "connected" | "errored" | "disabled";
   toolCount: number;
   error?: string;
 };
@@ -12,11 +12,12 @@ export type ServerState = {
 const clients = new Map<string, McpClient>();
 const cleanupFns = new Map<string, () => void>();
 const serverErrors = new Map<string, string>();
+const serverStates = new Map<string, "enabled" | "disabled">();
 
 export function getConnectedCount(): number {
   let count = 0;
-  for (const c of clients.values()) {
-    if (c.connected) count++;
+  for (const [name, c] of clients) {
+    if (c.connected && serverStates.get(name) !== "disabled") count++;
   }
   return count;
 }
@@ -24,7 +25,7 @@ export function getConnectedCount(): number {
 export function getConnectedServers(): string[] {
   const servers: string[] = [];
   for (const [name, c] of clients) {
-    if (c.connected) servers.push(name);
+    if (c.connected && serverStates.get(name) !== "disabled") servers.push(name);
   }
   return servers;
 }
@@ -32,11 +33,12 @@ export function getConnectedServers(): string[] {
 export function getServerStates(): ServerState[] {
   const states: ServerState[] = [];
   for (const [name, c] of clients) {
-    states.push({
-      name,
-      status: "connected",
-      toolCount: getToolCount(name),
-    });
+    const state = serverStates.get(name) ?? "enabled";
+    if (state === "disabled") {
+      states.push({ name, status: "disabled", toolCount: 0 });
+    } else if (c.connected) {
+      states.push({ name, status: "connected", toolCount: getToolCount(name) });
+    }
   }
   for (const [name, error] of serverErrors) {
     if (!clients.has(name)) {
@@ -44,6 +46,36 @@ export function getServerStates(): ServerState[] {
     }
   }
   return states;
+}
+
+export function getServerState(name: string): "enabled" | "disabled" {
+  return serverStates.get(name) ?? "enabled";
+}
+
+export function toggleServer(name: string): boolean {
+  const current = serverStates.get(name) ?? "enabled";
+  const next = current === "enabled" ? "disabled" : "enabled";
+  serverStates.set(name, next);
+  return next === "enabled";
+}
+
+export async function toggleServerAndRefresh(name: string): Promise<boolean> {
+  const enabled = toggleServer(name);
+  if (enabled) {
+    await startAll();
+  } else {
+    await stopServer(name);
+  }
+  return enabled;
+}
+
+export async function stopServer(name: string): Promise<void> {
+  const cleanup = cleanupFns.get(name);
+  if (cleanup) cleanup();
+  cleanupFns.delete(name);
+  const client = clients.get(name);
+  if (client) client.close();
+  clients.delete(name);
 }
 
 let toolCounts = new Map<string, number>();
@@ -64,21 +96,23 @@ export async function startAll(): Promise<void> {
   toolCounts.clear();
 
   const results = await Promise.allSettled(
-    entries.map(async ([serverName, serverConfig]) => {
-      const client = new McpClient(serverName, serverConfig);
-      await client.initialize();
-      const tools = await client.listTools();
-      toolCounts.set(serverName, tools.length);
-      for (const tool of tools) {
-        const key = `${serverName}/${tool.name}`;
-        const cleanup = registerTool(tool.name, {
-          ...tool,
-          execute: async (args) => client.callTool(tool.name, args),
-        });
-        cleanupFns.set(key, cleanup);
-      }
-      clients.set(serverName, client);
-    }),
+    entries
+      .filter(([serverName]) => serverStates.get(serverName) !== "disabled")
+      .map(async ([serverName, serverConfig]) => {
+        const client = new McpClient(serverName, serverConfig);
+        await client.initialize();
+        const tools = await client.listTools();
+        toolCounts.set(serverName, tools.length);
+        for (const tool of tools) {
+          const key = `${serverName}/${tool.name}`;
+          const cleanup = registerTool(tool.name, {
+            ...tool,
+            execute: async (args) => client.callTool(tool.name, args),
+          });
+          cleanupFns.set(key, cleanup);
+        }
+        clients.set(serverName, client);
+      }),
   );
 
   for (let i = 0; i < results.length; i++) {

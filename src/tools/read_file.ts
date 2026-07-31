@@ -46,11 +46,11 @@ const readFileTool: ToolDefinition = {
     }
 
     const stat = statSync(path);
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const MAX_FILE_SIZE = 10 * 200 * 200;
     if (stat.size > MAX_FILE_SIZE) {
       return {
         success: false,
-        error: `File too large (${(stat.size / 1024 / 1024).toFixed(1)} MB). Max: 10 MB.`,
+        error: `File too large (${(stat.size / 200 / 200).toFixed(1)} MB). Max: 10 MB.`,
       };
     }
 

@@ -1,6 +1,7 @@
 import { complete } from "../llm/client";
-import { executeTool, getAllTools } from "../tools/index";
-import type { CompletionMessage, CompletionResponse } from "../llm/types";
+import { executeTool, getToolSpecs } from "../tools/index";
+import { addMessage } from "../session/history";
+import type { CompletionMessage, CompletionResponse, ToolCallInfo } from "../llm/types";
 import type { AgentDefinition } from "./types";
 import type { ToolResult } from "../tools/schema";
 import { loadConfig } from "../config";
@@ -18,6 +19,15 @@ export type AgentUpdate =
   | { kind: "error"; error: string };
 
 export const MAX_AGENT_ITERATIONS = 25;
+
+export const DEFAULT_MAX_TOKENS = 1024;
+
+function wrapToolResult(toolName: string, result: ToolResult): string {
+  const summary = result.success
+    ? truncateResult(result.data)
+    : `Error: ${result.error}`;
+  return `IMPORTANT: Do not echo the raw tool output below. Use only what you need from it, then answer concisely in your own words.\n\nTool result from ${toolName}:\n${summary}`;
+}
 
 export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText: string } {
   const toolCalls: ToolCall[] = [];
@@ -44,23 +54,13 @@ export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText
   return { toolCalls, cleanText };
 }
 
-function buildToolDescriptions(): string {
-  return getAllTools()
-    .map((t) => {
-      if (!t.parameters || !t.parameters.properties) {
-        return `  - ${t.name}: ${t.description} (no parameters)`;
-      }
-      const props = t.parameters.properties;
-      const required = t.parameters.required ?? [];
-      const paramStr = Object.entries(props)
-        .map(
-          ([k, v]) =>
-            `    ${k}${required.includes(k) ? " (required)" : ""}: ${v.type}${v.description ? ` - ${v.description}` : ""}`,
-        )
-        .join("\n");
-      return `  - ${t.name}: ${t.description}\n${paramStr}`;
-    })
-    .join("\n");
+function parseToolCallArguments(argumentsJson: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(argumentsJson || "{}") as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return { input: argumentsJson };
+  }
 }
 
 function truncateResult(data: unknown, maxLen = 2000): string {
@@ -81,26 +81,24 @@ export async function runAgentLoop(
     args: Record<string, unknown>,
   ) => Promise<ToolResult>,
   modelName = "unknown",
+  sessionId?: string,
 ): Promise<string> {
   const startTime = performance.now();
   let toolCalls = 0;
   const exec = executeToolFn ?? executeTool;
 
-  const toolDescriptions = buildToolDescriptions();
+  if (sessionId) {
+    addMessage(sessionId, "user", query);
+  }
+
+  const tools = getToolSpecs();
   const systemPrompt = `${agent.systemPrompt}
 
-You are running in a CLI environment. You have access to the following tools. When you need to use one, emit a TOOL_CALL block in your response:
-
-${toolDescriptions}
-
-To call a tool, output this exact format (no markdown fences, raw XML):
-<TOOL_CALL>
-<name>tool_name</name>
-<args>{"arg1": "value1"}</args>
-</TOOL_CALL>
-
-You may call multiple tools in a single response. Always wait for the tool result before proceeding.
-When you have completed the task, respond with a summary and no TOOL_CALL blocks.`;
+You are an autonomous agent in a CLI environment. Be direct and terse:
+- Never greet the user, never narrate your plans, never write "I will..." or "Let me...". Act, don't describe.
+- For each request, immediately call the appropriate tool(s) and wait for the results before continuing.
+- Prefer read_file and write_file directly when you already know the path. Use glob_files only to discover paths, with a targeted pattern.
+- Once you have everything you need, answer the user's request concisely with the actual result.`;
 
   const messages: CompletionMessage[] = [
     { role: "system", content: systemPrompt },
@@ -117,7 +115,9 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
         model,
         messages,
         temperature: 0.7,
-        maxTokens: 200,
+        maxTokens: DEFAULT_MAX_TOKENS,
+        tools,
+        toolChoice: "auto",
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -126,28 +126,45 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
     }
 
     const content = response.content;
-    const { toolCalls: calls, cleanText } = parseToolCalls(content);
+    const callInfos: ToolCallInfo[] = response.toolCalls ?? [];
+    const calls: ToolCall[] = callInfos.map((tc) => ({
+      name: tc.name,
+      args: parseToolCallArguments(tc.arguments),
+    }));
 
-    messages.push({ role: "assistant", content });
+    const assistantMsg: CompletionMessage = { role: "assistant", content };
+    if (callInfos.length > 0) {
+      assistantMsg.toolCalls = callInfos;
+    }
+    messages.push(assistantMsg);
 
-    if (cleanText) {
-      onUpdate({ kind: "text", content: cleanText });
+    if (sessionId) {
+      const persistedContent =
+        content.trim() || (callInfos.length > 0 ? `[Calling: ${callInfos.map((c) => c.name).join(", ")}]` : "");
+      addMessage(sessionId, "assistant", persistedContent);
+    }
+
+    if (calls.length === 0 && content.trim()) {
+      onUpdate({ kind: "text", content });
     }
 
     if (calls.length === 0) {
       onUpdate({
         kind: "done",
-        content: cleanText || content,
+        content,
         toolCalls,
         duration: Math.round(performance.now() - startTime),
         agentName: agent.name,
         modelName,
       });
-      return cleanText || content;
+      return content;
     }
 
-    for (const tc of calls) {
+    for (let i = 0; i < calls.length; i++) {
+      const tc = calls[i];
+      const callInfo = callInfos[i];
       toolCalls++;
+
       onUpdate({ kind: "tool_call", toolCall: tc });
 
       let result: ToolResult;
@@ -162,11 +179,19 @@ When you have completed the task, respond with a summary and no TOOL_CALL blocks
 
       onUpdate({ kind: "tool_result", toolCall: tc, result });
 
-      const resultContent = result.success
-        ? `[Tool ${tc.name} result]\n${truncateResult(result.data)}`
-        : `[Tool ${tc.name} error]\n${result.error}`;
+      messages.push({
+        role: "tool",
+        content: wrapToolResult(tc.name, result),
+        toolCallId: callInfo?.id,
+      });
 
-      messages.push({ role: "user", content: resultContent });
+      if (sessionId) {
+        addMessage(sessionId, "tool", wrapToolResult(tc.name, result), {
+          tool_name: tc.name,
+          tool_args: JSON.stringify(tc.args),
+          tool_result: result.success ? truncateResult(result.data) : result.error,
+        });
+      }
     }
   }
 
