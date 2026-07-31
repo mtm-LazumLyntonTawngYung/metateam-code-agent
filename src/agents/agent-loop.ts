@@ -5,6 +5,7 @@ import type { CompletionMessage, CompletionResponse, ToolCallInfo } from "../llm
 import type { AgentDefinition } from "./types";
 import type { ToolResult } from "../tools/schema";
 import { loadConfig } from "../config";
+import { findModel } from "../llm/config";
 
 export type ToolCall = {
   name: string;
@@ -20,7 +21,7 @@ export type AgentUpdate =
 
 export const MAX_AGENT_ITERATIONS = 25;
 
-export const DEFAULT_MAX_TOKENS = 4096;
+export const DEFAULT_MAX_TOKENS = 200;
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
   const summary = result.success
@@ -80,7 +81,7 @@ export async function runAgentLoop(
     name: string,
     args: Record<string, unknown>,
   ) => Promise<ToolResult>,
-  modelName = "unknown",
+  modelId = "unknown",
   sessionId?: string,
 ): Promise<string> {
   const startTime = performance.now();
@@ -110,7 +111,7 @@ You are an autonomous agent in a CLI environment. Be direct and terse:
     let response: CompletionResponse;
     try {
       response = await complete({
-        model: modelName,
+        model: modelId,
         messages,
         temperature: 0.7,
         maxTokens: DEFAULT_MAX_TOKENS,
@@ -147,13 +148,14 @@ You are an autonomous agent in a CLI environment. Be direct and terse:
     }
 
     if (calls.length === 0) {
+      const modelDisplayName = findModel(modelId)?.displayName ?? modelId;
       onUpdate({
         kind: "done",
         content,
         toolCalls,
         duration: Math.round(performance.now() - startTime),
         agentName: agent.name,
-        modelName,
+        modelName: modelDisplayName,
       });
       return content;
     }

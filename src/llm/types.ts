@@ -187,6 +187,16 @@ export const KNOWN_MODELS: ModelConfig[] = [
     contextWindow: 128000,
   },
   {
+    id: "poolside/laguna-s-2.1:free",
+    displayName: "Laguna S 2.1 (OpenRouter)",
+    provider: "openrouter",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 8192,
+    contextWindow: 128000,
+  },
+  {
     id: "google/gemini-2.0-flash-001",
     displayName: "Gemini 2.0 Flash (OpenRouter)",
     provider: "openrouter",

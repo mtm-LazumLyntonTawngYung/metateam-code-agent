@@ -266,7 +266,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
   const startAgentLoop = useCallback(
     async (text: string, agent: AgentDefinition) => {
       const t = themeRef.current;
-      const modelName = findModel(modelId)?.displayName ?? modelId;
+      const modelDisplayName = findModel(modelId)?.displayName ?? modelId;
       setAgentBusy(true);
       setAgentLogs((prev) => [...prev, { kind: "query", text }]);
 
@@ -301,7 +301,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               {
                 kind: "status",
                 agentName: update.agentName,
-                modelName: update.modelName,
+                modelName: modelDisplayName,
                 duration: update.duration,
               },
             ]);
@@ -327,7 +327,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
         completionHistoryRef.current,
         onUpdate,
         requestToolExecution,
-        modelName,
+        modelId,
         currentSessionId ?? undefined,
       );
 
@@ -600,6 +600,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     }
     if (id === "help") setShowHelp(true);
     if (id === "mcps") setShowMcps(true);
+    if (id === "models" || id === "model") setShowModelPicker(true);
     if (id === "init") {
       setShowCommands(false);
       setQuery("/init");
