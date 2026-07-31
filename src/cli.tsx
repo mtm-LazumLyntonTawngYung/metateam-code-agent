@@ -153,13 +153,18 @@ const serveCmd = program.command("serve").description("Start headless WebSocket 
 serveCmd
   .option("-p, --port <port>", "Port to listen on", "8080")
   .option("-H, --host <host>", "Host to bind to", "127.0.0.1")
-  .action((options: { port: string; host: string }) => {
+  .option("-t, --ws-token <token>", "Auth token (prefer MTC_WS_TOKEN env var over CLI flag)")
+  .action((options: { port: string; host: string; wsToken?: string }) => {
     if (!process.stdin.isTTY) {
       console.log("mtc serve: starting headless server...");
+    }
+    if (options.wsToken) {
+      console.error("[mtc] WARNING: --ws-token passed via CLI — visible in process listings. Use MTC_WS_TOKEN env var instead.");
     }
     startServer({
       port: parseInt(options.port, 10) || 8080,
       host: options.host,
+      authToken: options.wsToken,
     });
   });
 

@@ -19,13 +19,15 @@ function readEnvVar(name: string): string | undefined {
 }
 
 const AZURE_CLIENT_ID =
-  readEnvVar("MTC_AZURE_CLIENT_ID") ?? "159fbf0f-82f2-4b4e-a1b5-e4734cf9ffc6";
+  readEnvVar("MTC_AZURE_CLIENT_ID") ?? process.env.MTC_AZURE_CLIENT_ID ?? "";
 const AZURE_TENANT_ID =
-  readEnvVar("MTC_AZURE_TENANT_ID") ?? "30102b23-c817-43f8-b2de-e77962e3a3e0";
+  readEnvVar("MTC_AZURE_TENANT_ID") ?? process.env.MTC_AZURE_TENANT_ID ?? "";
 const AZURE_CLIENT_SECRET =
-  readEnvVar("MTC_AZURE_CLIENT_SECRET") ?? "";
+  readEnvVar("MTC_AZURE_CLIENT_SECRET") ?? process.env.MTC_AZURE_CLIENT_SECRET ?? "";
 
-const AUTHORITY = `https://login.microsoftonline.com/${AZURE_TENANT_ID}`;
+const AUTHORITY = AZURE_TENANT_ID
+  ? `https://login.microsoftonline.com/${AZURE_TENANT_ID}`
+  : null;
 
 function withSecret(body: URLSearchParams): URLSearchParams {
   if (AZURE_CLIENT_SECRET) {
@@ -82,6 +84,11 @@ export function clearAuth(): void {
 }
 
 export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
+  if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
+    throw new Error(
+      "Azure AD credentials not configured. Set MTC_AZURE_CLIENT_ID and MTC_AZURE_TENANT_ID environment variables.",
+    );
+  }
   const body = withSecret(new URLSearchParams({
     client_id: AZURE_CLIENT_ID,
     scope: "openid profile email User.Read",
