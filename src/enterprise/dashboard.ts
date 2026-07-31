@@ -7,8 +7,9 @@
  * legal@metateam.io for terms.
  */
 
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 import { getLicense, formatLicenseInfo } from "./license";
-import { queryAuditLogs, getAuditStats } from "./audit";
+import { recordAuditEvent, queryAuditLogs, getAuditStats } from "./audit";
 import { listOrganizations, getOrganization } from "./org";
 import { getAllUsers } from "./user";
 import { getSystemStatus } from "./tier";
@@ -16,8 +17,146 @@ import { getConnectedServers } from "../mcp/index";
 import { getAllAgents } from "../agents/index";
 import { generateReport } from "../telemetry/reporter";
 import { isTelemetryEnabled } from "../telemetry/store";
+import { getDb } from "../session/db";
+
+const DASHBOARD_USER = process.env.MTC_DASHBOARD_USER ?? "";
+const DASHBOARD_PASSWORD = process.env.MTC_DASHBOARD_PASSWORD ?? "";
+const SESSION_COOKIE = "mtc_dash";
+const SESSION_MAX_AGE = 8 * 60 * 60;
+
+function ensureSessionsTable(): void {
+  const db = getDb();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS dashboard_sessions (
+      token TEXT PRIMARY KEY,
+      created_at TEXT DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL
+    )
+  `);
+}
+
+function cleanupExpiredSessions(): void {
+  getDb().exec("DELETE FROM dashboard_sessions WHERE expires_at < datetime('now')");
+}
+
+const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+
+function checkLoginRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (record && now < record.lockedUntil) {
+    return { allowed: false, retryAfter: Math.ceil((record.lockedUntil - now) / 1000) };
+  }
+  return { allowed: true };
+}
+
+function recordLoginAttempt(ip: string, success: boolean): void {
+  const now = Date.now();
+  if (success) {
+    loginAttempts.delete(ip);
+    return;
+  }
+  const record = loginAttempts.get(ip) ?? { count: 0, lockedUntil: 0 };
+  record.count++;
+  if (record.count >= 5) {
+    record.lockedUntil = now + 5 * 60 * 1000;
+    record.count = 0;
+  }
+  loginAttempts.set(ip, record);
+}
+
+function parseCookies(header: string | null): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const key = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    if (key) out[key] = value;
+  }
+  return out;
+}
+
+function hasValidSession(req: Request): boolean {
+  const token = parseCookies(req.headers.get("cookie"))[SESSION_COOKIE];
+  if (!token) return false;
+  const row = getDb().query(
+    "SELECT 1 AS ok FROM dashboard_sessions WHERE token = ? AND expires_at > datetime('now')",
+  ).get(token);
+  return !!row;
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const ha = createHash("sha256").update(a).digest();
+  const hb = createHash("sha256").update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
+
+function sessionCookie(token: string): string {
+  return `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${SESSION_MAX_AGE}; SameSite=Lax`;
+}
+
+function clearSessionCookie(): string {
+  return `${SESSION_COOKIE}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
+async function handleLogin(req: Request): Promise<Response> {
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown";
+  const limit = checkLoginRateLimit(ip);
+  if (!limit.allowed) {
+    return jsonResponse(
+      { error: "Too many failed attempts. Please try again later.", retryAfter: limit.retryAfter },
+      429,
+      { "Retry-After": String(limit.retryAfter) },
+    );
+  }
+
+  const body = await req.json().catch(() => null);
+  const username = String(body?.username ?? "");
+  const password = String(body?.password ?? "");
+  const success = safeEqual(username, DASHBOARD_USER) && safeEqual(password, DASHBOARD_PASSWORD);
+  recordLoginAttempt(ip, success);
+
+  if (!success) {
+    recordAuditEvent({
+      actor: username,
+      action: "dashboard.login_failed",
+      resource: "dashboard",
+      detail: `Failed attempt from ${ip}`,
+    });
+    return jsonResponse({ error: "Invalid username or password" }, 401);
+  }
+
+  recordAuditEvent({
+    actor: username,
+    action: "dashboard.login",
+    resource: "dashboard",
+    detail: `Login from ${ip}`,
+  });
+
+  const token = randomBytes(32).toString("hex");
+  getDb().run(
+    "INSERT INTO dashboard_sessions (token, created_at, expires_at) VALUES (?, datetime('now'), datetime('now', '+8 hours'))",
+    [token],
+  );
+  return jsonResponse({ ok: true }, 200, { "Set-Cookie": sessionCookie(token) });
+}
+
+function handleLogout(req: Request): Response {
+  const token = parseCookies(req.headers.get("cookie"))[SESSION_COOKIE];
+  if (token) {
+    getDb().run("DELETE FROM dashboard_sessions WHERE token = ?", [token]);
+  }
+  return jsonResponse({ ok: true }, 200, { "Set-Cookie": clearSessionCookie() });
+}
 
 export function startDashboard(port: number, host: string = "127.0.0.1"): void {
+  if (!DASHBOARD_USER || !DASHBOARD_PASSWORD) {
+    console.error("[mc dashboard] MTC_DASHBOARD_USER and MTC_DASHBOARD_PASSWORD must be set");
+    return;
+  }
+  ensureSessionsTable();
   console.error(`mtc enterprise dashboard: http://${host}:${port}`);
 
   Bun.serve({
@@ -26,6 +165,29 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
     async fetch(req) {
       const url = new URL(req.url);
       const path = url.pathname;
+
+      if (path === "/api/login" || path === "/api/logout" || path === "/api/health") {
+        cleanupExpiredSessions();
+      }
+
+      if (path === "/api/login" && req.method === "POST") {
+        return handleLogin(req);
+      }
+      if (path === "/api/logout" && req.method === "POST") {
+        return handleLogout(req);
+      }
+
+      if (!hasValidSession(req)) {
+        if (path === "/" || path === "/index.html" || path === "/login") {
+          return new Response(LOGIN_HTML, {
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
+        }
+        if (path.startsWith("/api/")) {
+          return jsonResponse({ error: "Unauthorized" }, 401);
+        }
+        return new Response("Not found", { status: 404 });
+      }
 
       if (path === "/" || path === "/index.html") {
         return new Response(DASHBOARD_HTML, {
@@ -81,11 +243,138 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
   });
 }
 
-function jsonResponse(data: unknown): Response {
+function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8", ...extraHeaders },
   });
 }
+
+const LOGIN_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Sign in — MetaTeam Control Plane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0c12;
+    --surface: #12151e;
+    --surface-2: #1a1e2a;
+    --border: rgba(148, 163, 255, 0.08);
+    --text: #e9ebf4;
+    --text-muted: #9ba3bb;
+    --accent: #6c7bff;
+    --red: #f87171;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(1000px 500px at 50% -20%, rgba(108,123,255,0.12), transparent 60%), var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .brand-mark {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: linear-gradient(135deg, #6c7bff, #9a5bff);
+    color: #fff; font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(108, 123, 255, 0.35);
+    margin-bottom: 18px;
+  }
+  h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .sub { color: var(--text-muted); font-size: 13px; margin: 6px 0 24px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 10px 12px; margin-bottom: 16px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+    font-family: inherit; outline: none;
+  }
+  input:focus { border-color: rgba(108,123,255,0.5); }
+  button {
+    width: 100%; padding: 10px 12px; margin-top: 4px;
+    background: var(--accent); border: none; border-radius: 8px;
+    color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .error {
+    margin-top: 14px; padding: 10px 12px;
+    border: 1px solid rgba(248,113,113,0.3); background: rgba(248,113,113,0.08);
+    color: var(--red); border-radius: 8px; font-size: 13px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand-mark">M</div>
+  <h1>MetaTeam Control Plane</h1>
+  <div class="sub">Sign in to access the dashboard</div>
+  <form id="loginForm">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" id="submitBtn">Sign in</button>
+    <div class="error" id="error"></div>
+  </form>
+</div>
+<script>
+(function () {
+  var form = document.getElementById('loginForm');
+  var error = document.getElementById('error');
+  var btn = document.getElementById('submitBtn');
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    error.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in\u2026';
+    try {
+      var res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        })
+      });
+      if (res.ok) {
+        window.location.href = '/';
+        return;
+      }
+      var data = await res.json().catch(function () { return {}; });
+      error.textContent = data.error || 'Sign in failed';
+      error.style.display = 'block';
+    } catch (err) {
+      error.textContent = 'Network error: ' + err.message;
+      error.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  });
+})();
+</script>
+</body>
+</html>`;
 
 const DASHBOARD_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -636,215 +925,6 @@ function renderView(view) {
     case 'users': content.innerHTML = renderUsers(); break;
     case 'servers': content.innerHTML = renderServers(); break;
   }
-}
-
-function renderOverview() {
-  const s = state.status;
-  if (!s) return '<div class="loading">Loading...</div>';
-  const tierBadge = '<span class="badge ' + s.tier + '">' + s.tier + '</span>';
-  return \`
-    <div class="header">
-      <h2>Overview</h2>
-      \${tierBadge}
-    </div>
-    <div class="cards">
-      <div class="card">
-        <h3>License Status</h3>
-        <div class="value \${s.licenseStatus === 'active' ? 'green' : 'red'}">\${s.licenseStatus}</div>
-      </div>
-      <div class="card">
-        <h3>MCP Connections</h3>
-        <div class="value blue">\${s.connectedMcpServers}</div>
-      </div>
-      <div class="card">
-        <h3>Active Agents</h3>
-        <div class="value blue">\${state.agents?.agents?.length ?? 0}</div>
-      </div>
-      <div class="card">
-        <h3>Features Available</h3>
-        <div class="value green">\${s.features?.filter(f => f.available).length ?? 0} / \${s.features?.length ?? 0}</div>
-      </div>
-    </div>
-    <div class="section">
-      <h3>Feature Availability</h3>
-      <div class="feature-grid">
-        \${(s.features ?? []).map(f => \`
-          <div class="feature-item">
-            <span class="icon">\${f.available ? '\u2705' : '\u274C'}</span>
-            <span>\${f.feature.replace(/_/g, ' ')}</span>
-            <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">\${f.tier}</span>
-          </div>
-        \`).join('')}
-      </div>
-    </div>
-  \`;
-}
-
-function renderLicense() {
-  const l = state.license;
-  if (!l) return '<div class="loading">Loading...</div>';
-  const tierBadge = '<span class="badge ' + l.license.tier + '">' + l.license.tier + '</span>';
-  return \`
-    <div class="header">
-      <h2>License</h2>
-      \${tierBadge}
-    </div>
-    <div class="cards">
-      <div class="card">
-        <h3>Status</h3>
-        <div class="value \${l.license.status === 'active' ? 'green' : 'red'}">\${l.license.status}</div>
-      </div>
-      <div class="card">
-        <h3>Seats</h3>
-        <div class="value blue">\${l.license.currentSeats} / \${l.license.maxSeats}</div>
-      </div>
-      <div class="card">
-        <h3>Expires</h3>
-        <div class="value yellow">\${l.license.expiresAt?.slice(0, 10) ?? 'N/A'}</div>
-      </div>
-      <div class="card">
-        <h3>Organization</h3>
-        <div class="value">\${l.license.organization}</div>
-      </div>
-    </div>
-    <div class="section">
-      <h3>License Details</h3>
-      <div class="license-box">\${l.formatted}</div>
-    </div>
-    <div class="section">
-      <h3>Enterprise Features</h3>
-      <div class="feature-grid">
-        \${(l.license.features ?? []).map(f => \`
-          <div class="feature-item">
-            <span class="icon">\u2705</span>
-            <span>\${f.replace(/_/g, ' ')}</span>
-          </div>
-        \`).join('')}
-        \${l.license.features?.length === 0 ? '<div style="color:var(--text-muted);padding:8px">No enterprise features (community tier)</div>' : ''}
-      </div>
-    </div>
-  \`;
-}
-
-function renderAudit() {
-  const a = state.audit;
-  if (!a) return '<div class="loading">Loading...</div>';
-  return \`
-    <div class="header"><h2>Audit Logs</h2></div>
-    <div class="cards">
-      <div class="card"><h3>Total Events</h3><div class="value blue">\${a.stats?.total ?? 0}</div></div>
-      <div class="card"><h3>Unique Actors</h3><div class="value blue">\${a.stats?.uniqueActors ?? 0}</div></div>
-    </div>
-    \${a.stats?.topActions?.length ? \`
-      <div class="section">
-        <h3>Top Actions</h3>
-        <table>
-          <tr><th>Action</th><th>Count</th></tr>
-          \${a.stats.topActions.map(act => \`<tr><td>\${act.action}</td><td>\${act.count}</td></tr>\`).join('')}
-        </table>
-      </div>
-    \` : ''}
-    <div class="section">
-      <h3>Recent Events</h3>
-      \${a.logs?.length ? \`
-        <table>
-          <tr><th>Time</th><th>Actor</th><th>Action</th><th>Resource</th><th>Detail</th></tr>
-          \${a.logs.map(log => \`
-            <tr>
-              <td style="white-space:nowrap">\${new Date(log.timestamp).toLocaleString()}</td>
-              <td>\${log.actor}</td>
-              <td><span class="badge" style="background:var(--surface-2);padding:2px 8px">\${log.action}</span></td>
-              <td>\${log.resource}</td>
-              <td style="color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis">\${log.detail}</td>
-            </tr>
-          \`).join('')}
-        </table>
-      \` : '<div style="color:var(--text-muted)">No audit events recorded yet.</div>'}
-    </div>
-  \`;
-}
-
-function renderAnalytics() {
-  const r = state.analytics?.report;
-  if (!r) return '<div class="loading">Loading...</div>';
-  return \`
-    <div class="header"><h2>Analytics (30 days)</h2></div>
-    <div class="cards">
-      <div class="card"><h3>Total Sessions</h3><div class="value blue">\${r.totalSessions ?? 0}</div></div>
-      <div class="card"><h3>Tool Calls</h3><div class="value blue">\${r.totalToolCalls ?? 0}</div></div>
-      <div class="card"><h3>Total Tokens</h3><div class="value yellow">\${(r.totalTokens ?? 0).toLocaleString()}</div></div>
-      <div class="card"><h3>Active Devices</h3><div class="value green">\${r.activeDevices ?? 0}</div></div>
-    </div>
-    \${r.modelStats?.length ? \`
-      <div class="section">
-        <h3>Model Usage</h3>
-        <table>
-          <tr><th>Model</th><th>Tokens</th><th>Calls</th></tr>
-          \${r.modelStats.map(m => \`<tr><td>\${m.model}</td><td>\${(m.total_tokens ?? 0).toLocaleString()}</td><td>\${m.call_count ?? 0}</td></tr>\`).join('')}
-        </table>
-      </div>
-    \` : ''}
-    \${r.toolStats?.length ? \`
-      <div class="section">
-        <h3>Tool Usage</h3>
-        <table>
-          <tr><th>Tool</th><th>Calls</th><th>Success Rate</th></tr>
-          \${r.toolStats.map(t => \`<tr><td>\${t.tool_name}</td><td>\${t.call_count}</td><td>\${((100 - (t.failure_rate ?? 0))).toFixed(0)}%</td></tr>\`).join('')}
-        </table>
-      </div>
-    \` : ''}
-  \`;
-}
-
-function renderOrganizations() {
-  const o = state.orgs;
-  if (!o) return '<div class="loading">Loading...</div>';
-  return \`
-    <div class="header"><h2>Organizations</h2></div>
-    \${o.organizations?.length ? \`
-      <table>
-        <tr><th>Name</th><th>Slug</th><th>Tier</th><th>Created</th></tr>
-        \${o.organizations.map(org => \`
-          <tr>
-            <td>\${org.name}</td>
-            <td>\${org.slug}</td>
-            <td><span class="badge \${org.tier}">\${org.tier}</span></td>
-            <td>\${new Date(org.createdAt).toLocaleDateString()}</td>
-          </tr>
-        \`).join('')}
-      </table>
-    \` : '<div style="color:var(--text-muted)">No organizations configured.</div>'}
-  \`;
-}
-
-function renderServers() {
-  const s = state.servers;
-  const a = state.agents;
-  return \`
-    <div class="header"><h2>Connections</h2></div>
-    <div class="cards">
-      <div class="card"><h3>MCP Servers</h3><div class="value blue">\${s?.servers?.length ?? 0}</div></div>
-      <div class="card"><h3>Agents</h3><div class="value blue">\${a?.agents?.length ?? 0}</div></div>
-    </div>
-    \${s?.servers?.length ? \`
-      <div class="section">
-        <h3>Connected MCP Servers</h3>
-        <table>
-          <tr><th>Name</th><th>Status</th></tr>
-          \${s.servers.map(name => \`<tr><td>\${name}</td><td><span class="status-dot active"></span>Connected</td></tr>\`).join('')}
-        </table>
-      </div>
-    \` : ''}
-    \${a?.agents?.length ? \`
-      <div class="section">
-        <h3>Available Agents</h3>
-        <table>
-          <tr><th>ID</th><th>Name</th><th>Mode</th></tr>
-          \${a.agents.map(agent => \`<tr><td>\${agent.id}</td><td>\${agent.name}</td><td><span class="badge" style="background:var(--surface-2)">\${agent.mode}</span></td></tr>\`).join('')}
-        </table>
-      </div>
-    \` : ''}
-  \`;
 }
 
 document.addEventListener('click', function (e) {
