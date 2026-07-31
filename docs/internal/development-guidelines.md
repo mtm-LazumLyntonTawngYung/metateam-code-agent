@@ -29,16 +29,21 @@ Coding standards, testing requirements, and contribution workflow for **mtc**.
 ```
 src/
 ├── cli.tsx              # Entry point
-├── agents/              # Agent logic
+├── agents/              # Agent definitions, loop, subagents, rules
+├── auth/                # SSO authentication
 ├── config/              # Configuration
+├── daemon/              # Headless autofix daemon
+├── enterprise/          # License, audit, orgs, dashboard
 ├── eval/                # Eval runner
 ├── init/                # Scaffolding
-├── llm/                 # LLM clients
+├── llm/                 # LLM clients, routing
 ├── mcp/                 # MCP integration
-├── review/              # PR review
+├── mcp-plugins/         # Bundled MCP bridges
+├── review/              # SQA review
 ├── secrets/             # Secret redaction
 ├── server/              # WebSocket server
 ├── session/             # History/state
+├── skills/              # Skill registry
 ├── telemetry/           # Analytics
 ├── tools/               # Tool implementations
 ├── ui/                  # Ink components
@@ -58,26 +63,28 @@ tests/evals/
 └── refactor-to-typescript/  # Eval: TS migration
 ```
 
-Run: `bun run test:eval`
+List and run:
+
+```bash
+mtc eval list
+mtc eval run <task-name>
+```
 
 ### Adding Eval Tests
 
 1. Create a directory in `tests/evals/<name>/`
 2. Add a `task.md` describing the task
-3. Add source files and expected output
-4. Run with `bun run test:eval`
+3. Add `setup.sh`, `sandbox/`, and an `assert.sh` (or `assert.cjs`) script
+4. Run with `mtc eval run <name>`
 
 ## Development Workflow
 
 ```bash
-# Start dev server (hot-reload)
+# Start the TUI (dev mode)
 bun run dev
 
 # Type check
 bun run typecheck
-
-# Run eval tests
-bun run test:eval
 
 # Build binary
 bun run build
@@ -88,7 +95,7 @@ bun run build
 Before submitting a PR:
 
 - [ ] `bun run typecheck` passes
-- [ ] `bun run test:eval` passes (or new tests added)
+- [ ] `mtc eval run <name>` passes for affected tasks (or new eval added)
 - [ ] Documentation updated
 - [ ] CHANGELOG.md entry added
 - [ ] No secrets or credentials committed

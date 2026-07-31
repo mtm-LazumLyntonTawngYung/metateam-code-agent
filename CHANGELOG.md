@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **Documentation sync** — updated all docs to match the current implementation:
+  - `README.md`: corrected key bindings; added LLM provider config, MCP load order, and skills
+  - `docs/internal/commands.md`: full CLI command inventory (`eval`, `llm`, `analytics`, `daemon`, `enterprise`, `auth`), accurate slash commands, key bindings, and agent permission matrix
+  - `docs/internal/configuration.md`: real environment variables, global config schema, custom-agent frontmatter
+  - `docs/internal/daemon.md`: environment variables, webhook limits, GitHub-only autofix caveat
+  - `docs/internal/onboarding.md`, `faq.md`, `troubleshooting.md`, `security-policy.md`: corrected LLM setup, config paths, and removed nonexistent options
+  - `docs/internal/architecture.md` and `development-guidelines.md`: module structure matching `src/`
+  - `docs/internal/repository-management.md`: actual CI/CD workflows and branch strategy
+  - `docs/playbook.md`, `ai-workflows.md`, `multi-department-workflows.md`: corrected Plan/Build/subagent invocation (subagents run `/read`, `/glob`, `/call` only)
+  - `docs/hackathon.md`: fixed broken plugin-registry link
+  - `.env.example`: documented all supported environment variables
+
 ## [0.5.0] - 2026-07-29
 
 ### Added

@@ -34,7 +34,7 @@ Context:  <links to related code, ADRs, or tickets>
 /edit src/processor.ts {import 'foo'} {import 'bar'}
 ```
 
-**Strong prompt (use through an agent or `/subagent`):**
+**Strong prompt (run through the Build agent — switch with Tab):**
 ```
 Refactor src/old-utils.ts into src/utils/ with three modules:
 - src/utils/format.ts   — formatting helpers (extract from lines 1-80)
@@ -156,8 +156,9 @@ This is the most effective workflow for complex changes:
 ```
 # Automated handoff
 /subagent explore /read src/**/*.ts /glob **/*.ts
-  → produce plan.md
-/subagent build Read plan.md and implement it
+  → gather context into plan.md
+Tab to the Build agent, then:
+Read plan.md and implement it
 ```
 
 ---
@@ -194,24 +195,23 @@ Rules:
 
 1. **Scan** with Explore agent:
    ```
-   /subagent explore Glob for all files using legacy-pattern
+   /subagent explore /glob **/*.js
    ```
 
-2. **Analyze** with custom migration agent:
+2. **Analyze** with custom migration agent (one command per invocation):
    ```
-   /subagent migration-specialist
-     Read the matched files and produce a migration plan
-     Mapping: {legacy API} → {new API}
+   /subagent migration-specialist /glob **/*.js
+   /subagent migration-specialist /read src/legacy/app.js
    ```
 
 3. **Execute** with Build agent:
    ```
-   /subagent build Execute the migration plan from plan.md
+   Tab to Build, then: Execute the migration plan from plan.md
    ```
 
 4. **Verify** with Plan agent:
    ```
-   /subagent plan Verify migration complete, all tests pass
+   Tab to Plan, then: Verify migration complete, all tests pass
    ```
 
 ### 4.3 Concrete Example: jQuery to Vanilla JS
@@ -219,7 +219,6 @@ Rules:
 **Scan phase:**
 ```
 /subagent explore /glob **/*.js
-  Grep for $.ajax, $(document).ready, $().on
 ```
 
 **Migration rules in `.mtc/rules/jquery-migration.md`:**
@@ -239,10 +238,11 @@ Maximum files per batch: 10
 
 **Execute:**
 ```
-/subagent build /read .mtc/rules/jquery-migration.md
-  Apply the migration rules to all files in src/legacy/
-  Process 10 files at a time.
-  After each batch, run tests.
+Tab to the Build agent, then:
+/read .mtc/rules/jquery-migration.md
+Apply the migration rules to all files in src/legacy/
+Process 10 files at a time.
+After each batch, run tests.
 ```
 
 ---
@@ -259,7 +259,7 @@ Instead of one massive prompt, chain file operations:
 /read src/types.ts
 /edit src/config.ts {old} {new}
 /edit src/types.ts {old} {new}
-/run_bash npm test
+/bash npm test
 
 # Ineffective (too much in one go)
 /edit src/config.ts ... /edit src/types.ts ...
@@ -274,11 +274,13 @@ Start broad, then narrow:
 /subagent explore /read src/services/auth.ts
 
 # Round 2: Plan
-/subagent plan /read src/services/auth.ts
-  I want to add rate limiting. Suggest implementation.
+Tab to the Plan agent, then:
+/read src/services/auth.ts
+I want to add rate limiting. Suggest implementation.
 
 # Round 3: Build
-/subagent build /read plan.md Implement the rate limiting.
+Tab to the Build agent, then:
+/read plan.md Implement the rate limiting.
 ```
 
 ### 5.3 Adding Constraints
@@ -339,7 +341,7 @@ Example `.mtc/rules/team-practices.md`:
 ```
 1. Check permissions — does the agent have access?
 2. Check file paths — relative to project root.
-3. Check bash commands — mtc uses Bun shell on Windows.
+3. Check bash commands — on Windows, mtc uses `cmd.exe`.
 ```
 
 ### Token limit reached
@@ -358,9 +360,9 @@ Example `.mtc/rules/team-practices.md`:
 ╔═══════════════════════════════════════════════════════════╗
 ║                    MTC Quick Reference                    ║
 ╠═══════════════════════════════════════════════════════════╣
-║ Tab         — Switch agents                              ║
-║ Ctrl+P      — Command palette                            ║
-║ Esc         — Go back                                    ║
+║ Tab         — Switch agents (open selector)              ║
+║ Ctrl+P or / — Command palette                            ║
+║ Esc         — Close overlay / back to home               ║
 ║                                                          ║
 ║ /read       — Read file contents                         ║
 ║ /write      — Write a file                               ║
@@ -368,13 +370,20 @@ Example `.mtc/rules/team-practices.md`:
 ║ /bash       — Run a shell command                        ║
 ║ /glob       — Search files by pattern                    ║
 ║ /call       — Call any registered tool                   ║
-║ /subagent   — Delegate to another agent                  ║
-║ /list-tools — List available tools                       ║
-║ /history    — View session history                       ║
+║ /subagent   — Run tool commands via a subagent           ║
+║ /connect    — Add an AI provider                         ║
+║ /mcps       — Toggle MCP servers                         ║
+║ /sessions   — Switch session                             ║
+║ /status     — View system status                         ║
+║ /new        — Start a new session                        ║
+║ /diff       — Open the diff viewer                       ║
+║ /move <dir> — Change working directory                   ║
 ║                                                          ║
 ║ mtc init    — Scaffold project config                    ║
 ║ mtc review  — Run SQA compliance checks                  ║
+║ mtc llm     — Configure LLM providers/routing            ║
 ║ mtc serve   — Start WebSocket server (for VS Code)       ║
+║ mtc daemon  — Start autonomous autofix daemon            ║
 ║ mtc analytics — View usage and cost dashboard            ║
 ╚═══════════════════════════════════════════════════════════╝
 ```

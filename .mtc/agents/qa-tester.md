@@ -77,9 +77,11 @@ describe('Login', () => {
 
 ## Use Cases
 
-| Scenario | Command |
+Switch to this agent with `Tab`, then type the prompt directly:
+
+| Scenario | Prompt |
 |----------|---------|
-| Generate E2E tests from user story | `/subagent qa-tester Read the user story in docs/stories/login.md and generate Playwright tests` |
-| Analyze test coverage | `/subagent qa-tester /glob cypress/e2e/**/*.cy.ts Analyze coverage for src/components/` |
-| Convert Gherkin to Cypress | `/subagent qa-tester /read features/login.feature Convert this Gherkin to Cypress tests` |
-| Add API contract tests | `/subagent qa-tester /read openapi.yaml Generate contract tests from this spec` |
+| Generate E2E tests from user story | `Read the user story in docs/stories/login.md and generate Playwright tests` |
+| Analyze test coverage | `/glob cypress/e2e/**/*.cy.ts` then `Analyze coverage for src/components/` |
+| Convert Gherkin to Cypress | `/read features/login.feature` then `Convert this Gherkin to Cypress tests` |
+| Add API contract tests | `/read openapi.yaml` then `Generate contract tests from this spec` |

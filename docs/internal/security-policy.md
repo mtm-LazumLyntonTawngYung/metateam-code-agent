@@ -41,7 +41,7 @@ After reporting, you'll receive:
 
 Agents and MCP plugins run with minimal required permissions:
 
-- **Plan agent:** Read-only (files, glob, read-only bash)
+- **Plan agent:** Read-only (files, glob, execute; no edit or bash)
 - **Build agent:** Full access, but destructive operations require user confirmation
 - **MCP plugins:** Sandboxed subprocesses with no default filesystem access
 - **Custom agents:** Explicitly declared permissions in agent definition
@@ -80,7 +80,7 @@ Every session records:
 - Agent switches
 - Token usage
 
-History is stored locally in SQLite at `~/.mtc/history.db`.
+History is stored locally in SQLite at `~/.config/mtc/history.db`.
 
 ## Access Control
 

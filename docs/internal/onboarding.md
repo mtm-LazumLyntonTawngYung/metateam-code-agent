@@ -14,8 +14,8 @@ Get up and running with **mtc** in under 15 minutes.
 ## Step 1: Clone & Install
 
 ```bash
-git clone git@github.com:metateam/mtc.git
-cd mtc
+git clone git@github.com:mtm-LazumLyntonTawngYung/metateam-code-agent.git
+cd metateam-code-agent
 bun install
 bun run build
 ```
@@ -24,31 +24,23 @@ Verify installation:
 
 ```bash
 mtc --version
-# mtc 0.1.0
+# 1.0.0
 ```
 
-## Step 2: Configure Credentials
+## Step 2: Configure LLM Provider
 
-### LLM API Key
-
-Set your preferred LLM provider key:
+mtc needs an LLM provider key. Provider keys are stored in
+`~/.config/mtc/config.json` via the CLI (not environment variables):
 
 ```bash
-# OpenAI
-export OPENAI_API_KEY="sk-..."
+# List known providers
+mtc llm status
 
-# Or Anthropic
-export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Or add to .env in project root
-echo "OPENAI_API_KEY=sk-..." >> .env
+# Add a provider (deepseek | openai | anthropic | openrouter)
+mtc llm set-provider --id deepseek --key sk-...
 ```
 
-### GitHub Token (for review features)
-
-```bash
-export GITHUB_TOKEN="ghp_..."
-```
+Alternatively, run `mtc` and use `/connect` to add a provider through the TUI.
 
 ## Step 3: First Session
 
@@ -94,15 +86,16 @@ Then install the `.vsix` from the build output.
 
 Or install from the VS Code marketplace (internal).
 
-## Step 6: Verify MCP Connectivity
+## Step 6: Verify Connectivity
 
-Check that your MCP servers are connected:
+Check that everything is connected:
 
 ```
-/call list-tools
+/status
 ```
 
-You should see the built-in tools: `read`, `write`, `edit`, `glob`, `bash`, `subagent`.
+You should see your tier, connected MCP server count, and feature
+availability. Use `/mcps` to inspect individual MCP servers.
 
 ## Next Steps
 
@@ -119,7 +112,7 @@ You should see the built-in tools: `read`, `write`, `edit`, `glob`, `bash`, `sub
 - [ ] Bun installed (`bun --version`)
 - [ ] Repository cloned
 - [ ] `bun install` completed
-- [ ] LLM API key configured
+- [ ] LLM provider configured (`mtc llm status`)
 - [ ] `mtc` runs without errors
 - [ ] VS Code extension installed (optional)
-- [ ] MCP servers connected
+- [ ] MCP servers connected (check `/status`)

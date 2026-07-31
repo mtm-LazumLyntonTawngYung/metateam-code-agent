@@ -58,15 +58,19 @@ Verify the implementation:
 
 ### Progressive Refinement
 
+Start broad, then narrow:
+
 ```
 # Round 1: Explore
 /subagent explore /read src/services/auth.ts
 
 # Round 2: Plan
-/subagent plan Read the auth module. Plan rate limiting.
+Tab to the Plan agent, then:
+Read the auth module. Plan rate limiting.
 
 # Round 3: Build
-/subagent build Implement the rate limiting plan.
+Tab to the Build agent, then:
+Implement the rate limiting plan.
 ```
 
 ### Adding Constraints
@@ -82,13 +86,19 @@ Do NOT:
 
 ## Subagent Delegation
 
-Use `/subagent` to delegate tasks to specialized agents:
+Subagents execute tool commands — `/read`, `/glob`, and `/call` — and return
+their results. They cannot run free-form prompts or the agent loop. Use them
+to gather context in parallel:
 
 ```
-/subagent migration-specialist
-  Analyze src/legacy/*.js and produce migration plan
-  Mapping: jQuery AJAX → fetch()
+# Run one tool command per /subagent invocation:
+/subagent explore /glob **/*.ts
+/subagent explore /read src/services/auth.ts
+/subagent typescript-specialist /read src/services/auth.ts
 ```
+
+For generative work (planning, writing, refactoring), switch to a primary
+agent (Plan or Build) with `Tab` and type the request directly.
 
 ## Best Practices
 

@@ -39,21 +39,19 @@ Playwright E2E test suites directly from user story documents.
 mtc
 
 # Switch to the QA Tester agent (Tab key)
-# Or use it as a subagent:
-/subagent qa-tester Read the user story in docs/stories/login.md and generate Playwright tests
 ```
 
 **Workflow:**
 
 1. Write a user story in your project's docs or ticket system
-2. Point the QA Tester agent at it:
+2. Switch to the QA Tester agent (Tab) and point it at the story:
    ```
-   /subagent qa-tester /read docs/stories/login.md
-     Generate Cypress E2E tests covering:
-     - Happy path login
-     - Invalid credentials
-     - Empty field validation
-     - Session expiry
+   /read docs/stories/login.md
+   Generate Cypress E2E tests covering:
+   - Happy path login
+   - Invalid credentials
+   - Empty field validation
+   - Session expiry
    ```
 3. The agent outputs complete test files with assertions
 4. Run the generated tests: `bun test` or `npx cypress run`
@@ -215,11 +213,11 @@ spec:
 
 **Incident response pattern:**
 ```
-/subagent devops-engineer
-  /call datadog_query_logs query="service:payment status:error" hoursAgo=1
-  /call devops_diagnose_logs logs=<result> source="app"
-  /read k8s/payment-service.yaml
-  Suggest a fix for the Kubernetes deployment
+# Switch to the DevOps Engineer agent (Tab), then:
+/call datadog_query_logs {"query":"service:payment status:error","hoursAgo":1}
+/call devops_diagnose_logs {"logs":"<result>","source":"app"}
+/read k8s/payment-service.yaml
+Suggest a fix for the Kubernetes deployment
 ```
 
 ---
@@ -232,12 +230,14 @@ The [Product Manager agent](../../.mtc/agents/product-manager.md) assists with
 requirements analysis, user story creation, sprint planning, and release notes.
 
 ```
-/subagent product-manager
-  /read docs/requirements/notifications.md
-  Create user stories with acceptance criteria for a notification system
-  - Real-time push notifications
-  - Email digest
-  - In-app notification center
+# Gather requirement context (subagents run /read, /glob, /call only):
+/subagent product-manager /read docs/requirements/notifications.md
+
+# Generate artifacts with a primary agent (switch with Tab):
+Write user stories with acceptance criteria for a notification system
+- Real-time push notifications
+- Email digest
+- In-app notification center
 ```
 
 **Output artifacts:**
