@@ -14,7 +14,7 @@
 ## Testing
 
 - [ ] `bun run typecheck` passes
-- [ ] `bun run test:eval` passes
+- [ ] `mtc eval run <task>` passes for affected tasks
 - [ ] Manual testing completed
 
 ## Checklist

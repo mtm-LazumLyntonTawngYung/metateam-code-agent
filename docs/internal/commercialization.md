@@ -94,10 +94,21 @@ mtc enterprise org create "Acme Corp" acme-corp
 ### License Key Format
 
 ```
-MTC-{TIER}-{ORG}-{HASH}
+MTC-{TIER}-{ORG}-{SIGNATURE}
 ```
 
-Example: `MTC-ENTERPRISE-ACME-1A2B3C4D5E6F`
+- `TIER` — `COMMUNITY`, `ENTERPRISE`, or `ENTERPRISE_PLUS`
+- `ORG` — organization slug (max 8 chars)
+- `SIGNATURE` — 16 hex chars (HMAC-SHA256 over `tier:org:expiresAt:maxSeats`),
+  hyphenated in 4-char groups
+
+Example: `MTC-ENTERPRISE-ACME-1A2B3C4D-5E6F7A8B`
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `MTC_LICENSE_SECRET` | HMAC secret used to sign and verify license keys. If unset, generated keys are **not** signature-verified (a warning is shown) — set it in production |
 
 ### Feature Gating
 
@@ -208,14 +219,6 @@ EXPOSE 3000
 CMD ["bun", "run", "src/cli.tsx", "enterprise", "dashboard", "--port", "3000"]
 ```
 
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `MTC_LICENSE_KEY` | Auto-activate license on startup |
-| `MTC_ENTERPRISE_PORT` | Dashboard port (default: 3000) |
-| `MTC_ENTERPRISE_HOST` | Dashboard bind address |
-
 ## SOC2 Compliance
 
 Enterprise+ tier includes:
@@ -225,3 +228,15 @@ Enterprise+ tier includes:
 - **Data encryption** — SQLite at rest, TLS in transit
 - **Availability** — Health check endpoints, monitoring integration
 - **Change management** — All tool operations logged with before/after state
+
+## Enterprise CLI Reference
+
+```bash
+mtc enterprise status                      # Tier, license, seats, features
+mtc enterprise activate <key>              # Activate a license key
+mtc enterprise deactivate                  # Revert to community tier
+mtc enterprise generate -t enterprise -o ACME   # Issue a key (needs MTC_LICENSE_SECRET)
+mtc enterprise dashboard -p 3000 -H 127.0.0.1   # Web control plane
+mtc enterprise audit -l 50 -a <actor> -s <date> # Audit logs
+mtc enterprise org list | create <name> <slug>  # Organization management
+```

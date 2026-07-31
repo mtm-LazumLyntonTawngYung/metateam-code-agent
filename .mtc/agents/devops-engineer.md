@@ -70,9 +70,11 @@ Always produce:
 
 ## Use Cases
 
-| Scenario | Command |
+Switch to this agent with `Tab`, then type the prompt directly:
+
+| Scenario | Prompt |
 |----------|---------|
-| Analyze deployment failure | `/subagent devops-engineer Here are the CloudWatch logs from the last deployment...` |
-| Fix Kubernetes config | `/subagent devops-engineer /read k8s/deployment.yaml The pod is in CrashLoopBackOff` |
-| Review Terraform plan | `/subagent devops-engineer /read terraform/main.tf Check for security issues` |
-| Diagnose performance | `/subagent devops-engineer P99 latency increased from 200ms to 2s after last deploy` |
+| Analyze deployment failure | `Here are the CloudWatch logs from the last deployment...` |
+| Fix Kubernetes config | `/read k8s/deployment.yaml` then `The pod is in CrashLoopBackOff` |
+| Review Terraform plan | `/read terraform/main.tf` then `Check for security issues` |
+| Diagnose performance | `P99 latency increased from 200ms to 2s after last deploy` |

@@ -87,9 +87,12 @@ You are Product Manager, a MetaTeam product management agent. You assist with re
 
 ## Use Cases
 
+Subagents execute tool commands (`/read`, `/glob`, `/call`) and return the
+results. Use this agent to gather requirements context, then switch to a
+primary agent (`Tab`) to generate artifacts:
+
 | Scenario | Command |
 |----------|---------|
-| Write user stories | `/subagent product-manager Create user stories for the login feature described in docs/requirements/auth.md` |
-| Plan sprint | `/subagent product-manager /read backlog.md Prioritize 10 items for a 2-week sprint` |
-| Write release notes | `/subagent product-manager /read CHANGELOG.md Draft release notes for v2.1.0` |
-| PRD outline | `/subagent product-manager Create a PRD outline for a notification system` |
+| Gather requirements context | `/subagent product-manager /read docs/requirements/auth.md` |
+| Read backlog for planning | `/subagent product-manager /read backlog.md` |
+| Read release history | `/subagent product-manager /read CHANGELOG.md` |

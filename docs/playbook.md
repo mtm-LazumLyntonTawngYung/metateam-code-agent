@@ -198,9 +198,10 @@ Rules:
    /subagent explore /glob **/*.js
    ```
 
-2. **Analyze** with custom migration agent:
+2. **Analyze** with custom migration agent (one command per invocation):
    ```
-   /subagent migration-specialist /glob **/*.js /read src/legacy/app.js
+   /subagent migration-specialist /glob **/*.js
+   /subagent migration-specialist /read src/legacy/app.js
    ```
 
 3. **Execute** with Build agent:
@@ -218,7 +219,6 @@ Rules:
 **Scan phase:**
 ```
 /subagent explore /glob **/*.js
-  /call ... (grep for $.ajax, $(document).ready, $().on)
 ```
 
 **Migration rules in `.mtc/rules/jquery-migration.md`:**
@@ -360,9 +360,9 @@ Example `.mtc/rules/team-practices.md`:
 ╔═══════════════════════════════════════════════════════════╗
 ║                    MTC Quick Reference                    ║
 ╠═══════════════════════════════════════════════════════════╣
-║ Tab         — Switch agents                              ║
-║ Ctrl+P      — Command palette                            ║
-║ Esc         — Go back                                    ║
+║ Tab         — Switch agents (open selector)              ║
+║ Ctrl+P or / — Command palette                            ║
+║ Esc         — Close overlay / back to home               ║
 ║                                                          ║
 ║ /read       — Read file contents                         ║
 ║ /write      — Write a file                               ║
@@ -370,13 +370,20 @@ Example `.mtc/rules/team-practices.md`:
 ║ /bash       — Run a shell command                        ║
 ║ /glob       — Search files by pattern                    ║
 ║ /call       — Call any registered tool                   ║
-║ /subagent   — Delegate to another agent                  ║
-║ /list-tools — List available tools                       ║
-║ /history    — View session history                       ║
+║ /subagent   — Run tool commands via a subagent           ║
+║ /connect    — Add an AI provider                         ║
+║ /mcps       — Toggle MCP servers                         ║
+║ /sessions   — Switch session                             ║
+║ /status     — View system status                         ║
+║ /new        — Start a new session                        ║
+║ /diff       — Open the diff viewer                       ║
+║ /move <dir> — Change working directory                   ║
 ║                                                          ║
 ║ mtc init    — Scaffold project config                    ║
 ║ mtc review  — Run SQA compliance checks                  ║
+║ mtc llm     — Configure LLM providers/routing            ║
 ║ mtc serve   — Start WebSocket server (for VS Code)       ║
+║ mtc daemon  — Start autonomous autofix daemon            ║
 ║ mtc analytics — View usage and cost dashboard            ║
 ╚═══════════════════════════════════════════════════════════╝
 ```

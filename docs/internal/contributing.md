@@ -20,21 +20,29 @@ Code of Conduct. Harassment or abusive behavior will not be tolerated.
 ## Development Workflow
 
 ```bash
-# Start development server (with hot-reload)
+# Start the TUI (dev mode)
 bun run dev
 
 # Type check
 bun run typecheck
 
-# Run eval tests
-bun run test:eval
+# List eval tasks
+mtc eval list
+
+# Run a single eval task
+mtc eval run <task-name>
+
+# Build binary
+bun run build
 ```
 
 ### Branch Naming
 
+Branches use the pattern `feature/#<issue-number>-<short-description>`:
+
 ```
-feature/<short-description>
-fix/<issue-number>-<short-description>
+feature/#42-mcp-integration
+fix/#46-bug-fix
 docs/<short-description>
 release/<version>
 ```
@@ -63,7 +71,7 @@ chore: bump dependencies
 ### PR Checklist
 
 ```markdown
-- [ ] Tests pass (`bun run typecheck && bun run test:eval`)
+- [ ] Tests pass (`bun run typecheck && mtc eval run <task>`)
 - [ ] Documentation updated
 - [ ] CHANGELOG.md entry added
 - [ ] Breaking changes noted with migration guide
@@ -81,7 +89,7 @@ chore: bump dependencies
 
 ## Testing
 
-- **Eval tests:** Located in `tests/evals/`, run with `bun run test:eval`
+- **Eval tests:** Located in `tests/evals/`, list with `mtc eval list` and run with `mtc eval run <name>`
 - **Manual testing:** Use `bun run dev` and test against a sample project
 - **MCP plugin testing:** Use the scaffold in `docs/templates/mcp-plugin-scaffold.ts`
 

@@ -91,9 +91,10 @@ their results. They cannot run free-form prompts or the agent loop. Use them
 to gather context in parallel:
 
 ```
-/subagent explore /read src/legacy/*.js /glob **/*.js
-
-/subagent typescript-specialist /read src/services/auth.ts /glob src/**/*.ts
+# Run one tool command per /subagent invocation:
+/subagent explore /glob **/*.ts
+/subagent explore /read src/services/auth.ts
+/subagent typescript-specialist /read src/services/auth.ts
 ```
 
 For generative work (planning, writing, refactoring), switch to a primary
