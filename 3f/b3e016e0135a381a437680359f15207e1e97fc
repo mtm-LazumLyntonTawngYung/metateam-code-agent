@@ -1,0 +1,14 @@
+src/enterprise/dashboard.ts
+  h_10671eecd6b5d0 89-93,96-110,113-149,151-158,160-219,221-227,229-287,292-300,302-325,327-334,336,342-358,361-526,530-552,568,594-597,599-600
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "3fb3e016e0135a381a437680359f15207e1e97fc",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
