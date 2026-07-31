@@ -191,15 +191,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     }
   }, []);
 
-  const noPanels =
-    !showAgents &&
-    !showCommands &&
-    !showModelPicker &&
-    !showHelp &&
-    !showSkills &&
-    !showVariants &&
-    !showThemePicker;
-
   useInput((_input, key) => {
     if (pendingPerm) return;
     if (key.escape) {
@@ -215,15 +206,15 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
       if (view !== "home") { setView("home"); return; }
       return;
     }
-    if (key.tab && noPanels && !showMcps && !showSessions) {
+    if (key.tab && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
       setShowAgents(true);
       return;
     }
-    if (key.ctrl && _input === "p" && noPanels && !showMcps && !showSessions) {
+    if (key.ctrl && _input === "p" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
       setShowCommands(true);
       return;
     }
-    if (_input === "/" && noPanels && !showMcps && !showSessions) {
+    if (_input === "/" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
       setShowCommands(true);
       return;
     }
@@ -231,7 +222,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
-    if (value.startsWith("/") && noPanels && !showMcps && !showSessions) {
+    if (value.startsWith("/") && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
       setShowCommands(true);
     }
   }, [showCommands, showModelPicker, showHelp, showSkills, showMcps, showVariants, showThemePicker, showSessions]);
@@ -395,11 +386,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
         if (agent) {
           setAgentLogs([{ kind: "query", text: value }]);
           startAgentLoop(
-            `Initialize project configuration at ${process.cwd()}. Inspect the project structure ` +
-              `(package.json, README, source files if present), detect language/framework/package manager, ` +
-              `then create or overwrite AGENTS.md at the project root with comprehensive rules and guidelines ` +
-              `tailored to this stack. Also create .mtc/ with rules/ and agents/ subdirectories and appropriate ` +
-              `config files. Use read_file, glob_files, run_bash, and write_file as needed.`,
+            `Initialize project configuration at ${process.cwd()}. Inspect the project structure (package.json, README, source files if present), detect language/framework/package manager, then create or overwrite AGENTS.md at the project root with comprehensive rules and guidelines tailored to this stack. Also create .mtc/ with rules/ and agents/ subdirectories and appropriate config files. Use read_file, glob_files, run_bash, and write_file as needed.`,
             agent,
           );
         }
@@ -441,13 +428,9 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
           const result = reviewProject({ dir: process.cwd() });
           const text = [
             `MTC Review: ${result.passed ? "PASSED" : "FAILED"}`,
-            `${result.summary.total} findings (${result.summary.critical} critical, ${result.summary.major} major, ` +
-              `${result.summary.minor} minor, ${result.summary.suggestion} suggestion)`,
+            `${result.summary.total} findings (${result.summary.critical} critical, ${result.summary.major} major, ${result.summary.minor} minor, ${result.summary.suggestion} suggestion)`,
             "",
-            ...result.findings.map(
-              (f) =>
-                `[${f.severity.toUpperCase()}] ${f.file}${f.line ? `:${f.line}` : ""} — ${f.message}`,
-            ),
+            ...result.findings.map(f => `[${f.severity.toUpperCase()}] ${f.file}${f.line ? `:${f.line}` : ""} — ${f.message}`),
           ].join("\n");
           setAgentLogs((prev) => [...prev, {
             kind: "message",
@@ -707,9 +690,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     };
   }, [agentLogs, query, gitBranch, authEmail, authName, activeSkillName]);
 
-  const footerRight =
-    `${sidebarData.tokenCount.toLocaleString()} ` +
-    `(${Math.round((sidebarData.tokenCount / sidebarData.maxContextTokens) * 100)}%)  ctrl+p commands`;
+  const footerRight = `${sidebarData.tokenCount.toLocaleString()} (${Math.round((sidebarData.tokenCount / sidebarData.maxContextTokens) * 100)}%)  ctrl+p commands`;
 
   const sidebar = <Sidebar {...sidebarData} />;
 
@@ -732,7 +713,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
             onResponse: handlePermissionResponse,
           }}
         />
-      ) : view === "home" && noPanels && !showMcps && !showSessions ? (
+      ) : view === "home" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions ? (
         <>
           <HomeScreen
             query={query}
@@ -764,22 +745,22 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               onSelect={handleSelectAgent}
             />
           )}
-          {noPanels && showCommands && (
+          {!showAgents && showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && (
             <CommandPalette
               onSelect={handleSelectCommand}
               initialFilter={query.startsWith("/") ? query.slice(1) : undefined}
             />
           )}
-          {noPanels && showModelPicker && (
+          {!showAgents && !showCommands && showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && (
             <ModelPicker
               currentModelId={modelId}
               onSelect={handleSelectModel}
             />
           )}
-          {noPanels && showHelp && (
+          {!showAgents && !showCommands && !showModelPicker && showHelp && !showSkills && !showVariants && !showThemePicker && (
             <HelpOverlay onClose={() => setShowHelp(false)} />
           )}
-          {noPanels && showSkills && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && showSkills && !showVariants && !showThemePicker && (
             <SkillsView
               onClose={() => setShowSkills(false)}
               activeSkillId={activeSkillId}
@@ -790,16 +771,16 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               }}
             />
           )}
-          {noPanels && showMcps && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && showMcps && !showVariants && !showThemePicker && (
             <McpsView onClose={() => setShowMcps(false)} />
           )}
-          {noPanels && showVariants && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && showVariants && !showThemePicker && (
             <VariantsView onClose={() => setShowVariants(false)} onSelect={handleSelectVariant} />
           )}
-          {noPanels && showThemePicker && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && showThemePicker && (
             <ThemePicker onSelect={handleSelectTheme} />
           )}
-          {noPanels && showSessions && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && showSessions && (
             <SessionsView
               onClose={() => setShowSessions(false)}
               currentSessionId={currentSessionId}
@@ -808,7 +789,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               onDelete={handleDeleteSession}
             />
           )}
-          {noPanels && !showMcps && !showSessions && view === "chat" && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "chat" && (
             <ChatView
               query={query}
               onBack={() => setView("home")}
@@ -820,10 +801,10 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               queuedCount={promptQueueRef.current.length}
             />
           )}
-          {noPanels && !showMcps && !showSessions && view === "diff" && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "diff" && (
             <GitDiffView onBack={() => setView("home")} />
           )}
-          {noPanels && !showMcps && !showSessions && view === "connect" && (
+          {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "connect" && (
             <ConnectForm onSave={handleConnectSave} />
           )}
         </AppLayout>

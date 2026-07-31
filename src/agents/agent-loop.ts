@@ -26,10 +26,7 @@ function wrapToolResult(toolName: string, result: ToolResult): string {
   const summary = result.success
     ? truncateResult(result.data)
     : `Error: ${result.error}`;
-  return (
-    "IMPORTANT: Do not echo the raw tool output below. Use only what you need from it, " +
-    `then answer concisely in your own words.\n\nTool result from ${toolName}:\n${summary}`
-  );
+  return `IMPORTANT: Do not echo the raw tool output below. Use only what you need from it, then answer concisely in your own words.\n\nTool result from ${toolName}:\n${summary}`;
 }
 
 export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText: string } {
@@ -100,8 +97,7 @@ export async function runAgentLoop(
 You are an autonomous agent in a CLI environment. Be direct and terse:
 - Never greet the user, never narrate your plans, never write "I will..." or "Let me...". Act, don't describe.
 - For each request, immediately call the appropriate tool(s) and wait for the results before continuing.
-- Prefer read_file and write_file directly when you already know the path. ` +
-  `Use glob_files only to discover paths, with a targeted pattern.
+- Prefer read_file and write_file directly when you already know the path. Use glob_files only to discover paths, with a targeted pattern.
 - Once you have everything you need, answer the user's request concisely with the actual result.`;
 
   const messages: CompletionMessage[] = [
