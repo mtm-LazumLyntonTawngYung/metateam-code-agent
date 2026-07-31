@@ -29,7 +29,8 @@ function isDefaultExcluded(filePath: string): boolean {
 const globFilesTool: ToolDefinition = {
   name: "glob_files",
   description:
-    "Fast glob search using Bun's native glob. Returns matching file paths. Common dependency and build directories (node_modules, .git, dist, build, etc.) are excluded automatically.",
+    "Fast glob search using Bun's native glob. Returns matching file paths. " +
+    "Common dependency and build directories (node_modules, .git, dist, build, etc.) are excluded automatically.",
   parameters: {
     type: "object",
     properties: {
