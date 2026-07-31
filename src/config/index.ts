@@ -18,6 +18,7 @@ export type MtcConfig = {
   telemetry?: TelemetryConfig;
   llm?: Record<string, unknown>;
   license?: Record<string, unknown>;
+  organization?: { name?: string };
   themeId?: string;
 };
 

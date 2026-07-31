@@ -10,6 +10,7 @@
 import { getLicense, formatLicenseInfo } from "./license";
 import { queryAuditLogs, getAuditStats } from "./audit";
 import { listOrganizations, getOrganization } from "./org";
+import { getAllUsers } from "./user";
 import { getSystemStatus } from "./tier";
 import { getConnectedServers } from "../mcp/index";
 import { getAllAgents } from "../agents/index";
@@ -51,6 +52,11 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
       if (path === "/api/orgs") {
         const orgs = listOrganizations();
         return jsonResponse({ organizations: orgs });
+      }
+
+      if (path === "/api/users") {
+        const users = getAllUsers();
+        return jsonResponse({ users });
       }
 
       if (path === "/api/servers") {
@@ -319,6 +325,10 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"/><path d="M10 22v-6h4v6"/><path d="M3 22h18"/></svg>
         <span>Organizations</span>
       </li>
+      <li data-view="users">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3-5 6.5-5s6 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M19 15c1.5.5 2.5 2 2.5 5"/></svg>
+        <span>Users</span>
+      </li>
       <li data-view="servers">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
         <span>Connections</span>
@@ -356,7 +366,7 @@ const IC = {
   file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
 };
 
-let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null };
+let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null, users: null };
 
 /* ---- helpers ---- */
 function stat(label, value, chip, icon) {
@@ -524,6 +534,41 @@ function renderOrganizations() {
         : '<div class="empty">No organizations configured.</div>');
 }
 
+function rolePill(role) {
+  const color = role === 'admin' ? 'var(--accent)' : role === 'viewer' ? 'var(--text-muted)' : 'var(--green)';
+  return '<span class="pill" style="color:' + color + '">' + role + '</span>';
+}
+
+function fmtLastActive(value) {
+  if (!value) return '<span class="dim">Never</span>';
+  const t = new Date(value).getTime();
+  if (isNaN(t)) return '<span class="dim">' + value + '</span>';
+  const diff = Date.now() - t;
+  const day = 86400000;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < day) return Math.floor(diff / 3600000) + 'h ago';
+  if (diff < 7 * day) return Math.floor(diff / day) + 'd ago';
+  return new Date(value).toLocaleDateString();
+}
+
+function renderUsers() {
+  const u = state.users;
+  if (!u) return '<div class="loading">Loading&hellip;</div>';
+  const users = u.users || [];
+  return pageHeader('Users', 'All TUI users and their organizations') +
+    section('Users', users.length + ' users',
+      users.length
+        ? table(['Email', 'Organization', 'Role', 'Last Active', 'Joined'], users.map(user => [
+            user.email,
+            user.orgName + '<div class="dim">' + user.orgSlug + '</div>',
+            rolePill(user.role),
+            fmtLastActive(user.lastActiveAt),
+            new Date(user.joinedAt).toLocaleDateString()
+          ]))
+        : '<div class="empty">No users found.</div>');
+}
+
 function renderServers() {
   const s = state.servers;
   const a = state.agents;
@@ -558,16 +603,17 @@ async function fetchJSON(url) {
 
 async function loadAll() {
   try {
-    const [status, license, audit, analytics, orgs, servers, agents] = await Promise.all([
+    const [status, license, audit, analytics, orgs, servers, agents, users] = await Promise.all([
       fetchJSON(API + '/status'),
       fetchJSON(API + '/license'),
       fetchJSON(API + '/audit'),
       fetchJSON(API + '/analytics'),
       fetchJSON(API + '/orgs'),
       fetchJSON(API + '/servers'),
-      fetchJSON(API + '/agents')
+      fetchJSON(API + '/agents'),
+      fetchJSON(API + '/users')
     ]);
-    state = { status, license, audit, analytics, orgs, servers, agents };
+    state = { status, license, audit, analytics, orgs, servers, agents, users };
     renderView(getActiveView());
   } catch (err) {
     document.getElementById('content').innerHTML = '<div class="error">Failed to load dashboard: ' + err.message + '</div>';
@@ -587,6 +633,7 @@ function renderView(view) {
     case 'audit': content.innerHTML = renderAudit(); break;
     case 'analytics': content.innerHTML = renderAnalytics(); break;
     case 'organizations': content.innerHTML = renderOrganizations(); break;
+    case 'users': content.innerHTML = renderUsers(); break;
     case 'servers': content.innerHTML = renderServers(); break;
   }
 }
