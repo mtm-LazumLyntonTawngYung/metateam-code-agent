@@ -20,7 +20,7 @@ export type AgentUpdate =
 
 export const MAX_AGENT_ITERATIONS = 25;
 
-export const DEFAULT_MAX_TOKENS = 1024;
+export const DEFAULT_MAX_TOKENS = 4096;
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
   const summary = result.success
