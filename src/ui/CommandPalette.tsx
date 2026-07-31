@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { getInstalledSkills } from "../skills";
 import { useTheme } from "./theme";
 
 const BUILTIN_COMMANDS = [
@@ -47,13 +46,7 @@ export default function CommandPalette({ onSelect, initialFilter = "" }: Command
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const allCommands = useMemo(() => {
-    const skills = getInstalledSkills();
-    const skillCmds = skills.map((s) => ({
-      id: s.id,
-      label: `/${s.id} - ${s.name} (skill)`,
-      category: "skills" as const,
-    }));
-    return [...BUILTIN_COMMANDS, ...skillCmds];
+    return BUILTIN_COMMANDS;
   }, []);
 
   const filtered = useMemo(
