@@ -106,8 +106,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
                 <Box marginTop={1} flexDirection="column" alignItems="center">
                   <Text color={theme.colors.muted}>Example configuration:</Text>
                   <Text color={theme.colors.muted}>
-                    {"{ \"mcpServers\": { \"figma\": { \"command\": \"bun\", " +
-                      "\"args\": [\"run\", \"src/mcp-plugins/figma-bridge.ts\"] } } }"}
+                    {'{ "mcpServers": { "figma": { "command": "bun", "args": ["run", "src/mcp-plugins/figma-bridge.ts"] } } }'}
                   </Text>
                 </Box>
               </Box>
@@ -182,11 +181,7 @@ export default function McpsView({ onClose }: McpsViewProps) {
             {"\u2191\u2193"} Navigate  <Text bold>Space</Text> Toggle  <Text bold>esc</Text> Close
           </Text>
           <Text color={theme.colors.muted}>
-            {refreshing
-              ? "Refreshing..."
-              : hasServers
-                ? `${connected.length} connected, ${disabled.length} disabled`
-                : "No servers"}
+            {refreshing ? "Refreshing..." : hasServers ? `${connected.length} connected, ${disabled.length} disabled` : "No servers"}
           </Text>
         </Box>
       </Box>

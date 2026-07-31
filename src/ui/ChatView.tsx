@@ -78,8 +78,7 @@ const COMMAND_HANDLERS: Record<string, CommandHandler> = {
 };
 
 const USAGE_TEXT =
-  "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | " +
-  "/bash cmd | /glob pattern | /call toolName {jsonArgs} | /subagent name /read ...";
+  "Usage: /read path [offset] [limit] | /write path content | /edit path target replacement | /bash cmd | /glob pattern | /call toolName {jsonArgs} | /subagent name /read ...";
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const HEADER_HEIGHT = 3; // query header + border top + padding
@@ -361,9 +360,7 @@ export default function ChatView({
         if (!agent || agent.mode !== "subagent") {
           result = {
             success: false,
-            error: `Unknown subagent: ${subagentId}. Available: ${
-              getSubagents().map((a) => a.id).join(", ") || "none"
-            }`,
+            error: `Unknown subagent: ${subagentId}. Available: ${getSubagents().map((a) => a.id).join(", ") || "none"}`,
           };
         } else if (!subQuery) {
           result = {
@@ -376,9 +373,7 @@ export default function ChatView({
             const subResult = await runSubagent({ agent, query: subQuery });
             result = {
               success: true,
-              data:
-                `Subagent "${agent.name}" completed in ${subResult.duration}ms ` +
-                `(${subResult.toolCalls} tool calls)\n\n${subResult.output}`,
+              data: `Subagent "${agent.name}" completed in ${subResult.duration}ms (${subResult.toolCalls} tool calls)\n\n${subResult.output}`,
             };
           } catch (err) {
             result = {
@@ -464,15 +459,7 @@ export default function ChatView({
           value={toolInput}
           onChange={setToolInput}
           onSubmit={handleToolSubmit}
-          placeholder={
-            queuedCount > 0
-              ? `${queuedCount} queued...`
-              : isAgentRunning
-                ? "agent is thinking..."
-                : busy
-                  ? "working..."
-                  : "type a message or /command"
-          }
+          placeholder={queuedCount > 0 ? `${queuedCount} queued...` : isAgentRunning ? "agent is thinking..." : busy ? "working..." : "type a message or /command"}
         />
       </Box>
 

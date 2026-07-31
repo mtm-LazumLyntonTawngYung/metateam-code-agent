@@ -58,7 +58,7 @@ program
       await waitUntilExit();
     } else {
       const output = renderToString(<App />, { columns: 80 });
-      process.stdout.write(output + "\n");
+      console.log(output);
     }
   });
 
@@ -167,10 +167,7 @@ serveCmd
       console.log("mtc serve: starting headless server...");
     }
     if (options.wsToken) {
-      console.error(
-        "[mtc] WARNING: --ws-token passed via CLI — visible in process listings. " +
-          "Use MTC_WS_TOKEN env var instead.",
-      );
+      console.error("[mtc] WARNING: --ws-token passed via CLI — visible in process listings. Use MTC_WS_TOKEN env var instead.");
     }
     startServer({
       port: parseInt(options.port, 10) || 8080,
@@ -179,9 +176,7 @@ serveCmd
     });
   });
 
-const daemonCmd = program
-  .command("daemon")
-  .description("Start headless daemon with webhook listener for autonomous autofix");
+const daemonCmd = program.command("daemon").description("Start headless daemon with webhook listener for autonomous autofix");
 
 daemonCmd
   .option("-p, --port <port>", "Port to listen on", "8080")
@@ -262,11 +257,7 @@ enterpriseCmd
   .description("Generate a new license key")
   .requiredOption("-t, --tier <tier>", "License tier: community, enterprise, enterprise-plus")
   .requiredOption("-o, --org <name>", "Organization name")
-  .option(
-    "-e, --expires <date>",
-    "Expiration date (ISO 8601)",
-    new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-  )
+  .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
   .option("-s, --seats <number>", "Max seats", "50")
   .action((options: { tier: string; org: string; expires: string; seats: string }) => {
     const key = generateLicenseKey(
