@@ -37,19 +37,20 @@ import {
   setSessionId,
   getSessionId,
 } from "../telemetry/tracker";
-import { initProject } from "../init/index";
 import { reviewProject } from "../review/index";
 import { getSystemStatus } from "../enterprise/index";
 import { exec } from "child_process";
 import { join, resolve } from "path";
 import { existsSync } from "fs";
-import { createSession } from "../session/history";
+import { createSession, getMessages } from "../session/history";
+import type { MessageRow } from "../session/history";
 import { countTokens, DEFAULT_BUDGET } from "../session/tokens";
 import { getCurrentBranch } from "./git";
 import LoginScreen from "./LoginScreen";
 import { isAuthenticated, getAuth, clearAuth } from "../auth/index";
 import { ThemeProvider, useTheme, getTheme } from "./theme";
 import { cleanExit } from "./clean-exit";
+import { disableMouseMode } from "./mouse";
 import ThemePicker from "./ThemePicker";
 import SessionsView from "./SessionsView";
 import { loadLlmConfig, findModel } from "../llm/config";
@@ -67,6 +68,28 @@ type LogEntry =
   | { kind: "status"; agentName: string; modelName: string; duration: number };
 
 type View = "home" | "chat" | "connect" | "diff";
+
+function messagesToLogs(messages: MessageRow[]): LogEntry[] {
+  const logs: LogEntry[] = [];
+  for (const m of messages) {
+    if (m.role === "user") {
+      logs.push({ kind: "query", text: m.content });
+    } else if (m.role === "assistant") {
+      logs.push({ kind: "message", text: m.content });
+    } else if (m.role === "tool" && m.tool_name) {
+      let args: Record<string, unknown> = {};
+      try {
+        args = m.tool_args ? JSON.parse(m.tool_args) : {};
+      } catch {}
+      logs.push({ kind: "tool_call", toolName: m.tool_name, args });
+      logs.push({
+        kind: "tool_result",
+        result: { success: true, data: m.tool_result ?? m.content },
+      });
+    }
+  }
+  return logs;
+}
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
@@ -99,8 +122,9 @@ export default function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
   const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
-  const promptQueueRef = useRef<string[]>([]);
-  const activeAgentRef = useRef<AgentDefinition | null>(null);
+const promptQueueRef = useRef<string[]>([]);
+const activeAgentRef = useRef<AgentDefinition | null>(null);
+const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([]);
   const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
   const [authenticated, setAuthenticated] = useState(isAuthenticated);
   const [authEmail, setAuthEmail] = useState(() => getAuth()?.userEmail ?? "");
@@ -129,10 +153,13 @@ export default function App() {
     setActiveAgentId(agentId);
     activeAgentRef.current = getActiveAgent();
 
+    const sid = createSession("mtc-session");
+    setSessionId(sid);
+    setCurrentSessionId(sid);
+    completionHistoryRef.current = [];
+
     const telem = ensureTelemetryConfig();
     if (telem.enabled) {
-      const sid = createSession("mtc-session");
-      setSessionId(sid);
       trackSessionStart();
       trackModelUsage("deepseek-v4-flash-free", 0);
     }
@@ -145,6 +172,7 @@ export default function App() {
     });
     setGitBranch(getCurrentBranch() ?? undefined);
     const onExit = () => {
+      try { disableMouseMode(); } catch {}
       try { process.stdout.write('\x1b[2J\x1b[3J\x1b[H'); } catch {}
     };
     process.on('exit', onExit);
@@ -295,9 +323,24 @@ export default function App() {
         }
       };
 
-      await runAgentLoop(text, agent, [], onUpdate, requestToolExecution, modelName);
+      await runAgentLoop(
+        text,
+        agent,
+        completionHistoryRef.current,
+        onUpdate,
+        requestToolExecution,
+        modelName,
+        currentSessionId ?? undefined,
+      );
+
+      if (currentSessionId) {
+        const rows = getMessages(currentSessionId, true);
+        completionHistoryRef.current = rows
+          .filter((r): r is MessageRow & { role: "user" | "assistant" } => r.role === "user" || r.role === "assistant")
+          .map((r) => ({ role: r.role, content: r.content }));
+      }
     },
-    [requestToolExecution, themeRef, modelId],
+    [requestToolExecution, themeRef, modelId, currentSessionId],
   );
 
   useEffect(() => {
@@ -314,15 +357,6 @@ export default function App() {
       if (value === "/connect" || value.startsWith("/connect ")) {
         setView("connect");
         setQuery("");
-        return;
-      }
-      if (value === "/agent" || value.startsWith("/agent ")) {
-        const parts = value.split(/\s+/);
-        if (parts.length > 1) {
-          switchAgent(parts[1]);
-          return;
-        }
-        setShowAgents(true);
         return;
       }
       if (value === "/logout") {
@@ -351,20 +385,10 @@ export default function App() {
         const agent = activeAgentRef.current ?? getActiveAgent();
         if (agent) {
           setAgentLogs([{ kind: "query", text: value }]);
-          const result = initProject({
-            dir: process.cwd(),
-            framework: "typescript",
-            docs: "en",
-            sqa: "basic",
-            offshore: false,
-            force: false,
-          });
-          const text = [
-            ...(result.created.length ? [`Created ${result.created.length} files:` , ...result.created.map(f => `  ${f}`)] : []),
-            ...(result.errors.length ? [`Errors:` , ...result.errors.map(e => `  ${e}`)] : []),
-          ].join("\n") || "Nothing to do.";
-          setAgentLogs((prev) => [...prev, { kind: "message", text }]);
-          setAgentBusy(false);
+          startAgentLoop(
+            `Initialize project configuration at ${process.cwd()}. Inspect the project structure (package.json, README, source files if present), detect language/framework/package manager, then create or overwrite AGENTS.md at the project root with comprehensive rules and guidelines tailored to this stack. Also create .mtc/ with rules/ and agents/ subdirectories and appropriate config files. Use read_file, glob_files, run_bash, and write_file as needed.`,
+            agent,
+          );
         }
         return;
       }
@@ -387,7 +411,9 @@ export default function App() {
       if (value === "/new") {
         const newSessionId = createSession("mtc-session");
         setSessionId(newSessionId);
+        setCurrentSessionId(newSessionId);
         setAgentLogs([]);
+        completionHistoryRef.current = [];
         setQuery("");
         setView("home");
         setNotification(`New session: ${newSessionId.slice(0, 8)}`);
@@ -510,6 +536,47 @@ export default function App() {
     setNotification(`Variant selected: ${variantId}`);
   };
 
+  const handleSelectSession = useCallback((sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setSessionId(sessionId);
+    setShowSessions(false);
+    const rows = getMessages(sessionId, true);
+    const history: { role: "user" | "assistant"; content: string }[] = [];
+    for (const row of rows) {
+      if (row.role === "user" || row.role === "assistant") {
+        history.push({ role: row.role, content: row.content });
+      }
+    }
+    completionHistoryRef.current = history;
+    setAgentLogs(messagesToLogs(rows));
+    setQuery("");
+    setView("chat");
+    setNotification(`Switched to session ${sessionId.slice(0, 8)}`);
+  }, []);
+
+  const handleNewSession = useCallback(() => {
+    const newSessionId = createSession("mtc-session");
+    setSessionId(newSessionId);
+    setCurrentSessionId(newSessionId);
+    completionHistoryRef.current = [];
+    setAgentLogs([]);
+    setShowSessions(false);
+    setQuery("");
+    setView("home");
+    setNotification(`New session: ${newSessionId.slice(0, 8)}`);
+  }, []);
+
+  const handleDeleteSession = useCallback(
+    (sessionId: string) => {
+      if (sessionId === currentSessionId) {
+        handleNewSession();
+      } else {
+        setNotification(`Deleted session ${sessionId.slice(0, 8)}`);
+      }
+    },
+    [currentSessionId, handleNewSession],
+  );
+
   const handleSelectCommand = (id: string) => {
     setShowCommands(false);
     setQuery("");
@@ -534,6 +601,7 @@ export default function App() {
       setNotification("Opening editor...");
     }
     if (id === "help") setShowHelp(true);
+    if (id === "mcps") setShowMcps(true);
     if (id === "init") {
       setShowCommands(false);
       setQuery("/init");
@@ -716,11 +784,9 @@ export default function App() {
             <SessionsView
               onClose={() => setShowSessions(false)}
               currentSessionId={currentSessionId}
-              onSelect={(sessionId) => {
-                setCurrentSessionId(sessionId);
-                setShowSessions(false);
-                setNotification(`Switched to session ${sessionId.slice(0, 8)}`);
-              }}
+              onSelect={handleSelectSession}
+              onNewSession={handleNewSession}
+              onDelete={handleDeleteSession}
             />
           )}
           {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "chat" && (

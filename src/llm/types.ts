@@ -1,3 +1,5 @@
+import type { JsonSchema } from "../tools/schema";
+
 export type ProviderId = "openai" | "anthropic" | "deepseek" | "openrouter";
 
 export type ModelTier = "fast" | "default" | "reasoning";
@@ -21,9 +23,29 @@ export type ProviderConfig = {
   models: string[];
 };
 
+export type ToolDefinition = {
+  name: string;
+  description: string;
+  parameters: JsonSchema;
+};
+
+export type ToolCallInfo = {
+  id: string;
+  name: string;
+  arguments: string;
+};
+
+export type ToolChoice =
+  | "auto"
+  | "none"
+  | "required"
+  | { type: "function"; function: { name: string } };
+
 export type CompletionMessage = {
-  role: "system" | "user" | "assistant";
+  role: "system" | "user" | "assistant" | "tool";
   content: string;
+  toolCalls?: ToolCallInfo[];
+  toolCallId?: string;
 };
 
 export type CompletionRequest = {
@@ -32,11 +54,14 @@ export type CompletionRequest = {
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
+  tools?: ToolDefinition[];
+  toolChoice?: ToolChoice;
 };
 
 export type CompletionResponse = {
   model: string;
   content: string;
+  toolCalls?: ToolCallInfo[];
   usage: {
     inputTokens: number;
     outputTokens: number;

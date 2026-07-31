@@ -1,5 +1,6 @@
 import { render, renderToString } from "ink";
 import { registerCleanup } from "./ui/clean-exit";
+import { MouseInputStream, enableMouseMode, disableMouseMode } from "./ui/mouse";
 import { Command } from "commander";
 import App from "./ui/App";
 import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
@@ -45,8 +46,15 @@ program
   .version("1.0.0")
   .action(async () => {
     if (process.stdin.isTTY) {
-      const { waitUntilExit, cleanup } = render(<App />);
-      registerCleanup(cleanup);
+      enableMouseMode();
+      const mouseInput = new MouseInputStream(process.stdin);
+      const { waitUntilExit, cleanup } = render(<App />, {
+        stdin: mouseInput as unknown as NodeJS.ReadStream,
+      });
+      registerCleanup(() => {
+        disableMouseMode();
+        cleanup();
+      });
       await waitUntilExit();
     } else {
       const output = renderToString(<App />, { columns: 80 });

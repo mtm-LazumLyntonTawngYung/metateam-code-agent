@@ -4,6 +4,7 @@ import editFileTool from "./edit_file";
 import runBashTool from "./run_bash";
 import globFilesTool from "./glob_files";
 import type { ToolDefinition, ToolResult } from "./schema";
+import type { ToolDefinition as LlmToolDefinition } from "../llm/types";
 import { trackToolCall } from "../telemetry/tracker";
 
 const toolRegistry: Record<string, ToolDefinition> = {
@@ -22,6 +23,14 @@ export function getTool(name: string): ToolDefinition | undefined {
 
 export function getAllTools(): ToolDefinition[] {
   return Object.values(toolRegistry);
+}
+
+export function getToolSpecs(): LlmToolDefinition[] {
+  return Object.values(toolRegistry).map((t) => ({
+    name: t.name,
+    description: t.description,
+    parameters: t.parameters,
+  }));
 }
 
 export function registerTool(name: string, def: ToolDefinition): () => void {

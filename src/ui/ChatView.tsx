@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Box, Text, useInput, useWindowSize } from "ink";
 import TextInput from "ink-text-input";
 import { useTheme } from "./theme";
 import { getSubagents, runSubagent, getAgentById } from "../agents/index";
 import type { ToolResult } from "../tools/schema";
+import { onWheel } from "./mouse";
 
 type ChatViewProps = {
   query: string;
@@ -84,21 +85,111 @@ const HEADER_HEIGHT = 3; // query header + border top + padding
 const FOOTER_HEIGHT = 4; // status bar + input + padding + help line
 const VISIBLE_LOG_LINES = 20;
 
-function truncateText(text: string, maxLines: number): string[] {
-  const lines = text.split("\n");
-  if (lines.length <= maxLines) return lines;
-  const truncated = lines.slice(0, maxLines - 1);
-  truncated.push(`... (${lines.length - maxLines + 1} more lines)`);
-  return truncated;
+function clip(text: string, maxLen = 120): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  return t.length > maxLen ? t.slice(0, maxLen) + "\u2026" : t;
 }
 
-function formatData(data: unknown, maxLines: number): string[] {
-  if (typeof data === "string") return truncateText(data, maxLines);
-  if (data === null || data === undefined) return [];
-  const formatted = typeof data === "object"
-    ? JSON.stringify(data, null, 2)
-    : String(data);
-  return truncateText(formatted, maxLines);
+function toolCallSummary(name: string, args: Record<string, unknown>): string {
+  if (name === "read_file" || name === "write_file" || name === "edit_file") {
+    return args.path ? `${name} ${clip(String(args.path), 60)}` : name;
+  }
+  if (name === "run_bash") return `${name} ${clip(String(args.command ?? ""), 60)}`;
+  if (name === "glob_files") return `${name} ${clip(String(args.pattern ?? ""), 60)}`;
+  return name;
+}
+
+function resultSummary(result: ToolResult): string {
+  if (!result.success) return `\u2717 ${clip(result.error ?? "Failed", 160)}`;
+  const d = result.data;
+  if (d && typeof d === "object") {
+    const o = d as Record<string, unknown>;
+    if (typeof o.totalLines === "number") return `\u2713 ${o.totalLines} lines`;
+    if (typeof o.count === "number") return `\u2713 ${o.count} files`;
+    if (typeof o.bytesWritten === "number") return `\u2713 ${o.bytesWritten} bytes`;
+    if (typeof o.replacedCount === "number") return `\u2713 ${o.replacedCount} replaced`;
+    if ("exitCode" in o) {
+      const first = typeof o.stdout === "string" && o.stdout ? ` \u00b7 ${clip(o.stdout.split("\n")[0], 60)}` : "";
+      return `\u2713 exit ${String(o.exitCode)}${first}`;
+    }
+  }
+  if (typeof d === "string") return `\u2713 ${clip(d, 120)}`;
+  if (d === null || d === undefined) return "\u2713 done";
+  return `\u2713 ${clip(String(d), 120)}`;
+}
+
+type FlatLine = {
+  key: string;
+  text: string;
+  arrow?: "user" | "system";
+  color?: string;
+  error?: boolean;
+  muted?: boolean;
+  indent?: boolean;
+  animate?: boolean;
+};
+
+function flattenEntries(entries: LogEntry[], lastMsgSeq: number, revealChars: number): FlatLine[] {
+  const lines: FlatLine[] = [];
+  let seq = 0;
+  let msgSeq = 0;
+  let prevKind = "";
+  const push = (text: string, extra: Partial<FlatLine> = {}) => {
+    lines.push({ key: `${seq++}`, text, ...extra });
+  };
+  const spacer = () => {
+    if (lines.length > 0 && lines[lines.length - 1].text !== "") push("");
+  };
+  for (const entry of entries) {
+    if (entry.kind === "query") {
+      if (prevKind) spacer();
+      entry.text.split("\n").forEach((t, i) => push(t, { arrow: "user", indent: i > 0 }));
+      prevKind = "query";
+    } else if (entry.kind === "message") {
+      if (prevKind) spacer();
+      const isLast = msgSeq === lastMsgSeq;
+      const textLines = entry.text.split("\n");
+      let charStart = 0;
+      for (let i = 0; i < textLines.length; i++) {
+        const len = textLines[i].length;
+        if (isLast && revealChars <= charStart) break;
+        let t = textLines[i];
+        let animate = false;
+        if (isLast && revealChars < charStart + len) {
+          t = t.slice(0, Math.max(0, revealChars - charStart));
+          animate = true;
+        }
+        push(t, {
+          arrow: i === 0 ? "system" : undefined,
+          color: entry.color,
+          indent: i > 0,
+          ...(animate ? { animate: true } : {}),
+        });
+        charStart += len + 1;
+      }
+      msgSeq++;
+      prevKind = "message";
+    } else if (entry.kind === "tool_call") {
+      if (prevKind !== "tool") spacer();
+      if (entry.toolName !== "input") {
+        push(`\u2318 ${toolCallSummary(entry.toolName, entry.args)}`, { muted: true });
+      }
+      prevKind = "tool";
+    } else if (entry.kind === "tool_result") {
+      if (prevKind !== "tool") spacer();
+      push(resultSummary(entry.result), {
+        indent: true,
+        ...(entry.result.success ? { muted: true } : { error: true }),
+      });
+      prevKind = "tool";
+    } else if (entry.kind === "status") {
+      if (prevKind) spacer();
+      const secs = (entry.duration / 1000).toFixed(1);
+      push(`\u25a3  ${entry.agentName} \u00b7 ${entry.modelName} \u00b7 ${secs}s`, { muted: true });
+      prevKind = "status";
+    }
+  }
+  return lines;
 }
 
 export default function ChatView({
@@ -117,13 +208,15 @@ export default function ChatView({
     { kind: "query", text: query },
     {
       kind: "message",
-      text: isAgentRunning ? "Agent is thinking..." : "Commands: /read /write /edit /bash /glob /call /subagent /agent",
+      text: isAgentRunning ? "Agent is thinking..." : "Commands: /read /write /edit /bash /glob /call /subagent",
       color: theme.colors.muted,
     },
   ]);
   const [toolInput, setToolInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [spinnerFrame, setSpinnerFrame] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [stickToBottom, setStickToBottom] = useState(true);
   const showingAgent = isAgentRunning || agentLogs.length > 0;
 
   useEffect(() => {
@@ -136,14 +229,106 @@ export default function ChatView({
 
   const spinner = SPINNER_FRAMES[spinnerFrame];
 
-  useInput((_input, key) => {
-    if (key.escape && !busy) onBack();
-  });
-
   const maxVisibleLogLines = useMemo(() => {
     const available = rows - HEADER_HEIGHT - FOOTER_HEIGHT;
     return Math.max(available, VISIBLE_LOG_LINES);
   }, [rows]);
+
+  const allEntries = showingAgent ? agentLogs : logs;
+
+  const msgMeta = useMemo(() => {
+    let total = 0;
+    let last = "";
+    for (const e of allEntries) {
+      if (e.kind === "message") {
+        last = e.text;
+        total++;
+      }
+    }
+    return { total, last };
+  }, [allEntries]);
+  const lastMsgSeq = msgMeta.total - 1;
+  const lastMsgTotalChars = msgMeta.last.length;
+
+  const [revealChars, setRevealChars] = useState(0);
+  const flatLines = useMemo(
+    () => flattenEntries(allEntries, lastMsgSeq, revealChars),
+    [allEntries, lastMsgSeq, revealChars],
+  );
+  const maxScrollTop = Math.max(0, flatLines.length - maxVisibleLogLines);
+
+  useEffect(() => {
+    setRevealChars(0);
+    if (!showingAgent || lastMsgTotalChars <= 0) return;
+    const duration = Math.max(600, Math.min(3200, lastMsgTotalChars * 4));
+    const chunk = Math.max(1, Math.ceil(lastMsgTotalChars / (duration / 16)));
+    const id = setInterval(() => {
+      setRevealChars((prev) => {
+        const next = prev + chunk;
+        if (next >= lastMsgTotalChars) {
+          clearInterval(id);
+          return lastMsgTotalChars;
+        }
+        return next;
+      });
+    }, 16);
+    return () => clearInterval(id);
+  }, [showingAgent, lastMsgTotalChars, lastMsgSeq]);
+
+  useEffect(() => {
+    if (stickToBottom) {
+      setScrollTop(maxScrollTop);
+    } else {
+      setScrollTop((s) => Math.min(s, maxScrollTop));
+    }
+  }, [flatLines.length, maxScrollTop, stickToBottom]);
+
+  useInput((_input, key) => {
+    if (key.escape && !busy) onBack();
+    if (key.upArrow) {
+      setStickToBottom(false);
+      setScrollTop((s) => Math.max(0, s - 1));
+    }
+    if (key.downArrow) {
+      const next = Math.min(maxScrollTop, scrollTop + 1);
+      setScrollTop(next);
+      setStickToBottom(next === maxScrollTop);
+    }
+    if (key.pageUp) {
+      setStickToBottom(false);
+      setScrollTop((s) => Math.max(0, s - maxVisibleLogLines));
+    }
+    if (key.pageDown) {
+      const next = Math.min(maxScrollTop, scrollTop + maxVisibleLogLines);
+      setScrollTop(next);
+      setStickToBottom(next === maxScrollTop);
+    }
+    if (key.home) {
+      setStickToBottom(false);
+      setScrollTop(0);
+    }
+    if (key.end) {
+      setScrollTop(maxScrollTop);
+      setStickToBottom(true);
+    }
+  });
+
+  const scrollTopRef = useRef(scrollTop);
+  scrollTopRef.current = scrollTop;
+  const maxScrollTopRef = useRef(maxScrollTop);
+  maxScrollTopRef.current = maxScrollTop;
+
+  useEffect(() => {
+    const off = onWheel((event) => {
+      const step = event.direction === "up" ? -3 : 3;
+      const next = Math.max(0, Math.min(maxScrollTopRef.current, scrollTopRef.current + step));
+      setScrollTop(next);
+      setStickToBottom(next >= maxScrollTopRef.current);
+    });
+    return off;
+  }, []);
+
+  const visibleLines = flatLines.slice(scrollTop, scrollTop + maxVisibleLogLines);
 
   const handleToolSubmit = useCallback(
     async (line: string) => {
@@ -198,11 +383,6 @@ export default function ChatView({
           }
           setBusy(false);
         }
-      } else if (cmd === "/agent" && rest[0]) {
-        result = {
-          success: false,
-          error: "Switch agents from the home screen with Tab or /agent",
-        };
       } else if (cmd === "/call" && rest[0]) {
         const toolName = rest[0];
         let args: Record<string, unknown>;
@@ -230,71 +410,42 @@ export default function ChatView({
     [busy, isAgentRunning, requestTool, onFreeformInput],
   );
 
-  const allEntries = showingAgent ? agentLogs : logs;
-  const displayEntries = allEntries.filter(
-    (l) => l.kind === "tool_result" || l.kind === "query" || l.kind === "message" || l.kind === "tool_call" || l.kind === "status",
-  );
-
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={2} paddingY={1}>
       <Box flexDirection="column" flexGrow={1}>
-        {displayEntries.length === 0 ? (
+        {visibleLines.length === 0 ? (
           <Text color={theme.colors.muted}>{spinner} thinking...</Text>
         ) : (
-          displayEntries.map((entry, i) => {
-            if (entry.kind === "query") {
-              return (
-                <Box key={i}>
-                  <Text color={theme.colors.text}>{entry.text}</Text>
-                </Box>
-              );
-            }
-            if (entry.kind === "message") {
-              return (
-                <Box key={i}>
-                  <Text color={theme.colors.text}>{entry.text}</Text>
-                </Box>
-              );
-            }
-            if (entry.kind === "tool_call") {
-              return (
-                <Box key={i}>
-                  <Text color={theme.colors.muted}>+ Thought</Text>
-                </Box>
-              );
-            }
-            if (entry.kind === "tool_result") {
-              const dataLines = entry.result.data ? formatData(entry.result.data, maxVisibleLogLines) : [];
-              return (
-                <Box key={i} flexDirection="column">
-                  {entry.result.success ? (
-                    dataLines.length > 0 ? (
-                      <Box paddingLeft={2} flexDirection="column">
-                        {dataLines.map((line, j) => (
-                          <Text key={j} color={theme.colors.text}>{line}</Text>
-                        ))}
-                      </Box>
-                    ) : null
-                  ) : (
-                    <Text color={theme.colors.error}>
-                      {"\u2717"} {entry.result.error ?? "Failed"}
-                    </Text>
-                  )}
-                </Box>
-              );
-            }
-            if (entry.kind === "status") {
-              const secs = (entry.duration / 1000).toFixed(1);
-              return (
-                <Box key={i}>
-                  <Text color={theme.colors.muted}>{"\u25a3"}  {entry.agentName} · {entry.modelName} · {secs}s</Text>
-                </Box>
-              );
-            }
-            return null;
+          visibleLines.map((line) => {
+            let text = line.text;
+            if (line.animate) text += "\u258d";
+            const arrow = line.arrow === "user"
+              ? <Text color={theme.colors.primary}>{"\u25b6"} </Text>
+              : line.arrow === "system"
+                ? <Text color={theme.colors.secondary}>{"\u25b6"} </Text>
+                : null;
+            const color = line.error
+              ? theme.colors.error
+              : line.muted
+                ? theme.colors.muted
+                : line.color ?? theme.colors.text;
+            return (
+              <Box key={line.key} paddingLeft={line.indent ? 2 : 0}>
+                {arrow}
+                <Text color={color}>{text}</Text>
+              </Box>
+            );
           })
         )}
       </Box>
+
+      {scrollTop > 0 && (
+        <Box marginTop={1}>
+          <Text color={theme.colors.muted}>
+            {"\u25b2"} {scrollTop} more lines above (home to top)
+          </Text>
+        </Box>
+      )}
 
       {(busy || isAgentRunning) && (
         <Box marginTop={1}>
@@ -314,7 +465,7 @@ export default function ChatView({
 
       <Box marginTop={1}>
         <Text color={theme.colors.muted}>
-          <Text bold>esc</Text> back
+          <Text bold>esc</Text> back  {"\u2191\u2193"} scroll  <Text bold>end</Text> bottom
         </Text>
       </Box>
     </Box>

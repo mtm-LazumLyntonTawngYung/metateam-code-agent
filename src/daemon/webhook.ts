@@ -42,7 +42,7 @@ export function startWebhookServer(config: DaemonConfig): void {
       }
 
       const rawBody = await req.text();
-      if (rawBody.length > 1024 * 1024) {
+      if (rawBody.length > 200 * 200) {
         return new Response("Payload too large", { status: 413 });
       }
 
