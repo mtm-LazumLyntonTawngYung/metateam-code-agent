@@ -1,0 +1,108 @@
+src/ui/SessionsView.tsx
+  s_ee98244f829b61::t_1c08b918b16212 66
+  s_ee98244f829b61::t_55beef9244a50a 4,11-12,27-28,33-34,37-39,50,53-62,64-65,67-71,91,93-105,141
+src/llm/index.ts
+  s_8ddc02c01ad160::t_758fca97981101 17-19
+src/ui/GitDiffView.tsx
+  h_10671eecd6b5d0 138-139
+src/llm/client.ts
+  s_8ddc02c01ad160::t_2f74622bcefdee 71,74,76,81-84,101-112,115-116,118-123,126-128,130-132,134,145,153-156,174-182,188-201,203-205,219,227,229,234-237,256-267,270-271,273-278,281-283,285-287,293-304,306-393
+  s_8ddc02c01ad160::t_cf449562daffa1 305
+  s_8ddc02c01ad160::t_66d72a8f290859 7-9,117,272
+src/daemon/webhook.ts
+  h_10671eecd6b5d0 45
+src/cli.tsx
+  s_ee98244f829b61::t_83345c2a1f60d8 49-50,54-57
+  s_ee98244f829b61::t_8b8256e6f8e4c3 3
+  s_ee98244f829b61::t_c19dcde2ba24b2 51-53
+src/agents/agent-loop.ts
+  s_ee98244f829b61::t_b5b8486cb71bf8 184,189
+  s_8ddc02c01ad160::t_324092c30da710 2-4,31,57-63,84,90-92,94,118-120,129-139,141-145,148,154,160,163-165,167,182-183,185-186
+  s_8ddc02c01ad160::t_1aabacafcafc94 97-101
+  s_8ddc02c01ad160::t_3489db10f553bc 147
+  s_8ddc02c01ad160::t_1f84a5b9a17845 28-30
+  s_8ddc02c01ad160::t_57b299069528ea 95
+  s_ee98244f829b61::t_94235bd4d50b57 188
+  s_ee98244f829b61::t_e055599fab4136 190-192
+src/ui/mouse.ts
+  s_ee98244f829b61::t_050e35dc43e3d8 1-19,30-60,71-80,90-136
+  s_ee98244f829b61::t_120b2a2930520f 81
+  s_ee98244f829b61::t_8b59238093b291 84,86-87
+  s_ee98244f829b61::t_7d1629745521cc 61-70,82-83,85,88-89
+  s_ee98244f829b61::t_53a89f51a8747d 20-29
+src/ui/ChatView.tsx
+  s_8ddc02c01ad160::t_12e9fea162ca14 420,435
+  s_8ddc02c01ad160::t_df2d528cf82499 421
+  s_ee98244f829b61::t_791d106c76e985 121-128,130-131,133-134,137-138,142-144,146,148,172,176,185,187,190-192
+  s_ee98244f829b61::t_9531335cb7ea29 325
+  s_ee98244f829b61::t_b00274949e4b70 416,419,422-434,436-437,442-448,468
+  s_8ddc02c01ad160::t_fb719b99854ba1 253
+  s_8ddc02c01ad160::t_6d912ba1953bc4 255-256
+  s_ee98244f829b61::t_67d72d5bc3dc73 321-323,327-328,330
+  s_ee98244f829b61::t_721ae2dc96d427 1
+  s_8ddc02c01ad160::t_289a1cc1672c22 88-90,93-99,102-120,129,135-136,139-141,147,150-153,163-165,167,169-171,173-175,177-184,186,188-189
+  s_ee98244f829b61::t_da21d067b2b35e 218-219,237-238,254,257-258,277-315,331
+  s_ee98244f829b61::t_fea8867db8b501 316-320,324,326,329
+  s_ee98244f829b61::t_f46b9ff63e49fe 100-101,211,332,449
+  s_8ddc02c01ad160::t_481543eeebd9b5 239-252,259-276
+  s_ee98244f829b61::t_03f74404027d3e 7
+  s_8ddc02c01ad160::t_19cde2f9b7b4e2 132,145,149,154-162,166,168
+src/tools/index.ts
+  s_8ddc02c01ad160::t_fe8c19e7677f3e 7
+  s_8ddc02c01ad160::t_9b382b50d31d6b 28-35
+src/tools/read_file.ts
+  h_10671eecd6b5d0 49,53
+src/tools/glob_files.ts
+  s_8ddc02c01ad160::t_9fc58875e156d5 6-28
+  s_8ddc02c01ad160::t_f568e62660f48d 32
+  s_8ddc02c01ad160::t_945e737245e0df 53
+src/ui/App.tsx
+  s_ee98244f829b61::t_b56095c822d721 72-93
+  s_ee98244f829b61::t_7f2e65eaa4067b 125-126,326-328,330-331,391
+  s_ee98244f829b61::t_18eec524f7d477 175
+  s_ee98244f829b61::t_1afa768a03309c 787-789
+  s_ee98244f829b61::t_1bd4b84fe492ab 53
+  s_8ddc02c01ad160::t_99b68052f12817 45
+  s_ee98244f829b61::t_0d26d77e839c6c 339
+  s_ee98244f829b61::t_3683a0ad345331 46
+  s_8ddc02c01ad160::t_6d1c5c2f4ae6c2 156-160
+  s_ee98244f829b61::t_14d35d9e78ee2c 604
+  s_ee98244f829b61::t_b0af66847cd12a 539-579
+  s_ee98244f829b61::t_dd520db8f28cc2 127
+  s_ee98244f829b61::t_0525b0600f9915 329
+  s_ee98244f829b61::t_b1453c6e0c0494 332-334,336-338
+  s_ee98244f829b61::t_854e82648b259f 340-341
+  s_ee98244f829b61::t_22c83101c4eb95 388-390
+src/llm/types.ts
+  s_8ddc02c01ad160::t_28ba90466edf7d 1-2
+  s_8ddc02c01ad160::t_cd27d1647809e3 26-43,45,47-48,57-58,64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "1b41c68a4e95996b496d2159583e00c35d3944d2",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  },
+  "sessions": {
+    "s_8ddc02c01ad160": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049ecd46bffeMaYXM9d9n98tfx",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_ee98244f829b61": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04a259a51ffeK8LdPXhNFLihxq",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
