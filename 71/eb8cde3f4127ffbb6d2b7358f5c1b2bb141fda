@@ -1,0 +1,59 @@
+docs/internal/commands.md
+  s_baac894a1d84d0::t_e2fff87e625ca7 3,12-34,38-40,43-82,88-100,104-116
+README.md
+  s_baac894a1d84d0::t_8e4910f3df9b61 13-15,42-51,55-64,70,74,78-82
+docs/internal/daemon.md
+  s_baac894a1d84d0::t_97acb800025dc1 154
+  s_baac894a1d84d0::t_a08e23b91a6664 47,54-85
+  s_baac894a1d84d0::t_8c29696c8f7e3a 181,183
+docs/internal/faq.md
+  s_baac894a1d84d0::t_8980735689a0c2 36-38
+  s_baac894a1d84d0::t_7c62f85212bd4d 83-84
+docs/internal/best-practices.md
+  s_baac894a1d84d0::t_48d35fcc9b4086 42
+  s_baac894a1d84d0::t_6360662cd72ba0 20-21
+docs/internal/ai-workflows.md
+  s_baac894a1d84d0::t_63f4f4d875a802 61-62,68-69,72-73,101
+  s_baac894a1d84d0::t_87b42e3e57c727 89-91,94-96,99-100
+docs/playbook.md
+  s_baac894a1d84d0::t_827b8e6b63c92f 37
+  s_baac894a1d84d0::t_3194852e22b82c 159-161
+  s_baac894a1d84d0::t_160b80d4a1b796 198,203,208,213
+  s_baac894a1d84d0::t_1041b55742bd1f 241-245
+  s_baac894a1d84d0::t_a0cabd8363b6ec 262
+  s_baac894a1d84d0::t_911cd98ac19eed 221
+  s_baac894a1d84d0::t_7534bddfceb614 277-279,282-283
+  s_baac894a1d84d0::t_c7b61aa36cb5c9 344
+docs/internal/architecture.md
+  s_baac894a1d84d0::t_f89ed1d6a4d200 42-52,54-57,60-62,64-69,71-76,79-82
+docs/internal/mcp-integrations.md
+  s_baac894a1d84d0::t_20e6c2260e767f 65,67-92,98
+  s_baac894a1d84d0::t_ea26012262c139 30-36,66
+docs/internal/configuration.md
+  s_baac894a1d84d0::t_7e6847f449269b 9-10,16-17,20-61,65-66,69-70,77-78,84-87,90,100,102-103,106-117,130-151,154-172
+docs/internal/onboarding.md
+  s_baac894a1d84d0::t_bcb2ffcff546cf 115,118
+  s_baac894a1d84d0::t_f1ecee778b7196 17-18,27,30,32-33,36-37,39-40,43
+  s_baac894a1d84d0::t_114ff1bc89e174 89,91,94,97-98
+docs/internal/troubleshooting.md
+  s_baac894a1d84d0::t_4250c634f5288d 102
+  s_baac894a1d84d0::t_204160ab12750b 73,85-86
+  s_baac894a1d84d0::t_40b8d0c1e7d332 65
+  s_baac894a1d84d0::t_03b05aec0e2f87 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "71eb8cde3f4127ffbb6d2b7358f5c1b2bb141fda",
+  "prompts": {},
+  "sessions": {
+    "s_baac894a1d84d0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049b3b615ffeV4qvPS7jB5dcO5",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
