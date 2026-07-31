@@ -1,0 +1,23 @@
+src/config/index.ts
+  s_c64006b5fc92f6::t_eb33a252f18453 63
+src/agents/agent-loop.ts
+  s_c64006b5fc92f6::t_df6522befd0e2b 113
+src/telemetry/reporter.ts
+  s_c64006b5fc92f6::t_eb33a252f18453 13-14,22-24,28-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "a0e7f2166761b680c13e796052cbd7edab1b04f4",
+  "prompts": {},
+  "sessions": {
+    "s_c64006b5fc92f6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0498addb2ffeSJq0UqIirhuwbM",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
