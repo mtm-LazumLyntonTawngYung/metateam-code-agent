@@ -31,7 +31,10 @@ export function startWebhookServer(config: DaemonConfig): void {
         return new Response("Method not allowed", { status: 405 });
       }
 
-      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+      const clientIp =
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        req.headers.get("x-real-ip") ??
+        "unknown";
       if (!whCheckRateLimit(clientIp)) {
         return new Response("Rate limit exceeded", { status: 429 });
       }
@@ -113,7 +116,10 @@ function parseWebhookEvent(wh: WebhookPayload): WebhookEvent | null {
   return null;
 }
 
-function parseGitHubIssue(payload: Record<string, unknown>, event: "issue.labeled" | "issue.opened"): WebhookEvent | null {
+function parseGitHubIssue(
+  payload: Record<string, unknown>,
+  event: "issue.labeled" | "issue.opened",
+): WebhookEvent | null {
   const issue = payload.issue as Record<string, unknown> | undefined;
   const repo = payload.repository as Record<string, unknown> | undefined;
   const sender = payload.sender as Record<string, unknown> | undefined;
@@ -201,7 +207,13 @@ function parseGitLabPush(payload: Record<string, unknown>): WebhookEvent | null 
 
 async function verifySignature(body: string, secret: string, signature: string): Promise<boolean> {
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
   const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
   const expected = "sha256=" + Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
   return expected === signature;

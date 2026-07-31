@@ -94,10 +94,16 @@ function alignHunk(
     if (o && n && o.text === n.text) {
       result.push({ oldText: o.text, newText: n.text, side: "both", oldLineNum: o.num, newLineNum: n.num });
       oi++; ni++;
-    } else if (o && (!n || o.text !== n.text) && (ni >= newLines.length || newLines.slice(ni).every(x => x.text !== o.text))) {
+    } else if (
+      o && (!n || o.text !== n.text) &&
+      (ni >= newLines.length || newLines.slice(ni).every(x => x.text !== o.text))
+    ) {
       result.push({ oldText: o.text, newText: "", side: "old", oldLineNum: o.num });
       oi++;
-    } else if (n && (!o || n.text !== o.text) && (oi >= oldLines.length || oldLines.slice(oi).every(x => x.text !== n.text))) {
+    } else if (
+      n && (!o || n.text !== o.text) &&
+      (oi >= oldLines.length || oldLines.slice(oi).every(x => x.text !== n.text))
+    ) {
       result.push({ oldText: "", newText: n.text, side: "new", newLineNum: n.num });
       ni++;
     } else if (o && n) {
@@ -216,8 +222,18 @@ export default function GitDiffView({ onBack }: { onBack: () => void }) {
             const oldNum = line.oldLineNum != null ? String(line.oldLineNum) : "";
             const newNum = line.newLineNum != null ? String(line.newLineNum) : "";
 
-            const oldColor = line.side === "old" ? theme.colors.error : line.side === "both" ? theme.colors.text : theme.colors.muted;
-            const newColor = line.side === "new" ? theme.colors.success : line.side === "both" ? theme.colors.text : theme.colors.muted;
+            const oldColor =
+              line.side === "old"
+                ? theme.colors.error
+                : line.side === "both"
+                  ? theme.colors.text
+                  : theme.colors.muted;
+            const newColor =
+              line.side === "new"
+                ? theme.colors.success
+                : line.side === "both"
+                  ? theme.colors.text
+                  : theme.colors.muted;
 
             const oldContent = padLeft(oldNum, lineNumWidth) + " " + line.oldText;
             const newContent = padLeft(newNum, lineNumWidth) + " " + line.newText;

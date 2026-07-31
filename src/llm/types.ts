@@ -199,7 +199,13 @@ export const KNOWN_MODELS: ModelConfig[] = [
 ];
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
-  fast: ["deepseek-chat", "gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
+  fast: [
+    "deepseek-chat",
+    "gpt-4o-mini",
+    "claude-haiku-3-5-20241022",
+    "openai/gpt-4o-mini",
+    "google/gemini-2.0-flash-001",
+  ],
   default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };
