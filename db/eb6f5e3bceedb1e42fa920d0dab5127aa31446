@@ -1,0 +1,68 @@
+.mtc/agents/product-manager.md
+  s_baac894a1d84d0::t_57aefca31accd2 90-93,96-98
+docs/templates/subagent-template.md
+  s_baac894a1d84d0::t_00c51e19d38822 19-22
+.github/PULL_REQUEST_TEMPLATE.md
+  s_baac894a1d84d0::t_eeb7d032b517fc 17
+docs/internal/contributing.md
+  s_baac894a1d84d0::t_748f5c4d47b338 23,31-36
+  s_baac894a1d84d0::t_3dbd5700b54796 29-30
+  s_baac894a1d84d0::t_29d91e4fa36030 41-42,44-45
+  s_baac894a1d84d0::t_e47687a9a4b580 74
+  s_baac894a1d84d0::t_43e773f46e2890 92
+docs/internal/security-policy.md
+  s_baac894a1d84d0::t_423f7a8d9da304 44
+  s_baac894a1d84d0::t_43acbc3c01bb0b 83
+.mtc/agents/devops-engineer.md
+  s_baac894a1d84d0::t_0eadb18f0b5c31 73-75,77-80
+docs/internal/ai-workflows.md
+  s_baac894a1d84d0::t_5254b0d312e145 94-97
+.env.example
+  s_baac894a1d84d0::t_6e51baf20cc2a7 1,4-27
+docs/internal/development-guidelines.md
+  s_baac894a1d84d0::t_373509e5671422 66-71,77-78,83,98
+  s_baac894a1d84d0::t_8fb6f7f9caf9fc 32-33,35-36,39,41-42,46
+docs/internal/multi-department-workflows.md
+  s_baac894a1d84d0::t_3d53d085b9420b 216-220
+  s_baac894a1d84d0::t_78e88f6de60f38 47,49-54
+  s_baac894a1d84d0::t_7be085aae6ffb5 233-240
+CHANGELOG.md
+  s_baac894a1d84d0::t_25bad4413c46a4 3-17
+docs/hackathon.md
+  s_baac894a1d84d0::t_128793fafa1d90 282-283
+  s_baac894a1d84d0::t_e13ed5f404e29a 97-100
+  s_baac894a1d84d0::t_9ab46738653853 117-118
+docs/internal/commercialization.md
+  s_baac894a1d84d0::t_1ad9bfbb05f5bb 97,100-111
+  s_baac894a1d84d0::t_03076f60a64c53 231-242
+docs/internal/release-process.md
+  s_baac894a1d84d0::t_683703cb8e66a9 100
+  s_baac894a1d84d0::t_d21c8cf5febc6d 40,43,45
+docs/playbook.md
+  s_baac894a1d84d0::t_92089dbafed0ce 201,203-204
+  s_baac894a1d84d0::t_d3cda7854185b0 363-365,373-380,384,386
+docs/internal/repository-management.md
+  s_baac894a1d84d0::t_ffe7849e5f1c69 71
+  s_baac894a1d84d0::t_08577d7706971f 32-33
+  s_baac894a1d84d0::t_6d78e8835d2a6a 93
+  s_baac894a1d84d0::t_a50f222c7ca564 56-57,62-63
+  s_baac894a1d84d0::t_839826a6608706 10,13
+.mtc/agents/qa-tester.md
+  s_baac894a1d84d0::t_f07b24289b8f3f 80-82,84-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "dbeb6f5e3bceedb1e42fa920d0dab5127aa31446",
+  "prompts": {},
+  "sessions": {
+    "s_baac894a1d84d0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049b3b615ffeV4qvPS7jB5dcO5",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
