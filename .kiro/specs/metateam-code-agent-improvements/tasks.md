@@ -141,75 +141,75 @@ Implement comprehensive improvements to the MetaTeam Code Agent (MTC) across fou
 
 ### Phase 3: Missing Feature Implementation (Weeks 6-9)
 
-- [ ] 11. Wire rules and skills into system prompt
-  - [ ] 11.1 Extend runAgentLoop to use getEffectiveSystemPrompt(agent)
+- [x] 11. Wire rules and skills into system prompt
+  - [x] 11.1 Extend runAgentLoop to use getEffectiveSystemPrompt(agent)
     - Append active-skill body to system prompt
     - Update src/agents/index.ts signature to take agent parameter
     - Have App.tsx pass active skill's body properly
     - _Requirements: 3.1_
 
-- [ ] 12. Implement context rotation and database-backed history
-  - [ ] 12.1 Build messages from buildContext(sessionId, systemPrompt)
+- [x] 12. Implement context rotation and database-backed history
+  - [x] 12.1 Build messages from buildContext(sessionId, systemPrompt)
     - Update runAgentLoop to use session context instead of completionHistoryRef
     - Call rotateIfNeeded(sessionId) before each iteration
     - Update App.tsx to support new context flow
     - _Requirements: 3.2_
   
-  - [ ]* 12.2 Write property test for session state management
+  - [x]* 12.2 Write property test for session state management
     - **Property 8: Session State Management**
     - **Validates: Requirements 3.2, 7.4**
   
-  - [ ] 12.3 Implement SQLite database for session persistence
+  - [x] 12.3 Implement SQLite database for session persistence
     - Create database schema for sessions and messages
     - Implement CRUD operations for session management
     - Add migration system for database schema updates
     - _Requirements: 3.2_
 
-- [ ] 13. Implement agent-loop abort support
-  - [ ] 13.1 Add AbortController plumbing throughout execution chain
+- [x] 13. Implement agent-loop abort support
+  - [x] 13.1 Add AbortController plumbing throughout execution chain
     - Add signal?: AbortSignal parameter to runAgentLoop
     - Pass signal through to complete() and fetch calls
     - Wire Ctrl+C in App.tsx to abort running agent
     - _Requirements: 3.3_
 
-- [ ] 14. Implement LLM streaming responses (largest effort)
-  - [ ] 14.1 Implement completeStream() for each LLM provider
+- [x] 14. Implement LLM streaming responses (largest effort)
+  - [x] 14.1 Implement completeStream() for each LLM provider
     - OpenAI/OpenRouter: SSE data: lines handling
     - Anthropic: SSE events handling
     - DeepSeek: Provider-specific streaming format
     - Keep non-streaming fallback for unsupported providers
     - _Requirements: 3.4_
   
-  - [ ] 14.2 Update agent-loop to consume streaming responses
+  - [x] 14.2 Update agent-loop to consume streaming responses
     - Aggregate content deltas for progressive display
     - Aggregate tool_calls deltas before executing tools
     - Maintain compatibility with existing onUpdate callback
     - _Requirements: 3.4_
   
-  - [ ] 14.3 Verify UI handles streaming correctly
+  - [x] 14.3 Verify UI handles streaming correctly
     - Ensure ChatView.tsx truncation/animation still works
     - Test progressive reveal of streaming content
     - Validate tool call aggregation and execution
     - _Requirements: 3.4_
 
-- [ ] 15. Checkpoint - Feature implementation validation
+- [x] 15. Checkpoint - Feature implementation validation
   - Ensure all new features work correctly, ask the user if questions arise.
 
-- [ ] 16. Implement comprehensive testing framework
-  - [ ] 16.1 Extract testable pure functions from codebase
+- [x] 16. Implement comprehensive testing framework
+  - [x] 16.1 Extract testable pure functions from codebase
     - Webhook gate validation functions
     - License round-trip functions  
     - Frontmatter parsing and normalization
     - Token counting and text processing utilities
     - _Requirements: 3.5, 5.1_
   
-  - [ ] 16.2 Set up Bun test runner configuration
+  - [x] 16.2 Set up Bun test runner configuration
     - Add "test": "bun test" to package.json
     - Create tests/unit/ directory structure
     - Configure test runners and coverage reporting
     - _Requirements: 5.1_
   
-  - [ ] 16.3 Create CI/CD pipeline for automated testing
+  - [x] 16.3 Create CI/CD pipeline for automated testing
     - Add .github/workflows/test.yml
     - Run bun install, typecheck, and tests on PRs
     - Add security scanning and dependency auditing

@@ -12,6 +12,7 @@
     "build": "bun build --compile --outfile bin/mtc src/cli.tsx",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "test:eval": "bun run src/cli.tsx eval"
   },
   "dependencies": {

@@ -31,12 +31,14 @@ export function getActiveAgent(): AgentDefinition | null {
   return activeAgent;
 }
 
-export function getEffectiveSystemPrompt(): string {
-  const agent = getActiveAgent();
-  if (!agent) return "";
-  const base = agent.systemPrompt;
-  if (!cachedRules) return base;
-  return `${base}\n\n${cachedRules}`;
+export function getEffectiveSystemPrompt(
+  agent: AgentDefinition,
+  skillBody?: string,
+): string {
+  const parts = [agent.systemPrompt];
+  if (cachedRules) parts.push(cachedRules);
+  if (skillBody) parts.push(skillBody);
+  return parts.join("\n\n");
 }
 
 export function getAllAgents(): AgentDefinition[] {

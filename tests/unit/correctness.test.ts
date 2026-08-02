@@ -4,6 +4,7 @@ import { filterKnownModels } from "../../src/llm/config";
 import { MAX_FILE_SIZE } from "../../src/tools/read_file";
 import { registerTool, getTool, getAllTools } from "../../src/tools/index";
 import { parseFrontmatter } from "../../src/agents/frontmatter";
+import { OpenAIStreamAccumulator } from "../../src/llm/client";
 import { prop, randInt, randStr } from "./prop";
 
 describe("Property 5: Resource Management Bounds", () => {
@@ -117,6 +118,56 @@ describe("Property 7: Concurrency Safety", () => {
       expect(a).not.toBeNull();
       expect(b).not.toBeNull();
       expect(a).toEqual(b);
+    });
+  });
+});
+
+describe("streaming SSE accumulation", () => {
+  test("text deltas concatenate into content", () => {
+    const deltas: string[] = [];
+    const acc = new OpenAIStreamAccumulator((d) => {
+      if (d.kind === "text") deltas.push(d.text);
+    });
+    acc.flushLine('data: {"choices":[{"delta":{"content":"Hel"}}]}');
+    acc.flushLine('data: {"choices":[{"delta":{"content":"lo"}}]}');
+    acc.flushLine("data: [DONE]");
+    acc.finalize();
+    expect(acc.content).toBe("Hello");
+    expect(deltas).toEqual(["Hel", "lo"]);
+    expect(acc.toolCalls).toEqual([]);
+  });
+
+  test("tool call argument fragments aggregate across lines", () => {
+    const acc = new OpenAIStreamAccumulator(() => {});
+    acc.flushLine('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"read_file","arguments":"{\\"path\\":"}}]}}]}');
+    acc.flushLine('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"src/a.ts\\"}"}}]}}]}');
+    acc.flushLine("data: [DONE]");
+    acc.finalize();
+    expect(acc.toolCalls).toHaveLength(1);
+    expect(acc.toolCalls[0].name).toBe("read_file");
+    expect(acc.toolCalls[0].id).toBe("call_1");
+    expect(JSON.parse(acc.toolCalls[0].arguments)).toEqual({ path: "src/a.ts" });
+  });
+
+  test("usage is captured from stream", () => {
+    const acc = new OpenAIStreamAccumulator(() => {});
+    acc.flushLine('data: {"choices":[{"delta":{"content":"x"}}],"usage":{"prompt_tokens":5,"completion_tokens":3,"total_tokens":8}}');
+    acc.flushLine("data: [DONE]");
+    acc.finalize();
+    expect(acc.usage?.total_tokens).toBe(8);
+  });
+
+  test("non-data lines and malformed JSON are ignored", () => {
+    prop(100, (rand) => {
+      const acc = new OpenAIStreamAccumulator(() => {});
+      acc.flushLine(": keepalive comment");
+      acc.flushLine(`event: random`);
+      acc.flushLine("data: {not json");
+      acc.flushLine("data: " + randStr(rand, 10, "abc{}"));
+      acc.flushLine("data: [DONE]");
+      acc.finalize();
+      expect(acc.content).toBe("");
+      expect(acc.toolCalls).toEqual([]);
     });
   });
 });
