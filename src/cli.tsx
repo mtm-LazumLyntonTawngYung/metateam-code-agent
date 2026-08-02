@@ -260,6 +260,9 @@ enterpriseCmd
   .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
   .option("-s, --seats <number>", "Max seats", "50")
   .action((options: { tier: string; org: string; expires: string; seats: string }) => {
+    if (!process.env.MTC_LICENSE_SECRET) {
+      console.error("\n  WARNING: MTC_LICENSE_SECRET is not set. Keys generated without it cannot be verified and will be rejected on activation. Set MTC_LICENSE_SECRET in your environment.\n");
+    }
     const key = generateLicenseKey(
       options.tier as Tier,
       options.org,

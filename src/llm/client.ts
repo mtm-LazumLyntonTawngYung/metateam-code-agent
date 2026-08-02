@@ -8,7 +8,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from "./types";
-import { findProvider } from "./config";
+import { findProvider, findModel } from "./config";
 import { trackModelUsage } from "../telemetry/tracker";
 
 export async function complete(
@@ -75,7 +75,7 @@ async function completeOpenAI(
     model: req.model,
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     stream: false,
   };
   if (req.tools?.length) {
@@ -90,6 +90,7 @@ async function completeOpenAI(
       Authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {
@@ -146,7 +147,7 @@ async function completeAnthropic(
 
   const body: Record<string, unknown> = {
     model: req.model,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     messages,
   };
   if (systemMsg) body.system = systemMsg.content;
@@ -163,6 +164,7 @@ async function completeAnthropic(
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {
@@ -228,7 +230,7 @@ async function completeOpenRouter(
     model: req.model,
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     stream: false,
   };
   if (req.tools?.length) {
@@ -245,6 +247,7 @@ async function completeOpenRouter(
       "X-Title": "MetaTeam Code Agent",
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {

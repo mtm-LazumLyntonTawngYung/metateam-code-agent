@@ -2,7 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+- **Webhook security gateway** — constant-time GitHub signature and GitLab token validation (`crypto.timingSafeEqual`); unauthenticated webhook requests now return 401
+- **Clone URL and path traversal validation** — strict regex on repository clone URLs and resolved-path containment checks for LLM-written files in the autofix pipeline
+- **SSO public-client device flow** — `MTC_AZURE_CLIENT_SECRET` is now optional; auth tokens written with 0600 permissions; exact `@metateammyanmar.com` domain check
+
 ### Changed
+- **License system redesign (BREAKING)** — license keys now use canonical `MTC-<tier>-<base64url(payload)>-<hmac>` format with HMAC verification, expiry enforced at read time, and fail-closed behavior when `MTC_LICENSE_SECRET` is not set. Existing keys must be regenerated.
+- **Custom agent defaults (BREAKING)** — new custom agents default to `read: allow`, `edit/bash/execute: deny`; frontmatter `permissions` are now honored explicitly (`allow`/`deny`). The `mtc init` template already matched.
 - **Documentation sync** — updated all docs to match the current implementation:
   - `README.md`: corrected key bindings; added LLM provider config, MCP load order, and skills
   - `docs/internal/commands.md`: full CLI command inventory (`eval`, `llm`, `analytics`, `daemon`, `enterprise`, `auth`), accurate slash commands, key bindings, and agent permission matrix

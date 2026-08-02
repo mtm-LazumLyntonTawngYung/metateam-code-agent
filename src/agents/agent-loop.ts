@@ -21,7 +21,7 @@ export type AgentUpdate =
 
 export const MAX_AGENT_ITERATIONS = 25;
 
-export const DEFAULT_MAX_TOKENS = 200;
+export const DEFAULT_MAX_TOKENS = 4096;
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
   const summary = result.success
@@ -114,7 +114,7 @@ You are an autonomous agent in a CLI environment. Be direct and terse:
         model: modelId,
         messages,
         temperature: 0.7,
-        maxTokens: DEFAULT_MAX_TOKENS,
+        maxTokens: findModel(modelId)?.maxTokens ?? DEFAULT_MAX_TOKENS,
         tools,
         toolChoice: "auto",
       });

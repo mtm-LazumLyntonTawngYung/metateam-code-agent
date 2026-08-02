@@ -1,6 +1,7 @@
 import type { DaemonConfig } from "./config";
 import type { WebhookEvent, IssuePayload, RepoPayload } from "./types";
 import { runPipeline } from "./pipeline";
+import { validateWebhookRequest } from "../utils/security";
 
 type WebhookPayload = {
   event: string;
@@ -42,15 +43,15 @@ export function startWebhookServer(config: DaemonConfig): void {
       }
 
       const rawBody = await req.text();
-      if (rawBody.length > 200 * 200) {
+      if (rawBody.length > 10 * 1024 * 1024) {
         return new Response("Payload too large", { status: 413 });
       }
 
       const body = rawBody;
-      const contentType = req.headers.get("content-type") ?? "";
       const githubEvent = req.headers.get("x-github-event");
       const gitlabEvent = req.headers.get("x-gitlab-event");
       const signature = req.headers.get("x-hub-signature-256") ?? undefined;
+      const gitlabToken = req.headers.get("x-gitlab-token") ?? undefined;
 
       let wh: WebhookPayload;
       try {
@@ -65,11 +66,9 @@ export function startWebhookServer(config: DaemonConfig): void {
         return new Response("Invalid JSON", { status: 400 });
       }
 
-      if (config.webhookSecret && wh.signature) {
-        const expected = await verifySignature(body, config.webhookSecret, wh.signature);
-        if (!expected) {
-          return new Response("Invalid signature", { status: 401 });
-        }
+      const auth = validateWebhookRequest(wh.platform, signature, gitlabToken, body, config.webhookSecret ?? "");
+      if (!auth.ok) {
+        return new Response(auth.message, { status: auth.status });
       }
 
       const parsed = parseWebhookEvent(wh);
@@ -197,12 +196,4 @@ function parseGitLabPush(payload: Record<string, unknown>): WebhookEvent | null 
     },
     platform: "gitlab",
   };
-}
-
-async function verifySignature(body: string, secret: string, signature: string): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
-  const expected = "sha256=" + Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
-  return expected === signature;
 }

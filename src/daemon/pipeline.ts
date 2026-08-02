@@ -8,6 +8,7 @@ import { sendNotification } from "./notifier";
 import { complete } from "../llm/client";
 import { routeTask } from "../llm/router";
 import { executeTool } from "../tools/index";
+import { validateCloneUrl, validateFilePath } from "../utils/security";
 
 const activeJobs = new Map<string, PipelineJob>();
 
@@ -52,6 +53,10 @@ export async function runPipeline(event: WebhookEvent, config: DaemonConfig): Pr
 
 async function executeAutofix(job: PipelineJob, config: DaemonConfig): Promise<void> {
   const issue = job.issue;
+
+  if (!validateCloneUrl(issue.repoCloneUrl)) {
+    throw new Error("Invalid clone URL");
+  }
 
   const tempDir = `${config.tempDir}/${job.id}`;
   const cloneDir = `${tempDir}/repo`;
@@ -111,6 +116,9 @@ FILE: <relative path>
     await notifyStatus(job, "fixing", `Applying fix to ${changes.length} file(s)...`);
 
     for (const change of changes) {
+      if (!validateFilePath(cloneDir, change.path)) {
+        throw new Error(`Refusing to write outside clone directory: ${change.path}`);
+      }
       const writeResult = await executeTool("write_file", {
         path: `${cloneDir}/${change.path}`,
         content: change.content,
@@ -143,6 +151,9 @@ FILE: <relative path>
 
       const retryChanges = extractFileChanges(retryResponse.content);
       for (const change of retryChanges) {
+        if (!validateFilePath(cloneDir, change.path)) {
+          throw new Error(`Refusing to write outside clone directory: ${change.path}`);
+        }
         await executeTool("write_file", {
           path: `${cloneDir}/${change.path}`,
           content: change.content,

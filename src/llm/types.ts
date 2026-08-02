@@ -56,6 +56,7 @@ export type CompletionRequest = {
   stream?: boolean;
   tools?: ToolDefinition[];
   toolChoice?: ToolChoice;
+  signal?: AbortSignal;
 };
 
 export type CompletionResponse = {
@@ -95,16 +96,6 @@ export const KNOWN_MODELS: ModelConfig[] = [
     costPer1kOutput: 0.0011,
     maxTokens: 8192,
     contextWindow: 128000,
-  },
-  {
-    id: "deepseek-chat",
-    displayName: "DeepSeek Flash",
-    provider: "deepseek",
-    tier: "fast",
-    costPer1kInput: 0.00014,
-    costPer1kOutput: 0.00055,
-    maxTokens: 200,
-    contextWindow: 6200,
   },
   {
     id: "gpt-4o",
@@ -209,7 +200,7 @@ export const KNOWN_MODELS: ModelConfig[] = [
 ];
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
-  fast: ["deepseek-chat", "gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
+  fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
   default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };

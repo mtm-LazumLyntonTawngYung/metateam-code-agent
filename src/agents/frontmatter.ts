@@ -1,7 +1,8 @@
 export function parseFrontmatter(
   content: string,
 ): { frontmatter: Record<string, unknown>; body: string } | null {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const normalized = content.replace(/\r\n/g, "\n");
+  const match = normalized.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) return null;
 
   const raw = match[1];
@@ -42,9 +43,10 @@ export function parseFrontmatter(
 }
 
 function parseScalar(value: string): unknown {
+  if (value.startsWith('"') && value.endsWith('"')) return value.slice(1, -1);
+  if (value.startsWith("'") && value.endsWith("'")) return value.slice(1, -1);
   if (value === "true") return true;
   if (value === "false") return false;
-  const num = Number(value);
-  if (!Number.isNaN(num) && value.trim() !== "") return num;
+  if (/^-?\d+$/.test(value)) return Number(value);
   return value;
 }

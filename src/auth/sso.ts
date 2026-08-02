@@ -5,34 +5,20 @@ import { loadConfig } from "../config";
 import { ensureUserProvisioned } from "../enterprise/user";
 
 const AUTH_FILE = path.join(os.homedir(), ".config", "mtc", "auth.json");
+const ALLOWED_DOMAIN = "metateammyanmar.com";
 
-function readEnvVar(name: string): string | undefined {
-  const fromEnv = process.env[name];
-  if (fromEnv) return fromEnv;
-  try {
-    const cfg = loadConfig() as Record<string, unknown>;
-    const auth = cfg.auth as Record<string, string> | undefined;
-    if (auth?.[name]) return auth[name];
-  } catch {
-    // ignore
-  }
-  return undefined;
+function getAzureConfig(): { clientId: string; tenantId: string; clientSecret: string } {
+  const auth = loadConfig().auth ?? {};
+  return {
+    clientId: process.env.MTC_AZURE_CLIENT_ID ?? auth.clientId ?? "",
+    tenantId: process.env.MTC_AZURE_TENANT_ID ?? auth.tenantId ?? "",
+    clientSecret: process.env.MTC_AZURE_CLIENT_SECRET ?? auth.clientSecret ?? "",
+  };
 }
 
-const AZURE_CLIENT_ID =
-  readEnvVar("MTC_AZURE_CLIENT_ID") ?? process.env.MTC_AZURE_CLIENT_ID ?? "";
-const AZURE_TENANT_ID =
-  readEnvVar("MTC_AZURE_TENANT_ID") ?? process.env.MTC_AZURE_TENANT_ID ?? "";
-const AZURE_CLIENT_SECRET =
-  readEnvVar("MTC_AZURE_CLIENT_SECRET") ?? process.env.MTC_AZURE_CLIENT_SECRET ?? "";
-
-const AUTHORITY = AZURE_TENANT_ID
-  ? `https://login.microsoftonline.com/${AZURE_TENANT_ID}`
-  : null;
-
-function withSecret(body: URLSearchParams): URLSearchParams {
-  if (AZURE_CLIENT_SECRET) {
-    body.set("client_secret", AZURE_CLIENT_SECRET);
+function withSecret(body: URLSearchParams, clientSecret: string): URLSearchParams {
+  if (clientSecret) {
+    body.set("client_secret", clientSecret);
   }
   return body;
 }
@@ -84,18 +70,25 @@ export function clearAuth(): void {
   }
 }
 
+export function validateEmailDomain(email: string): boolean {
+  const domain = String(email).toLowerCase().split("@").pop() ?? "";
+  return domain === ALLOWED_DOMAIN;
+}
+
 export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
-  if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
+  const { clientId, tenantId, clientSecret } = getAzureConfig();
+  if (!clientId || !tenantId) {
     throw new Error(
       "Azure AD credentials not configured. Set MTC_AZURE_CLIENT_ID and MTC_AZURE_TENANT_ID environment variables.",
     );
   }
+  const authority = `https://login.microsoftonline.com/${tenantId}`;
   const body = withSecret(new URLSearchParams({
-    client_id: AZURE_CLIENT_ID,
+    client_id: clientId,
     scope: "openid profile email User.Read",
-  }));
+  }), clientSecret);
 
-  const url = `${AUTHORITY}/oauth2/v2.0/devicecode`;
+  const url = `${authority}/oauth2/v2.0/devicecode`;
   console.error(`[mtc auth] POST ${url}`);
 
   const res = await fetch(url, {
@@ -121,11 +114,18 @@ export async function pollForToken(
   expiresIn: number,
   onPoll?: () => void,
 ): Promise<AuthData> {
+  const { clientId, tenantId, clientSecret } = getAzureConfig();
+  if (!clientId || !tenantId) {
+    throw new Error(
+      "Azure AD credentials not configured. Set MTC_AZURE_CLIENT_ID and MTC_AZURE_TENANT_ID environment variables.",
+    );
+  }
+  const authority = `https://login.microsoftonline.com/${tenantId}`;
   const body = withSecret(new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-    client_id: AZURE_CLIENT_ID,
+    client_id: clientId,
     device_code: deviceCode,
-  }));
+  }), clientSecret);
 
   const deadline = Date.now() + expiresIn * 1000;
   let pollCount = 0;
@@ -134,7 +134,7 @@ export async function pollForToken(
     if (onPoll) onPoll();
     pollCount++;
 
-    const res = await fetch(`${AUTHORITY}/oauth2/v2.0/token`, {
+    const res = await fetch(`${authority}/oauth2/v2.0/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: body.toString(),
@@ -192,9 +192,9 @@ export async function pollForToken(
 
     console.error(`[mtc auth] extracted email: "${userEmail}", name: "${userName}"`);
 
-    if (!userEmail.endsWith("@metateammyanmar.com")) {
+    if (!validateEmailDomain(userEmail)) {
       throw new Error(
-        `Access denied: You must log in with an @metateammyanmar.com account. "${userEmail}" is not allowed.`,
+        `Access denied: You must log in with an @${ALLOWED_DOMAIN} account. "${userEmail}" is not allowed.`,
       );
     }
 
@@ -208,7 +208,7 @@ export async function pollForToken(
     };
 
     fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
-    fs.writeFileSync(AUTH_FILE, JSON.stringify(authData, null, 2));
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(authData, null, 2), { mode: 0o600 });
     console.error(`[mtc auth] saved to ${AUTH_FILE}`);
 
     const result = ensureUserProvisioned(userEmail);
