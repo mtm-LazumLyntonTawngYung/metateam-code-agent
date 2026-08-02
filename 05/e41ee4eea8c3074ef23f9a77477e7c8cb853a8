@@ -1,0 +1,19 @@
+tests/unit/session.test.ts
+  s_3b0d4ac429b85c::t_66965c1fc22ac6 103,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "05e41ee4eea8c3074ef23f9a77477e7c8cb853a8",
+  "prompts": {},
+  "sessions": {
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
