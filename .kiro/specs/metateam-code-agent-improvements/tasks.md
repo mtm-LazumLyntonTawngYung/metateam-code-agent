@@ -218,81 +218,81 @@ Implement comprehensive improvements to the MetaTeam Code Agent (MTC) across fou
 ### Phase 4: Cleanup & Polish (Weeks 10-13)
 
 - [ ] 17. Unify version source and improve error handling
-  - [ ] 17.1 Create single version source from package.json
+  - [x] 17.1 Create single version source from package.json
     - Add src/version.ts importing package.json version
     - Use in updater.ts and cli.tsx
     - Fix checkForUpdates to compare semver numerically
     - _Requirements: 3.6_
   
-  - [ ]* 17.2 Write property test for build determinism
+  - [x]* 17.2 Write property test for build determinism
     - **Property 12: Build and Version Determinism**
     - **Validates: Requirements 3.6, 7.1, 7.6**
   
-  - [ ] 17.3 Improve GitLab daemon error handling
+  - [x] 17.3 Improve GitLab daemon error handling
     - Add explicit rejection for unsupported GitLab operations
     - Update docs/internal/daemon.md with limitations
     - _Requirements: 3.7_
 
 - [ ] 18. Perform dead code removal and cleanup
-  - [ ] 18.1 Remove unused functions and imports
+  - [x] 18.1 Remove unused functions and imports
     - parseToolCalls from agent-loop.ts (no callers)
     - Unused imports from server/handler.ts
     - Unused retestResult from daemon/pipeline.ts
     - _Requirements: 3.8_
   
-  - [ ] 18.2 Clean up UI placeholders and stubs
+  - [x] 18.2 Clean up UI placeholders and stubs
     - Remove or implement sidebar placeholders in App.tsx
     - Fix env-var warning name bug in daemon/config.ts
     - Remove dead verifyWithDeviceCode from sso.ts
     - _Requirements: 3.8_
 
 - [ ] 19. Implement cross-platform compatibility fixes
-  - [ ] 19.1 Fix Windows-specific path and line ending issues
+  - [x] 19.1 Fix Windows-specific path and line ending issues
     - Handle Windows path separators consistently
     - Fix CRLF normalization across all text processing
     - Test on Windows 10/11 with PowerShell and CMD
     - _Requirements: 9.1_
   
-  - [ ]* 19.2 Write property test for cross-platform path handling
+  - [x]* 19.2 Write property test for cross-platform path handling
     - **Property 9: Cross-Platform Path Handling**
     - **Validates: Requirements 9.1, 9.5**
   
-  - [ ] 19.2 Test macOS and Linux compatibility
+  - [x] 19.3 Test macOS and Linux compatibility
     - Handle macOS security features and filesystem conventions
     - Support different Linux distributions and package managers
     - Implement platform detection for adaptive behavior
     - _Requirements: 9.2, 9.3, 9.6_
 
-- [ ] 20. Final checkpoint - Complete system validation
+- [x] 20. Final checkpoint - Complete system validation
   - Ensure all tests pass across all platforms, ask the user if questions arise.
 
-- [ ] 21. Update documentation and create migration guides
-  - [ ] 21.1 Update README.md with new features and changes
+- [x] 21. Update documentation and create migration guides
+  - [x] 21.1 Update README.md with new features and changes
     - Document license key format and secret requirement
     - Explain SSO secret-optional flow
     - Note GitLab daemon limitations
     - _Requirements: 4.2_
   
-  - [ ] 21.2 Update internal documentation
+  - [x] 21.2 Update internal documentation
     - docs/internal/mcp-integrations.md for namespaced tools
     - docs/internal/daemon.md for GitLab limitations
     - docs/internal/configuration.md for updated config schema
     - _Requirements: 4.2_
   
-  - [ ] 21.3 Create migration guides for breaking changes
+  - [x] 21.3 Create migration guides for breaking changes
     - License key format migration guide
     - SSO configuration updates
     - Custom agent permission changes
     - _Requirements: 4.2_
 
-- [ ] 22. Implement telemetry and monitoring systems
-  - [ ] 22.1 Add opt-in telemetry with clear privacy disclosures
+- [x] 22. Implement telemetry and monitoring systems
+  - [x] 22.1 Add opt-in telemetry with clear privacy disclosures
     - Implement usage analytics collection
     - Add privacy policy and data handling documentation
     - Make telemetry opt-in with easy disable option
     - _Requirements: 4.5_
   
-  - [ ] 22.2 Implement comprehensive logging and metrics
+  - [x] 22.2 Implement comprehensive logging and metrics
     - Structured JSON logging for all operations
     - Performance metrics collection
     - Health check endpoints for daemon
@@ -323,8 +323,9 @@ Implement comprehensive improvements to the MetaTeam Code Agent (MTC) across fou
     { "id": 5, "tasks": ["12.2", "14.1", "14.2", "14.3"] },
     { "id": 6, "tasks": ["16.1", "16.2", "16.3"] },
     { "id": 7, "tasks": ["17.1", "17.3", "18.1", "18.2"] },
-    { "id": 8, "tasks": ["17.2", "19.1", "19.2"] },
-    { "id": 9, "tasks": ["21.1", "21.2", "21.3", "22.1", "22.2"] }
+    { "id": 8, "tasks": ["17.2", "19.1", "19.2", "19.3"] },
+    { "id": 9, "tasks": ["21.1", "21.2", "21.3", "22.1", "22.2"] },
+    { "id": 10, "tasks": ["20"] }
   ]
 }
 ```

@@ -46,32 +46,7 @@ function wrapToolResult(toolName: string, result: ToolResult): string {
   return `IMPORTANT: Do not echo the raw tool output below. Use only what you need from it, then answer concisely in your own words.\n\nTool result from ${toolName}:\n${summary}`;
 }
 
-export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText: string } {
-  const toolCalls: ToolCall[] = [];
-  const regex = /<TOOL_CALL>([\s\S]*?)<\/TOOL_CALL>/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    const block = match[1].trim();
-    const nameMatch = block.match(/<name>([\s\S]*?)<\/name>/);
-    const argsMatch = block.match(/<args>([\s\S]*?)<\/args>/);
-    if (nameMatch) {
-      const name = nameMatch[1].trim();
-      let args: Record<string, unknown> = {};
-      if (argsMatch) {
-        try {
-          args = JSON.parse(argsMatch[1].trim());
-        } catch {
-          args = { input: argsMatch[1].trim() };
-        }
-      }
-      toolCalls.push({ name, args });
-    }
-  }
-  const cleanText = text.replace(regex, "").trim();
-  return { toolCalls, cleanText };
-}
-
-function parseToolCallArguments(argumentsJson: string): Record<string, unknown> {
+export function parseToolCallArguments(argumentsJson: string): Record<string, unknown> {
   try {
     const parsed = JSON.parse(argumentsJson || "{}") as unknown;
     return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};

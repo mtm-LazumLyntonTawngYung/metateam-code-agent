@@ -56,7 +56,7 @@ const readFileTool: ToolDefinition = {
     }
 
     const raw = readFileSync(path, "utf-8");
-    const lines = raw.split("\n");
+    const lines = raw.replace(/\r\n/g, "\n").split("\n");
     const totalLines = lines.length;
 
     const start = offset ? Math.max(1, offset) : 1;

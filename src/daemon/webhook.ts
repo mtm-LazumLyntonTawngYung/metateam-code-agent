@@ -2,6 +2,7 @@ import type { DaemonConfig } from "./config";
 import type { WebhookEvent, IssuePayload, RepoPayload } from "./types";
 import { runPipeline } from "./pipeline";
 import { validateWebhookRequest } from "../utils/security";
+import { logger } from "../utils/logger";
 
 type WebhookPayload = {
   event: string;
@@ -28,6 +29,21 @@ export function startWebhookServer(config: DaemonConfig): void {
     port: config.port,
     hostname: config.host,
     async fetch(req) {
+      const url = new URL(req.url);
+
+      if (url.pathname === "/health") {
+        if (req.method !== "GET") {
+          return new Response("Method not allowed", { status: 405 });
+        }
+        return new Response(
+          JSON.stringify({ status: "ok", uptime: Math.round(process.uptime()) }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+
       if (req.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
       }
@@ -37,7 +53,6 @@ export function startWebhookServer(config: DaemonConfig): void {
         return new Response("Rate limit exceeded", { status: 429 });
       }
 
-      const url = new URL(req.url);
       if (url.pathname !== "/webhook") {
         return new Response("Not found", { status: 404 });
       }
@@ -77,7 +92,7 @@ export function startWebhookServer(config: DaemonConfig): void {
       }
 
       runPipeline(parsed, config).catch((err) => {
-        console.error(`Pipeline error: ${err instanceof Error ? err.message : String(err)}`);
+        logger.error("Pipeline error", { error: err instanceof Error ? err.message : String(err) });
       });
 
       return new Response("Accepted", { status: 202 });

@@ -458,7 +458,7 @@ register({
 
 // JSON-RPC over stdin/stdout
 process.stdin.on("data", async (buffer) => {
-  for (const line of buffer.toString().split("\n").filter(Boolean)) {
+  for (const line of buffer.toString().split("\n").map((l) => l.trim()).filter(Boolean)) {
     try {
       const req = JSON.parse(line);
       if (req.method === "initialize") {

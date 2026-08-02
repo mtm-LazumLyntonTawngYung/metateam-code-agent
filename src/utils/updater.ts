@@ -1,4 +1,5 @@
-const CURRENT_VERSION = "1.0.0";
+import { VERSION, isNewerVersion } from "../version";
+
 const REPO = "mtm-LazumLyntonTawngYung/metateam-code-agent";
 
 export type UpdateInfo = {
@@ -27,15 +28,15 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
     const latestVersion = (data.tag_name ?? "").replace(/^v/, "");
 
     cached = {
-      currentVersion: CURRENT_VERSION,
+      currentVersion: VERSION,
       latestVersion: latestVersion || null,
       hasUpdate:
-        latestVersion !== "" && latestVersion !== CURRENT_VERSION,
+        latestVersion !== "" && isNewerVersion(latestVersion, VERSION),
       downloadUrl: data.html_url ?? null,
     };
   } catch {
     cached = {
-      currentVersion: CURRENT_VERSION,
+      currentVersion: VERSION,
       latestVersion: null,
       hasUpdate: false,
       downloadUrl: null,

@@ -11,7 +11,7 @@ AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to a
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
 - **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter providers with automatic task classification and fallback.
-- **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes.
+- **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but rejected).
 - **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard.
 
 ## Installation
@@ -80,6 +80,31 @@ Project-specific rules in `.mtc/rules/` (and `AGENTS.md` at the project root) ar
 ### Skills
 
 Skills can be installed from the built-in catalog or from `.mtc/skills/<id>/SKILL.md` (workspace) and `~/.mtc/skills/<id>/SKILL.md` (global). Open them with `/skills`.
+
+### Enterprise Licenses
+
+Enterprise features (SSO, org management, audit logs, dashboard) are enabled with a
+license key activated via `mtc enterprise activate <key>`.
+
+- Keys use the canonical format `MTC-<tier>-<base64url(payload)>-<hmac>` and are
+  verified with HMAC-SHA256 against a secret.
+- **A `MTC_LICENSE_SECRET` env var is required** to generate *and* activate keys.
+  Keys generated without the secret cannot be verified and will be rejected on
+  activation. Set it in your environment before running `mtc enterprise generate-key`.
+
+### SSO (Microsoft Entra ID)
+
+SSO uses the public-client device-code flow. A client secret is **optional** for
+interactive logins — only the client ID and tenant ID are required. If a
+`MTC_AZURE_CLIENT_SECRET` is present it is used, otherwise the public-client flow
+is used. Auth tokens are stored with 0600 file permissions.
+
+### Telemetry
+
+Usage analytics are **opt-in** and disabled by default. Enable them with
+`mtc analytics enable` (a full privacy disclosure is printed), disable anytime
+with `mtc analytics disable`. Data is stored locally and never includes file
+contents, prompts, or responses. See [docs/internal/privacy-policy.md](docs/internal/privacy-policy.md).
 
 ## Documentation
 
