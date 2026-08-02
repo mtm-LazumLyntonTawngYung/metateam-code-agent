@@ -1,0 +1,119 @@
+package.json
+  s_3b0d4ac429b85c::t_e0378788f81d7c 14
+tests/unit/license.test.ts
+  s_3b0d4ac429b85c::t_b8db378a302ce7 3-4
+  s_3b0d4ac429b85c::t_79adfbc1132497 50-97
+  s_3b0d4ac429b85c::t_38a5adb0f90da6 1-2,5-49
+src/cli.tsx
+  s_3b0d4ac429b85c::t_799e5c01eb59f3 263-265
+src/agents/agent-loop.ts
+  s_3b0d4ac429b85c::t_1a8e3966d3e5b5 24
+  s_3b0d4ac429b85c::t_45d5f33b95aebc 117
+src/daemon/pipeline.ts
+  s_3b0d4ac429b85c::t_bbbf7038ac57fc 57-60
+  s_3b0d4ac429b85c::t_43b16231b14cb5 11
+  s_3b0d4ac429b85c::t_41f8532a9eda5b 119-121
+  s_3b0d4ac429b85c::t_edae545ae8e2fa 154-156
+src/tools/read_file.ts
+  s_3b0d4ac429b85c::t_c3cc18a36bfd66 54
+  s_3b0d4ac429b85c::t_7ad416a15d4ac0 5-6
+src/utils/security.ts
+  s_3b0d4ac429b85c::t_7adc833a349b28 1,13
+  s_3b0d4ac429b85c::t_17bc5d4e3879d7 2-12,14-45,47-63
+  s_3b0d4ac429b85c::t_a2dd650279957c 46
+tests/unit/correctness.test.ts
+  s_3b0d4ac429b85c::t_0502b39ec906a0 1-122
+tests/unit/security.test.ts
+  s_3b0d4ac429b85c::t_c7167e98b2c877 94-176
+  s_3b0d4ac429b85c::t_ec216e34397759 1-9,11-93
+  s_3b0d4ac429b85c::t_b0ae2a4771af41 10
+src/config/index.ts
+  s_3b0d4ac429b85c::t_d61bcfdde36988 21
+src/llm/fallback.ts
+  s_3b0d4ac429b85c::t_4976225fbe2e66 16,24-25,27,31,37
+src/auth/sso.ts
+  s_3b0d4ac429b85c::t_68a9a6302d4bed 8-16,19-21,73-77,79-80,85,87,89,91,117-123,126,128,137,195,197,211,248
+src/mcp/index.ts
+  s_3b0d4ac429b85c::t_7f8f6ada78fa45 13
+  s_3b0d4ac429b85c::t_933356243400d5 73-76
+  s_3b0d4ac429b85c::t_8d40aedf7ed7b6 93-95,102,104-120,126
+  s_3b0d4ac429b85c::t_7eb1028e32944d 140-142
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_3b0d4ac429b85c::t_bab7ee27578daa 71
+  s_3b0d4ac429b85c::t_26cdf13513a6bc 77-136
+  s_3b0d4ac429b85c::t_58e5cb0b124a19 18
+  s_3b0d4ac429b85c::t_338b97faa11657 11-12,22-29,39-66
+  s_3b0d4ac429b85c::t_cad98f8dffee14 35
+  s_3b0d4ac429b85c::t_4e1eca80beb8eb 8-10
+  s_3b0d4ac429b85c::t_8566c3aa9f5321 13-17
+  s_3b0d4ac429b85c::t_9d9503b524b5ab 19-21
+  s_3b0d4ac429b85c::t_6efc132d94d338 30-34
+  s_3b0d4ac429b85c::t_aa22a0bb91803d 36-38
+  s_3b0d4ac429b85c::t_99b378805a6931 67-70
+  s_3b0d4ac429b85c::t_cbe3967251431b 72-76
+  s_3b0d4ac429b85c::t_7650474fc87c8b 137-139
+src/daemon/webhook.ts
+  s_3b0d4ac429b85c::t_0adee81a3d1684 54,69-71
+  s_3b0d4ac429b85c::t_1f7e964deb2058 4
+  s_3b0d4ac429b85c::t_ec491e083d7c20 46
+src/llm/client.ts
+  s_3b0d4ac429b85c::t_4c63519ae0523e 93
+  s_3b0d4ac429b85c::t_4949fef2cbedd4 167
+  s_3b0d4ac429b85c::t_3865654cec7f34 78,150,233
+  s_3b0d4ac429b85c::t_db0a41dc307c35 250
+  s_3b0d4ac429b85c::t_0ccd2a4c4201a6 11
+src/agents/custom.ts
+  s_3b0d4ac429b85c::t_c2ff76a0b1dc0a 38-41
+  s_3b0d4ac429b85c::t_06179f2b539485 12-14
+src/agents/rules.ts
+  s_3b0d4ac429b85c::t_72caa623873267 47
+CHANGELOG.md
+  s_3b0d4ac429b85c::t_50a2ab7dbb81be 5-9,11-12
+tests/unit/prop.ts
+  s_3b0d4ac429b85c::t_47d511dc2d6fce 1-20
+src/enterprise/license.ts
+  s_3b0d4ac429b85c::t_34864290f6d8f8 12
+  s_3b0d4ac429b85c::t_db3417291ff005 10,14,22-27,29-34,36-64,67-83,94-110,120-122,124-125
+src/llm/config.ts
+  s_3b0d4ac429b85c::t_54447d53e41d90 2
+  s_3b0d4ac429b85c::t_5394fc50a4b577 90-94
+src/llm/types.ts
+  s_3b0d4ac429b85c::t_b3559f22665aae 59
+  s_3b0d4ac429b85c::t_62069ed50c3bf5 203
+src/agents/frontmatter.ts
+  s_3b0d4ac429b85c::t_6bd0de6d24b781 4-5
+  s_3b0d4ac429b85c::t_1f754bae84a04d 46-47,50
+src/ui/ModelPicker.tsx
+  s_3b0d4ac429b85c::t_38596192bbbbac 3,16
+  s_3b0d4ac429b85c::t_544447765b71c2 19,37-44,46-66
+src/enterprise/dashboard.ts
+  s_3b0d4ac429b85c::t_63f179ce247857 703,712-713
+  s_3b0d4ac429b85c::t_ea9ca9e79b4603 883,888-890
+  s_3b0d4ac429b85c::t_70487d49f76c70 828-829,831
+  s_3b0d4ac429b85c::t_eec2e6a743ba0d 721,725-730
+  s_3b0d4ac429b85c::t_08d2680afa8dba 760
+  s_3b0d4ac429b85c::t_9b43618596c6ba 130
+  s_3b0d4ac429b85c::t_b1ed8b874ed53f 776,781-785
+  s_3b0d4ac429b85c::t_b8b8b460fc082d 669
+  s_3b0d4ac429b85c::t_7fc79e6dec5024 96-99
+  s_3b0d4ac429b85c::t_9312b9fc32d20c 804-806,812-814
+  s_3b0d4ac429b85c::t_bc676a5f1149f4 838,844,851,862-863,866
+src/ui/LoginScreen.tsx
+  s_3b0d4ac429b85c::t_79744ea8c58845 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "13610015fbdfffd0217e0ba6e670a41ea1e13170",
+  "prompts": {},
+  "sessions": {
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
