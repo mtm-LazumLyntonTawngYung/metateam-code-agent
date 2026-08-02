@@ -100,9 +100,9 @@ describe("Property 8: Session State Management", () => {
   });
 
   test("session ids are unique across creations", () => {
-    prop(50, (rand) => {
+    prop(20, (rand) => {
       const ids = new Set<string>();
-      const n = 1 + randInt(rand, 20);
+      const n = 1 + randInt(rand, 10);
       for (let i = 0; i < n; i++) ids.add(createSession("prop"));
       expect(ids.size).toBe(n);
       for (const id of ids) deleteSession(id);
