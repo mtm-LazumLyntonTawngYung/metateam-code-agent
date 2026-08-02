@@ -28,7 +28,13 @@ JSON-RPC over stdin/stdout.
 
 3. Restart mtc
 4. Verify the server appears: `/mcps` (or `/status` for connected count)
-5. Use its tools: `/call <toolName> {jsonArgs}`
+5. Use its tools: `/call <server>/<toolName> {jsonArgs}`
+
+**Tool namespacing:** MCP tools are exposed with a `<server>/<tool>` prefix
+(e.g. `figma/list_components`) to keep tool names unique when multiple
+servers are connected. Use the full `server/tool` name in `/call`. When a
+server is disconnected, its tools are removed from the registry and calls
+to them fail with a clear "tool not found" error.
 
 MCP servers are loaded from the first matching source:
 `.mtc/mcp.json`, `~/.config/mtc/mcp.json`, then OpenCode config files

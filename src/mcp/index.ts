@@ -10,7 +10,7 @@ export type ServerState = {
 };
 
 const clients = new Map<string, McpClient>();
-const cleanupFns = new Map<string, () => void>();
+const cleanupFns = new Map<string, Array<() => void>>();
 const serverErrors = new Map<string, string>();
 const serverStates = new Map<string, "enabled" | "disabled">();
 
@@ -70,8 +70,10 @@ export async function toggleServerAndRefresh(name: string): Promise<boolean> {
 }
 
 export async function stopServer(name: string): Promise<void> {
-  const cleanup = cleanupFns.get(name);
-  if (cleanup) cleanup();
+  const cleanups = cleanupFns.get(name);
+  if (cleanups) {
+    for (const cleanup of cleanups) cleanup();
+  }
   cleanupFns.delete(name);
   const client = clients.get(name);
   if (client) client.close();
@@ -88,37 +90,40 @@ export async function startAll(): Promise<void> {
   const config = loadMcpConfig();
   const entries = Object.entries(config.mcpServers);
 
-  for (const [, cleanup] of cleanupFns) cleanup();
+  for (const [, cleanups] of cleanupFns) {
+    for (const cleanup of cleanups) cleanup();
+  }
   cleanupFns.clear();
   for (const [, c] of clients) c.close();
   clients.clear();
   serverErrors.clear();
   toolCounts.clear();
 
+  const enabled = entries.filter(([serverName]) => serverStates.get(serverName) !== "disabled");
   const results = await Promise.allSettled(
-    entries
-      .filter(([serverName]) => serverStates.get(serverName) !== "disabled")
-      .map(async ([serverName, serverConfig]) => {
-        const client = new McpClient(serverName, serverConfig);
-        await client.initialize();
-        const tools = await client.listTools();
-        toolCounts.set(serverName, tools.length);
-        for (const tool of tools) {
-          const key = `${serverName}/${tool.name}`;
-          const cleanup = registerTool(tool.name, {
-            ...tool,
-            execute: async (args) => client.callTool(tool.name, args),
-          });
-          cleanupFns.set(key, cleanup);
-        }
-        clients.set(serverName, client);
-      }),
+    enabled.map(async ([serverName, serverConfig]) => {
+      const client = new McpClient(serverName, serverConfig);
+      await client.initialize();
+      const tools = await client.listTools();
+      toolCounts.set(serverName, tools.length);
+      const cleanups: Array<() => void> = [];
+      for (const tool of tools) {
+        const fullName = `${serverName}/${tool.name}`;
+        cleanups.push(registerTool(fullName, {
+          ...tool,
+          name: fullName,
+          execute: async (args) => client.callTool(tool.name, args),
+        }));
+      }
+      cleanupFns.set(serverName, cleanups);
+      clients.set(serverName, client);
+    }),
   );
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === "rejected") {
-      const [serverName] = entries[i];
+      const [serverName] = enabled[i];
       const err = result.reason;
       const msg = err instanceof Error ? err.message : String(err);
       serverErrors.set(serverName, msg);
@@ -132,7 +137,9 @@ export function recordServerError(name: string, error: string): void {
 }
 
 export async function stopAll(): Promise<void> {
-  for (const [, cleanup] of cleanupFns) cleanup();
+  for (const [, cleanups] of cleanupFns) {
+    for (const cleanup of cleanups) cleanup();
+  }
   cleanupFns.clear();
   for (const [, c] of clients) c.close();
   clients.clear();

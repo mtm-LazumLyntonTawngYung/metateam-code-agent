@@ -2,6 +2,8 @@ import { accessSync, constants, readFileSync, statSync } from "fs";
 import { isPathIgnored } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
+export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 const readFileTool: ToolDefinition = {
   name: "read_file",
   description:
@@ -46,16 +48,15 @@ const readFileTool: ToolDefinition = {
     }
 
     const stat = statSync(path);
-    const MAX_FILE_SIZE = 10 * 200 * 200;
     if (stat.size > MAX_FILE_SIZE) {
       return {
         success: false,
-        error: `File too large (${(stat.size / 200 / 200).toFixed(1)} MB). Max: 10 MB.`,
+        error: `File too large (${(stat.size / (1024 * 1024)).toFixed(1)} MB). Max: 10 MB.`,
       };
     }
 
     const raw = readFileSync(path, "utf-8");
-    const lines = raw.split("\n");
+    const lines = raw.replace(/\r\n/g, "\n").split("\n");
     const totalLines = lines.length;
 
     const start = offset ? Math.max(1, offset) : 1;

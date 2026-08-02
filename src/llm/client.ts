@@ -8,7 +8,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from "./types";
-import { findProvider } from "./config";
+import { findProvider, findModel } from "./config";
 import { trackModelUsage } from "../telemetry/tracker";
 
 export async function complete(
@@ -30,6 +30,31 @@ export async function complete(
       return completeOpenRouter(provider, req);
     default:
       return completeOpenAI(provider, req);
+  }
+}
+
+export type StreamDelta =
+  | { kind: "text"; text: string }
+  | { kind: "tool_call"; toolCall: ToolCallInfo };
+
+export async function completeStream(
+  req: CompletionRequest,
+  onDelta: (delta: StreamDelta) => void,
+): Promise<CompletionResponse> {
+  const provider = findProvider(req.model);
+  if (!provider) {
+    throw new Error(`No provider configured for model: ${req.model}`);
+  }
+
+  switch (provider.id) {
+    case "anthropic":
+      return streamAnthropic(provider, req, onDelta);
+    case "openai":
+    case "deepseek":
+    case "openrouter":
+      return streamOpenAICompatible(provider, req, onDelta, provider.id);
+    default:
+      return streamOpenAICompatible(provider, req, onDelta, "openai");
   }
 }
 
@@ -75,7 +100,7 @@ async function completeOpenAI(
     model: req.model,
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     stream: false,
   };
   if (req.tools?.length) {
@@ -90,6 +115,7 @@ async function completeOpenAI(
       Authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {
@@ -146,7 +172,7 @@ async function completeAnthropic(
 
   const body: Record<string, unknown> = {
     model: req.model,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     messages,
   };
   if (systemMsg) body.system = systemMsg.content;
@@ -163,6 +189,7 @@ async function completeAnthropic(
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {
@@ -228,7 +255,7 @@ async function completeOpenRouter(
     model: req.model,
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 200,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
     stream: false,
   };
   if (req.tools?.length) {
@@ -245,6 +272,7 @@ async function completeOpenRouter(
       "X-Title": "MetaTeam Code Agent",
     },
     body: JSON.stringify(body),
+    signal: req.signal,
   });
 
   if (!res.ok) {
@@ -391,4 +419,267 @@ function safeParseArguments(json: string): unknown {
   } catch {
     return { input: json };
   }
+}
+
+async function streamOpenAICompatible(
+  provider: { apiKey: string; baseUrl: string },
+  req: CompletionRequest,
+  onDelta: (delta: StreamDelta) => void,
+  providerId: ProviderId,
+): Promise<CompletionResponse> {
+  const url = `${provider.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const body: Record<string, unknown> = {
+    model: req.model,
+    messages: toOpenAIMessages(req.messages),
+    temperature: req.temperature ?? 0.7,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
+    stream: true,
+  };
+  if (req.tools?.length) {
+    body.tools = toOpenAITools(req.tools);
+    body.tool_choice = req.toolChoice ?? "auto";
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${provider.apiKey}`,
+  };
+  if (providerId === "openrouter") {
+    headers["HTTP-Referer"] = "https://github.com/metateam-code-agent";
+    headers["X-Title"] = "MetaTeam Code Agent";
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal: req.signal,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new ResponseError(res.status, `${providerId} ${res.status}: ${text}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error(`${providerId}: stream body unavailable`);
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const acc = new OpenAIStreamAccumulator(onDelta);
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) acc.flushLine(line);
+  }
+  if (buffer.trim()) {
+    for (const line of buffer.split("\n")) acc.flushLine(line);
+  }
+  acc.finalize();
+
+  const totalTokens = acc.usage?.total_tokens ?? 0;
+  if (totalTokens) trackModelUsage(req.model, totalTokens);
+
+  return {
+    model: req.model,
+    content: acc.content,
+    ...(acc.toolCalls.length > 0 ? { toolCalls: acc.toolCalls } : {}),
+    usage: {
+      inputTokens: acc.usage?.prompt_tokens ?? 0,
+      outputTokens: acc.usage?.completion_tokens ?? 0,
+      totalTokens,
+    },
+    provider: providerId,
+  };
+}
+
+export class OpenAIStreamAccumulator {
+  content = "";
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
+  toolCalls: ToolCallInfo[] = [];
+  private toolCallsById = new Map<string, { id: string; name: string; args: string }>();
+  private toolCallOrder: string[] = [];
+
+  constructor(private onDelta: (delta: StreamDelta) => void) {}
+
+  flushLine(line: string): void {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    let data: {
+      choices?: Array<{
+        delta?: { content?: string | null; tool_calls?: Array<{ index: number; id?: string; function?: { name?: string; arguments?: string } }> };
+        finish_reason?: string | null;
+      }>;
+      usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+    };
+    try {
+      data = JSON.parse(payload);
+    } catch {
+      return;
+    }
+    if (data.usage) this.usage = data.usage;
+    const delta = data.choices?.[0]?.delta;
+    if (!delta) return;
+    if (delta.content) {
+      this.content += delta.content;
+      this.onDelta({ kind: "text", text: delta.content });
+    }
+    for (const tc of delta.tool_calls ?? []) {
+      const id = tc.id ?? this.toolCallOrder[tc.index] ?? `tc_${tc.index}`;
+      let entry = this.toolCallsById.get(id);
+      if (!entry) {
+        entry = { id, name: tc.function?.name ?? "", args: "" };
+        this.toolCallsById.set(id, entry);
+        this.toolCallOrder[tc.index] = id;
+      }
+      if (tc.function?.name && !entry.name) entry.name = tc.function.name;
+      if (tc.function?.arguments) entry.args += tc.function.arguments;
+    }
+  }
+
+  finalize(): void {
+    this.toolCalls = this.toolCallOrder
+      .map((id) => this.toolCallsById.get(id))
+      .filter((t): t is { id: string; name: string; args: string } => !!t && !!t.name)
+      .map((t) => ({ id: t.id, name: t.name, arguments: t.args || "{}" }));
+  }
+}
+
+async function streamAnthropic(
+  provider: { apiKey: string; baseUrl: string },
+  req: CompletionRequest,
+  onDelta: (delta: StreamDelta) => void,
+): Promise<CompletionResponse> {
+  const url = `${provider.baseUrl.replace(/\/+$/, "")}/messages`;
+
+  const systemMsg = req.messages.find((m) => m.role === "system");
+  const messages = toAnthropicMessages(req.messages);
+
+  const body: Record<string, unknown> = {
+    model: req.model,
+    max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
+    messages,
+    stream: true,
+  };
+  if (systemMsg) body.system = systemMsg.content;
+  if (req.tools?.length) {
+    body.tools = toAnthropicTools(req.tools);
+    body.tool_choice = toAnthropicToolChoice(req.toolChoice ?? "auto");
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": provider.apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+    signal: req.signal,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new ResponseError(res.status, `Anthropic ${res.status}: ${text}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("Anthropic: stream body unavailable");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let model = req.model;
+  const toolCalls: ToolCallInfo[] = [];
+  let currentTool: { id: string; name: string; args: string } | null = null;
+
+  const flushEvent = (event: string) => {
+    if (!event.startsWith("event:")) return;
+    const lines = event.split("\n");
+    const type = lines[0].slice(6).trim();
+    const dataLine = lines.find((l) => l.startsWith("data:"));
+    if (!dataLine) return;
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(dataLine.slice(5).trim());
+    } catch {
+      return;
+    }
+
+    if (type === "message_start") {
+      const m = data.message as { model?: string; usage?: { input_tokens?: number; output_tokens?: number } } | undefined;
+      if (m) {
+        if (m.model) model = m.model;
+        if (m.usage) {
+          inputTokens = m.usage.input_tokens ?? 0;
+          outputTokens = m.usage.output_tokens ?? 0;
+        }
+      }
+      return;
+    }
+    if (type === "content_block_start") {
+      const block = data.content_block as { type?: string; id?: string; name?: string } | undefined;
+      if (block?.type === "tool_use") {
+        currentTool = { id: block.id ?? "", name: block.name ?? "", args: "" };
+      }
+      return;
+    }
+    if (type === "content_block_delta") {
+      const delta = data.delta as { type?: string; text?: string; partial_json?: string } | undefined;
+      if (delta?.type === "text_delta" && delta.text) {
+        content += delta.text;
+        onDelta({ kind: "text", text: delta.text });
+      } else if (delta?.type === "input_json_delta" && currentTool && delta.partial_json) {
+        currentTool.args += delta.partial_json;
+      }
+      return;
+    }
+    if (type === "content_block_stop") {
+      if (currentTool) {
+        toolCalls.push({
+          id: currentTool.id,
+          name: currentTool.name,
+          arguments: currentTool.args || "{}",
+        });
+        currentTool = null;
+      }
+      return;
+    }
+    if (type === "message_delta") {
+      const usage = data.usage as { output_tokens?: number } | undefined;
+      if (usage?.output_tokens) outputTokens = usage.output_tokens;
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split("\n\n");
+    buffer = events.pop() ?? "";
+    for (const ev of events) flushEvent(ev);
+  }
+  if (buffer.trim()) flushEvent(buffer);
+
+  const totalTokens = inputTokens + outputTokens;
+  if (totalTokens) trackModelUsage(req.model, totalTokens);
+
+  return {
+    model,
+    content,
+    ...(toolCalls.length > 0 ? { toolCalls } : {}),
+    usage: {
+      inputTokens,
+      outputTokens,
+      totalTokens,
+    },
+    provider: "anthropic",
+  };
 }

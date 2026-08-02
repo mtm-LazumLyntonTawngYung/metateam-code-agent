@@ -1,5 +1,6 @@
 import { Box, Text } from "ink";
 import { useTheme } from "../theme";
+import { VERSION } from "../../version";
 
 export default function Header() {
   const theme = useTheme();
@@ -13,7 +14,7 @@ export default function Header() {
       <Text bold color={theme.colors.primary}>
         mtc
       </Text>
-      <Text color={theme.colors.muted}> Metateam Code Agent v0.1.0</Text>
+      <Text color={theme.colors.muted}> Metateam Code Agent v{VERSION}</Text>
     </Box>
   );
 }

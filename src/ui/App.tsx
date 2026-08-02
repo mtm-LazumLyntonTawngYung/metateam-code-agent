@@ -123,7 +123,7 @@ export default function App() {
   const [agentLogs, setAgentLogs] = useState<LogEntry[]>([]);
 const promptQueueRef = useRef<string[]>([]);
 const activeAgentRef = useRef<AgentDefinition | null>(null);
-const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([]);
+const abortControllerRef = useRef<AbortController | null>(null);
   const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
   const [authenticated, setAuthenticated] = useState(isAuthenticated);
   const [authEmail, setAuthEmail] = useState(() => getAuth()?.userEmail ?? "");
@@ -155,7 +155,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     const sid = createSession("mtc-session");
     setSessionId(sid);
     setCurrentSessionId(sid);
-    completionHistoryRef.current = [];
 
     const telem = ensureTelemetryConfig();
     if (telem.enabled) {
@@ -216,6 +215,11 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
       setShowCommands(true);
       return;
     }
+    if (key.ctrl && _input === "c" && agentBusy && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setNotification("Aborting agent...");
+      return;
+    }
   });
 
   const handleQueryChange = useCallback((value: string) => {
@@ -266,9 +270,14 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
   const startAgentLoop = useCallback(
     async (text: string, agent: AgentDefinition) => {
       const t = themeRef.current;
-      const modelName = findModel(modelId)?.displayName ?? modelId;
+      const modelDisplayName = findModel(modelId)?.displayName ?? modelId;
       setAgentBusy(true);
       setAgentLogs((prev) => [...prev, { kind: "query", text }]);
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const skill = activeSkillId ? (getAllSkills().find((s) => s.id === activeSkillId)?.body ?? undefined) : undefined;
 
       const onUpdate = (update: AgentUpdate) => {
         switch (update.kind) {
@@ -277,6 +286,18 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               ...prev,
               { kind: "message", text: update.content, color: t.colors.text },
             ]);
+            break;
+          case "stream":
+            setAgentLogs((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last && last.kind === "message") {
+                next[next.length - 1] = { kind: "message", text: update.content, color: t.colors.text };
+              } else {
+                next.push({ kind: "message", text: update.content, color: t.colors.text });
+              }
+              return next;
+            });
             break;
           case "tool_call":
             setAgentLogs((prev) => [
@@ -301,11 +322,12 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               {
                 kind: "status",
                 agentName: update.agentName,
-                modelName: update.modelName,
+                modelName: modelDisplayName,
                 duration: update.duration,
               },
             ]);
             setAgentBusy(false);
+            abortControllerRef.current = null;
             break;
           case "error":
             setAgentLogs((prev) => [
@@ -317,28 +339,21 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
               },
             ]);
             setAgentBusy(false);
+            abortControllerRef.current = null;
             break;
         }
       };
 
-      await runAgentLoop(
-        text,
-        agent,
-        completionHistoryRef.current,
-        onUpdate,
-        requestToolExecution,
-        modelName,
-        currentSessionId ?? undefined,
-      );
-
-      if (currentSessionId) {
-        const rows = getMessages(currentSessionId, true);
-        completionHistoryRef.current = rows
-          .filter((r): r is MessageRow & { role: "user" | "assistant" } => r.role === "user" || r.role === "assistant")
-          .map((r) => ({ role: r.role, content: r.content }));
-      }
+      await runAgentLoop(text, agent, [], onUpdate, {
+        executeToolFn: requestToolExecution,
+        modelId,
+        sessionId: currentSessionId ?? undefined,
+        skillBody: skill,
+        signal: controller.signal,
+        stream: true,
+      });
     },
-    [requestToolExecution, themeRef, modelId, currentSessionId],
+    [requestToolExecution, themeRef, modelId, currentSessionId, activeSkillId],
   );
 
   useEffect(() => {
@@ -411,7 +426,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
         setSessionId(newSessionId);
         setCurrentSessionId(newSessionId);
         setAgentLogs([]);
-        completionHistoryRef.current = [];
         setQuery("");
         setView("home");
         setNotification(`New session: ${newSessionId.slice(0, 8)}`);
@@ -539,13 +553,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     setSessionId(sessionId);
     setShowSessions(false);
     const rows = getMessages(sessionId, true);
-    const history: { role: "user" | "assistant"; content: string }[] = [];
-    for (const row of rows) {
-      if (row.role === "user" || row.role === "assistant") {
-        history.push({ role: row.role, content: row.content });
-      }
-    }
-    completionHistoryRef.current = history;
     setAgentLogs(messagesToLogs(rows));
     setQuery("");
     setView("chat");
@@ -556,7 +563,6 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     const newSessionId = createSession("mtc-session");
     setSessionId(newSessionId);
     setCurrentSessionId(newSessionId);
-    completionHistoryRef.current = [];
     setAgentLogs([]);
     setShowSessions(false);
     setQuery("");
@@ -600,6 +606,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
     }
     if (id === "help") setShowHelp(true);
     if (id === "mcps") setShowMcps(true);
+    if (id === "models" || id === "model") setShowModelPicker(true);
     if (id === "init") {
       setShowCommands(false);
       setQuery("/init");
@@ -677,9 +684,7 @@ const completionHistoryRef = useRef<{ role: "user" | "assistant"; content: strin
       sessionTitle: query || "New Session",
       tokenCount: tokenSum,
       maxContextTokens: DEFAULT_BUDGET.maxTokens,
-      costSpent: 0,
       mcpServers,
-      lspStatus: { enabled: false, activeCount: 0 },
       currentPath: process.cwd(),
       gitBranch,
       authEmail: authEmail || undefined,

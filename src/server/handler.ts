@@ -4,7 +4,6 @@ import {
   createSession,
   addMessage,
   getMessages,
-  deleteSession,
 } from "../session/history";
 import {
   setSessionId,

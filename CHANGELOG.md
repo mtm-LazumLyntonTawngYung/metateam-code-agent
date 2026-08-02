@@ -2,7 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+- **Webhook security gateway** — constant-time GitHub signature and GitLab token validation (`crypto.timingSafeEqual`); unauthenticated webhook requests now return 401
+- **Clone URL and path traversal validation** — strict regex on repository clone URLs and resolved-path containment checks for LLM-written files in the autofix pipeline
+- **SSO public-client device flow** — `MTC_AZURE_CLIENT_SECRET` is now optional; auth tokens written with 0600 permissions; exact `@metateammyanmar.com` domain check
+- **Single version source** — `src/version.ts` now the sole source of truth (updater, CLI, header, sidebar); `checkForUpdates` compares semver numerically
+- **Cross-platform hardening** — CRLF normalization in `read_file` and MCP plugins; daemon temp dir uses OS temp path; `join()`-based path handling in the autofix pipeline; CI tests on Linux, macOS, and Windows
+- **Structured JSON logging** — daemon logs JSON lines with levels, job IDs, and secret redaction; `GET /health` liveness endpoint
+- **Opt-in telemetry** — disabled by default with full privacy disclosure on `mtc analytics enable`; see `docs/internal/privacy-policy.md`
+- **Property tests** — Property 9 (cross-platform paths) and Property 12 (build/version determinism)
+- **Migration guide** — `docs/migration-guide.md` for license format, SSO, agent permission, and telemetry changes
+
 ### Changed
+- **GitLab daemon (BREAKING behavior)** — GitLab webhook events are now explicitly rejected with a logged warning instead of silently no-oping; only GitHub repositories can be autofixed
+- **Telemetry default (BREAKING)** — usage analytics are now off unless explicitly enabled
+- **License system redesign (BREAKING)** — license keys now use canonical `MTC-<tier>-<base64url(payload)>-<hmac>` format with HMAC verification, expiry enforced at read time, and fail-closed behavior when `MTC_LICENSE_SECRET` is not set. Existing keys must be regenerated.
+- **Custom agent defaults (BREAKING)** — new custom agents default to `read: allow`, `edit/bash/execute: deny`; frontmatter `permissions` are now honored explicitly (`allow`/`deny`). The `mtc init` template already matched.
+- **Sidebar cleanup** — removed always-stubbed `costSpent` and LSP status rows from the sidebar
+- **Daemon config fix** — env-var warning now prints the correct variable name (hyphens converted to underscores)
 - **Documentation sync** — updated all docs to match the current implementation:
   - `README.md`: corrected key bindings; added LLM provider config, MCP load order, and skills
   - `docs/internal/commands.md`: full CLI command inventory (`eval`, `llm`, `analytics`, `daemon`, `enterprise`, `auth`), accurate slash commands, key bindings, and agent permission matrix

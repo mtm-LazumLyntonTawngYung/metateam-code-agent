@@ -1,5 +1,5 @@
 import { loadConfig, saveConfig } from "../config";
-import { KNOWN_MODELS, type ProviderConfig, type ProviderId } from "./types";
+import { KNOWN_MODELS, type ModelConfig, type ProviderConfig, type ProviderId } from "./types";
 
 export type LlmConfig = {
   providers: ProviderConfig[];
@@ -85,6 +85,11 @@ export function getConfiguredModelIds(): string[] {
     ids.push(...p.models);
   }
   return ids;
+}
+
+export function filterKnownModels(configuredIds: string[]): ModelConfig[] {
+  const ids = new Set(configuredIds);
+  return KNOWN_MODELS.filter((m) => ids.has(m.id));
 }
 
 export function findModel(id: string) {

@@ -18,6 +18,7 @@ export type MtcConfig = {
   telemetry?: TelemetryConfig;
   llm?: Record<string, unknown>;
   license?: Record<string, unknown>;
+  auth?: { clientId?: string; tenantId?: string; clientSecret?: string };
   organization?: { name?: string };
   themeId?: string;
 };
@@ -61,7 +62,7 @@ export function ensureTelemetryConfig(): { enabled: boolean; deviceId: string } 
     return { enabled: cfg.telemetry.enabled, deviceId: cfg.telemetry.deviceId };
   }
   const deviceId = generateDeviceId();
-  const telemetry = { enabled: cfg.telemetry?.enabled ?? true, deviceId };
+  const telemetry = { enabled: cfg.telemetry?.enabled ?? false, deviceId };
   saveConfig({ telemetry });
   return telemetry;
 }

@@ -1,24 +1,17 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { version } from '../../../package.json';
+import { VERSION } from '../../version';
 
 interface McpServerInfo {
   name: string;
   status: 'connected' | 'disconnected';
 }
 
-interface LspStatusInfo {
-  enabled: boolean;
-  activeCount: number;
-}
-
 interface SidebarProps {
   sessionTitle?: string;
   tokenCount: number;
   maxContextTokens: number;
-  costSpent: number;
   mcpServers: McpServerInfo[];
-  lspStatus: LspStatusInfo;
   currentPath: string;
   gitBranch?: string;
   authEmail?: string;
@@ -30,9 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sessionTitle = 'New Session',
   tokenCount,
   maxContextTokens,
-  costSpent,
   mcpServers,
-  lspStatus,
   currentPath,
   gitBranch,
   authEmail,
@@ -59,7 +50,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <Text bold color="gray">Context</Text>
         <Text color="gray">{tokenCount.toLocaleString()} tokens</Text>
         <Text color="gray">{contextPercent}% used</Text>
-        <Text color="gray">${costSpent.toFixed(2)} spent</Text>
       </Box>
 
       <Box flexDirection="column" marginTop={1}>
@@ -82,13 +72,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </Box>
       )}
 
-      <Box flexDirection="column" marginTop={1}>
-        <Text bold color="gray">LSP</Text>
-        <Text color="gray">
-          {lspStatus.enabled ? `${lspStatus.activeCount} LSPs active` : 'LSPs are disabled'}
-        </Text>
-      </Box>
-
       <Box flexDirection="column" marginTop={2}>
         <Text color="gray" wrap="truncate-end">
           {currentPath}{gitBranch ? `:${gitBranch}` : ''}
@@ -97,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <Box marginTop={1}>
         <Text color="green">● </Text>
-        <Text color="gray">MetaCode v{version}</Text>
+        <Text color="gray">MetaCode v{VERSION}</Text>
       </Box>
     </Box>
   );

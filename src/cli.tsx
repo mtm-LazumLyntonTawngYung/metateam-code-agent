@@ -3,6 +3,7 @@ import { registerCleanup } from "./ui/clean-exit";
 import { MouseInputStream, enableMouseMode, disableMouseMode } from "./ui/mouse";
 import { Command } from "commander";
 import App from "./ui/App";
+import { VERSION } from "./version";
 import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
 import { listTasks, runTask } from "./eval/index";
 import { ensureTelemetryConfig, saveConfig } from "./config";
@@ -43,7 +44,7 @@ const program = new Command();
 program
   .name("mtc")
   .description("Metateam Code Agent — AI-powered terminal-first coding assistant")
-  .version("1.0.0")
+  .version(VERSION)
   .action(async () => {
     if (process.stdin.isTTY) {
       enableMouseMode();
@@ -136,6 +137,13 @@ analyticsCmd
     const { deviceId } = ensureTelemetryConfig();
     saveConfig({ telemetry: { enabled: true, deviceId } });
     console.log("\n  Telemetry enabled. Usage data will be collected locally.\n");
+    console.log("  What is collected (stored locally only):");
+    console.log("    - Session start/end timestamps and session IDs");
+    console.log("    - Tool calls, their success/failure and duration");
+    console.log("    - Model names and token usage");
+    console.log("    - An anonymous device ID");
+    console.log("  What is NOT collected: file contents, prompts, or code.");
+    console.log("  Disable anytime with: mtc analytics disable\n");
   });
 
 analyticsCmd
@@ -260,6 +268,9 @@ enterpriseCmd
   .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
   .option("-s, --seats <number>", "Max seats", "50")
   .action((options: { tier: string; org: string; expires: string; seats: string }) => {
+    if (!process.env.MTC_LICENSE_SECRET) {
+      console.error("\n  WARNING: MTC_LICENSE_SECRET is not set. Keys generated without it cannot be verified and will be rejected on activation. Set MTC_LICENSE_SECRET in your environment.\n");
+    }
     const key = generateLicenseKey(
       options.tier as Tier,
       options.org,

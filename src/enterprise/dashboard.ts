@@ -93,6 +93,10 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ha, hb);
 }
 
+function sanitizeIp(value: string): string {
+  return value.replace(/[<>&"']/g, "");
+}
+
 function sessionCookie(token: string): string {
   return `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${SESSION_MAX_AGE}; SameSite=Lax`;
 }
@@ -123,7 +127,7 @@ async function handleLogin(req: Request): Promise<Response> {
       actor: username,
       action: "dashboard.login_failed",
       resource: "dashboard",
-      detail: `Failed attempt from ${ip}`,
+      detail: `Failed attempt from ${sanitizeIp(ip)}`,
     });
     return jsonResponse({ error: "Invalid username or password" }, 401);
   }
@@ -662,7 +666,7 @@ function stat(label, value, chip, icon) {
   return '<div class="stat">' +
     '<div class="stat-icon ' + chip + '">' + (icon || '') + '</div>' +
     '<div class="stat-label">' + label + '</div>' +
-    '<div class="stat-value">' + value + '</div>' +
+    '<div class="stat-value">' + esc(value) + '</div>' +
     '</div>';
 }
 function stats(items) { return '<div class="stats">' + items.join('') + '</div>'; }
@@ -696,7 +700,7 @@ function table(headers, rows) {
 }
 
 function tierBadge(tier) {
-  return '<span class="badge tier ' + tier + '">' + tier + '</span>';
+  return '<span class="badge tier ' + esc(tier) + '">' + esc(tier) + '</span>';
 }
 
 function featureGrid(features) {
@@ -705,8 +709,8 @@ function featureGrid(features) {
     var ok = !!f.available;
     return '<div class="feature-item">' +
       '<span class="icon" style="color:' + (ok ? 'var(--green)' : 'var(--text-faint)') + '">' + (ok ? IC.check : IC.x) + '</span>' +
-      '<span>' + f.feature.replace(/_/g, ' ') + '</span>' +
-      '<span class="tier">' + f.tier + '</span>' +
+      '<span>' + esc(f.feature.replace(/_/g, ' ')) + '</span>' +
+      '<span class="tier">' + esc(f.tier) + '</span>' +
       '</div>';
   }).join('') + '</div>';
 }
@@ -714,8 +718,14 @@ function featureGrid(features) {
 function pillList(items) {
   if (!items || !items.length) return '<div class="empty">No enterprise features (community tier).</div>';
   return '<div class="pill-list">' + items.map(function (i) {
-    return '<span class="pill">' + i.replace(/_/g, ' ') + '</span>';
+    return '<span class="pill">' + esc(i.replace(/_/g, ' ')) + '</span>';
   }).join('') + '</div>';
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;';
+  });
 }
 
 /* ---- views ---- */
@@ -747,7 +757,7 @@ function renderLicense() {
       stat('Expires', lic.expiresAt ? lic.expiresAt.slice(0, 10) : 'N/A', 'chip-yellow', IC.clock),
       stat('Organization', lic.organization, 'chip-purple', IC.building)
     ]) +
-    section('License Details', null, '<div class="license-box">' + l.formatted + '</div>', true) +
+    section('License Details', null, '<div class="license-box">' + esc(l.formatted) + '</div>', true) +
     section('Enterprise Features', feats.length + ' features', pillList(feats), true);
 }
 
@@ -763,16 +773,16 @@ function renderAudit() {
   ]);
   if (statsData.topActions && statsData.topActions.length) {
     html += section('Top Actions', statsData.topActions.length + ' actions',
-      table(['Action', 'Count'], statsData.topActions.map(act => [act.action, '<span class="mono">' + act.count + '</span>'])));
+      table(['Action', 'Count'], statsData.topActions.map(act => [esc(act.action), '<span class="mono">' + esc(act.count) + '</span>'])));
   }
   html += section('Recent Events', logs.length + ' events',
     logs.length
       ? table(['Time', 'Actor', 'Action', 'Resource', 'Detail'], logs.map(log => [
-          '<span class="mono">' + new Date(log.timestamp).toLocaleString() + '</span>',
-          log.actor,
-          '<span class="pill">' + log.action + '</span>',
-          log.resource,
-          '<span class="dim">' + log.detail + '</span>'
+          '<span class="mono">' + esc(new Date(log.timestamp).toLocaleString()) + '</span>',
+          esc(log.actor),
+          '<span class="pill">' + esc(log.action) + '</span>',
+          esc(log.resource),
+          '<span class="dim">' + esc(log.detail) + '</span>'
         ]))
       : '<div class="empty">No audit events recorded yet.</div>');
   return html;
@@ -791,17 +801,17 @@ function renderAnalytics() {
   if (r.modelStats && r.modelStats.length) {
     html += section('Model Usage', r.modelStats.length + ' models',
       table(['Model', 'Tokens', 'Calls'], r.modelStats.map(m => [
-        m.model,
-        '<span class="mono">' + (m.total_tokens || 0).toLocaleString() + '</span>',
-        '<span class="mono">' + (m.call_count || 0) + '</span>'
+        esc(m.model),
+        '<span class="mono">' + esc((m.total_tokens || 0).toLocaleString()) + '</span>',
+        '<span class="mono">' + esc(m.call_count || 0) + '</span>'
       ])));
   }
   if (r.toolStats && r.toolStats.length) {
     html += section('Tool Usage', r.toolStats.length + ' tools',
       table(['Tool', 'Calls', 'Success Rate'], r.toolStats.map(t => [
-        t.tool_name,
-        '<span class="mono">' + t.call_count + '</span>',
-        (100 - (t.failure_rate || 0)).toFixed(0) + '%'
+        esc(t.tool_name),
+        '<span class="mono">' + esc(t.call_count) + '</span>',
+        esc((100 - (t.failure_rate || 0)).toFixed(0)) + '%'
       ])));
   }
   return html;
@@ -815,30 +825,30 @@ function renderOrganizations() {
     section('Organizations', orgs.length + ' orgs',
       orgs.length
         ? table(['Name', 'Slug', 'Tier', 'Created'], orgs.map(org => [
-            org.name,
-            '<span class="mono">' + org.slug + '</span>',
+            esc(org.name),
+            '<span class="mono">' + esc(org.slug) + '</span>',
             tierBadge(org.tier),
-            new Date(org.createdAt).toLocaleDateString()
+            esc(new Date(org.createdAt).toLocaleDateString())
           ]))
         : '<div class="empty">No organizations configured.</div>');
 }
 
 function rolePill(role) {
   const color = role === 'admin' ? 'var(--accent)' : role === 'viewer' ? 'var(--text-muted)' : 'var(--green)';
-  return '<span class="pill" style="color:' + color + '">' + role + '</span>';
+  return '<span class="pill" style="color:' + color + '">' + esc(role) + '</span>';
 }
 
 function fmtLastActive(value) {
   if (!value) return '<span class="dim">Never</span>';
   const t = new Date(value).getTime();
-  if (isNaN(t)) return '<span class="dim">' + value + '</span>';
+  if (isNaN(t)) return '<span class="dim">' + esc(value) + '</span>';
   const diff = Date.now() - t;
   const day = 86400000;
   if (diff < 60000) return 'just now';
   if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
   if (diff < day) return Math.floor(diff / 3600000) + 'h ago';
   if (diff < 7 * day) return Math.floor(diff / day) + 'd ago';
-  return new Date(value).toLocaleDateString();
+  return esc(new Date(value).toLocaleDateString());
 }
 
 function renderUsers() {
@@ -849,11 +859,11 @@ function renderUsers() {
     section('Users', users.length + ' users',
       users.length
         ? table(['Email', 'Organization', 'Role', 'Last Active', 'Joined'], users.map(user => [
-            user.email,
-            user.orgName + '<div class="dim">' + user.orgSlug + '</div>',
+            esc(user.email),
+            esc(user.orgName) + '<div class="dim">' + esc(user.orgSlug) + '</div>',
             rolePill(user.role),
             fmtLastActive(user.lastActiveAt),
-            new Date(user.joinedAt).toLocaleDateString()
+            esc(new Date(user.joinedAt).toLocaleDateString())
           ]))
         : '<div class="empty">No users found.</div>');
 }
@@ -870,14 +880,14 @@ function renderServers() {
   ]);
   html += section('Connected MCP Servers', servers.length + ' servers',
     servers.length
-      ? table(['Name', 'Status'], servers.map(name => [name, '<span class="status ok">Connected</span>']))
+      ? table(['Name', 'Status'], servers.map(name => [esc(name), '<span class="status ok">Connected</span>']))
       : '<div class="empty">No MCP servers connected.</div>');
   html += section('Available Agents', agents.length + ' agents',
     agents.length
       ? table(['ID', 'Name', 'Mode'], agents.map(agent => [
-          '<span class="mono">' + agent.id + '</span>',
-          agent.name,
-          '<span class="pill">' + agent.mode + '</span>'
+          '<span class="mono">' + esc(agent.id) + '</span>',
+          esc(agent.name),
+          '<span class="pill">' + esc(agent.mode) + '</span>'
         ]))
       : '<div class="empty">No agents available.</div>');
   return html;

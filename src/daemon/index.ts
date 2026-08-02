@@ -1,19 +1,23 @@
 import { startWebhookServer } from "./webhook";
 import type { DaemonConfig } from "./config";
+import { logger } from "../utils/logger";
 export type { DaemonConfig } from "./config";
 
 export function startDaemon(config: DaemonConfig): void {
-  console.log(`mtc daemon starting on ${config.host}:${config.port}`);
-  console.log(`  autofix label: "${config.autofixLabel}"`);
-  if (config.slackWebhook) console.log("  Slack notifications: enabled");
-  if (config.teamsWebhook) console.log("  Teams notifications: enabled");
+  logger.info("mtc daemon starting", {
+    host: config.host,
+    port: config.port,
+    autofixLabel: config.autofixLabel,
+    slack: Boolean(config.slackWebhook),
+    teams: Boolean(config.teamsWebhook),
+  });
 
   process.on("SIGINT", () => {
-    console.log("\nmtc daemon shutting down...");
+    logger.info("mtc daemon shutting down (SIGINT)");
     process.exit(0);
   });
   process.on("SIGTERM", () => {
-    console.log("\nmtc daemon shutting down...");
+    logger.info("mtc daemon shutting down (SIGTERM)");
     process.exit(0);
   });
 

@@ -7,10 +7,11 @@
  * legal@metateam.io for terms.
  */
 
-import { createHash, randomUUID, createHmac } from "crypto";
+import { createHmac } from "crypto";
 import { loadConfig, saveConfig } from "../config/index";
-import type { LicenseInfo, Tier, EnterpriseFeature, LicenseStatus } from "./types";
+import type { LicenseInfo, Tier, EnterpriseFeature } from "./types";
 import { TIER_FEATURES } from "./types";
+import { safeCompare } from "../utils/security";
 
 let cachedLicense: LicenseInfo | null = null;
 
@@ -18,28 +19,68 @@ function getLicenseSecret(): string {
   return process.env.MTC_LICENSE_SECRET ?? "";
 }
 
-export function getLicense(): LicenseInfo {
-  if (cachedLicense) return cachedLicense;
+type LicensePayload = {
+  tier: Tier;
+  organization: string;
+  expiresAt: string;
+  maxSeats: number;
+};
 
-  const cfg = loadConfig();
-  const licenseData = cfg.license as Record<string, unknown> | undefined;
+export function generateLicenseKey(tier: Tier, organization: string, expiresAt: string, maxSeats: number): string {
+  const payload: LicensePayload = { tier, organization, expiresAt, maxSeats };
+  const b64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const hmac = createHmac("sha256", getLicenseSecret()).update(b64).digest("hex");
+  return `MTC-${tier}-${b64}-${hmac}`;
+}
 
-  if (licenseData?.key) {
-    cachedLicense = {
-      key: String(licenseData.key),
-      tier: (licenseData.tier as Tier) ?? "community",
-      status: (licenseData.status as LicenseStatus) ?? "invalid",
-      organization: String(licenseData.organization ?? ""),
-      activatedAt: String(licenseData.activatedAt ?? ""),
-      expiresAt: String(licenseData.expiresAt ?? ""),
-      features: (licenseData.features as EnterpriseFeature[]) ?? [],
-      maxSeats: (licenseData.maxSeats as number) ?? 1,
-      currentSeats: (licenseData.currentSeats as number) ?? 1,
-    };
-    return cachedLicense;
+export function parseLicenseKey(key: string): LicenseInfo | null {
+  return decodeLicenseKey(key).license ?? null;
+}
+
+function decodeLicenseKey(key: string): { license?: LicenseInfo; error?: string } {
+  const secret = getLicenseSecret();
+  if (!secret) {
+    return { error: "MTC_LICENSE_SECRET not set — license cannot be verified" };
   }
 
-  cachedLicense = {
+  const match = key.match(/^MTC-(enterprise-plus|enterprise|community)-([A-Za-z0-9_-]+)-([a-f0-9]{64})$/i);
+  if (!match) return { error: "Invalid license key format" };
+
+  const tier = match[1].toLowerCase() as Tier;
+  const b64 = match[2];
+  const hmac = match[3].toLowerCase();
+  const expected = createHmac("sha256", secret).update(b64).digest("hex");
+  if (!safeCompare(expected, hmac)) return { error: "Invalid license signature" };
+
+  let payload: LicensePayload;
+  try {
+    payload = JSON.parse(Buffer.from(b64, "base64url").toString("utf-8")) as LicensePayload;
+  } catch {
+    return { error: "Invalid license payload" };
+  }
+
+  if (payload.tier !== tier) return { error: "Tier mismatch" };
+  if (!payload.expiresAt || new Date(payload.expiresAt).getTime() <= Date.now()) {
+    return { error: "License key has expired" };
+  }
+
+  return {
+    license: {
+      key,
+      tier,
+      status: "active",
+      organization: payload.organization,
+      activatedAt: new Date().toISOString(),
+      expiresAt: payload.expiresAt,
+      features: TIER_FEATURES[tier] ?? [],
+      maxSeats: payload.maxSeats,
+      currentSeats: 1,
+    },
+  };
+}
+
+function communityLicense(): LicenseInfo {
+  return {
     key: "",
     tier: "community",
     status: "active",
@@ -50,6 +91,23 @@ export function getLicense(): LicenseInfo {
     maxSeats: 1,
     currentSeats: 1,
   };
+}
+
+export function getLicense(): LicenseInfo {
+  if (cachedLicense) return cachedLicense;
+
+  const cfg = loadConfig();
+  const licenseData = cfg.license as Record<string, unknown> | undefined;
+
+  if (licenseData?.key) {
+    const parsed = parseLicenseKey(String(licenseData.key));
+    if (parsed) {
+      cachedLicense = parsed;
+      return cachedLicense;
+    }
+  }
+
+  cachedLicense = communityLicense();
   return cachedLicense;
 }
 
@@ -59,29 +117,12 @@ export function setLicense(license: LicenseInfo): void {
 }
 
 export function activateLicense(key: string): { success: boolean; license?: LicenseInfo; error?: string } {
-  const parsed = parseLicenseKey(key);
-  if (!parsed) {
-    return { success: false, error: "Invalid license key format or signature" };
+  const result = decodeLicenseKey(key);
+  if (!result.license) {
+    return { success: false, error: result.error ?? "Invalid license key" };
   }
-
-  if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
-    return { success: false, error: "License key has expired" };
-  }
-
-  const license: LicenseInfo = {
-    key,
-    tier: parsed.tier,
-    status: "active",
-    organization: parsed.organization,
-    activatedAt: new Date().toISOString(),
-    expiresAt: parsed.expiresAt ?? new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-    features: TIER_FEATURES[parsed.tier] ?? [],
-    maxSeats: parsed.maxSeats ?? 5,
-    currentSeats: 1,
-  };
-
-  setLicense(license);
-  return { success: true, license };
+  setLicense(result.license);
+  return { success: true, license: result.license };
 }
 
 export function deactivateLicense(): void {
@@ -101,57 +142,6 @@ export function getEffectiveTier(): Tier {
 
 export function isEnterprise(): boolean {
   return getLicense().tier !== "community";
-}
-
-export function generateLicenseKey(tier: Tier, organization: string, expiresAt: string, maxSeats: number): string {
-  const secret = getLicenseSecret();
-  const payload = `${tier}:${organization}:${expiresAt}:${maxSeats}`;
-  const sig = secret
-    ? createHmac("sha256", secret).update(payload).digest("hex").toUpperCase().slice(0, 16)
-    : createHash("sha256").update(payload + randomUUID()).digest("hex").toUpperCase().slice(0, 16);
-
-  const raw = `MTC-${tier.toUpperCase()}-${organization.replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 8)}-${sig}`;
-  return raw.match(/.{1,4}/g)?.join("-") ?? raw;
-}
-
-function parseLicenseKey(key: string): { tier: Tier; organization: string; expiresAt: string; maxSeats: number } | null {
-  const cleaned = key.replace(/-/g, "");
-  const match = cleaned.match(/^MTC(ENTERPRISE(?:_PLUS)?|COMMUNITY)([A-Z0-9]+)([A-F0-9]{16})$/i);
-  if (!match) return null;
-
-  const tierMap: Record<string, Tier> = {
-    COMMUNITY: "community",
-    ENTERPRISE: "enterprise",
-    ENTERPRISE_PLUS: "enterprise-plus",
-  };
-
-  const tierStr = match[1].toUpperCase();
-  const tier = tierMap[tierStr];
-  if (!tier) return null;
-
-  const organization = match[2] ?? "Unknown";
-  const sigFromKey = match[3];
-
-  const secret = getLicenseSecret();
-  const expiresAt = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
-  const maxSeats = tier === "community" ? 1 : tier === "enterprise" ? 50 : 500;
-
-  if (secret) {
-    const payload = `${tier}:${organization}:${expiresAt}:${maxSeats}`;
-    const expectedSig = createHmac("sha256", secret).update(payload).digest("hex").toUpperCase().slice(0, 16);
-    if (sigFromKey !== expectedSig) {
-      return null;
-    }
-  } else {
-    console.warn("[mtc] MTC_LICENSE_SECRET not set — license key signature NOT verified!");
-  }
-
-  return {
-    tier,
-    organization,
-    expiresAt,
-    maxSeats,
-  };
 }
 
 export function formatLicenseInfo(license: LicenseInfo): string {
