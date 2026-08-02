@@ -9,8 +9,7 @@ export type LlmConfig = {
     reasoningModel: string;
   };
 };
-
-const DEFAULT_PROVIDERS: ProviderConfig[] = [
+export const DEFAULT_PROVIDERS: ProviderConfig[] = [
   {
     id: "deepseek",
     label: "DeepSeek",
@@ -37,7 +36,7 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
     label: "OpenRouter",
     apiKey: "",
     baseUrl: "https://openrouter.ai/api/v1",
-    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"],
+    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat", "poolside/laguna-s-2.1:free"],
   },
 ];
 
@@ -48,13 +47,25 @@ export function loadLlmConfig(): LlmConfig {
   const raw = (cfg as Record<string, unknown>)[CONFIG_KEY] as Partial<LlmConfig> | undefined;
 
   return {
-    providers: raw?.providers?.length ? raw.providers : DEFAULT_PROVIDERS,
+    providers: raw?.providers?.length
+      ? mergeProviders(raw.providers, DEFAULT_PROVIDERS)
+      : DEFAULT_PROVIDERS,
     routing: raw?.routing ?? {
       simpleModel: "deepseek-chat",
       defaultModel: "deepseek-chat",
       reasoningModel: "claude-sonnet-4-20250514",
     },
   };
+}
+
+function mergeProviders(saved: ProviderConfig[], defaults: ProviderConfig[]): ProviderConfig[] {
+  const defaultByProvider = new Map(defaults.map((p) => [p.id, p]));
+  return saved.map((p) => {
+    const def = defaultByProvider.get(p.id);
+    if (!def) return p;
+    const models = [...new Set([...(p.models ?? []), ...def.models])];
+    return { ...p, models };
+  });
 }
 
 export function saveLlmConfig(partial: Partial<LlmConfig>): LlmConfig {
