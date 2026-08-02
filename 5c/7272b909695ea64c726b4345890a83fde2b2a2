@@ -1,0 +1,98 @@
+docs/internal/README.md
+  s_3b0d4ac429b85c::t_3c865854bcb1b1 52,55-60
+src/version.ts
+  s_3b0d4ac429b85c::t_e2f2a1abc348fc 1-27
+src/ui/components/Sidebar.tsx
+  s_3b0d4ac429b85c::t_868894c8790e2c 83
+  s_3b0d4ac429b85c::t_51709914fd81f4 3
+src/config/index.ts
+  s_3b0d4ac429b85c::t_9a04c2f00653d5 65
+src/mcp-plugins/figma-bridge.ts
+  s_3b0d4ac429b85c::t_33bb006e8e7896 440
+src/ui/components/Header.tsx
+  s_3b0d4ac429b85c::t_dfc44ed042bf36 3,17
+src/agents/agent-loop.ts
+  s_3b0d4ac429b85c::t_16be03b8224ae9 49
+README.md
+  s_3b0d4ac429b85c::t_9cfceccd1309a3 14
+  s_3b0d4ac429b85c::t_7d7cf633ef022c 84-108
+src/daemon/webhook.ts
+  s_3b0d4ac429b85c::t_854a6ab455fb9e 32-46
+  s_3b0d4ac429b85c::t_55c259c9a20c46 5
+  s_3b0d4ac429b85c::t_72e2ddb68c3704 95
+src/cli.tsx
+  s_3b0d4ac429b85c::t_80c419840f30b0 47
+  s_3b0d4ac429b85c::t_d6fd1aa556d293 140-146
+  s_3b0d4ac429b85c::t_de4e01bdcd664c 6
+src/daemon/config.ts
+  s_3b0d4ac429b85c::t_32b64507f93b8f 26-27
+  s_3b0d4ac429b85c::t_99f041f64f467c 1-3
+  s_3b0d4ac429b85c::t_9c9ad1d59070df 22
+src/utils/logger.ts
+  s_3b0d4ac429b85c::t_baea8488cc45ba 1-35
+src/daemon/index.ts
+  s_3b0d4ac429b85c::t_b4f795416badf1 3,7-13,16,20
+docs/internal/mcp-integrations.md
+  s_3b0d4ac429b85c::t_906d2892369665 31-37
+src/utils/updater.ts
+  s_3b0d4ac429b85c::t_37b42b6edb16f3 1-2,31,34,39
+CHANGELOG.md
+  s_3b0d4ac429b85c::t_463de286ad1683 9-14,17-18,21-22
+docs/internal/privacy-policy.md
+  s_3b0d4ac429b85c::t_aaa4b3517144ff 1-60
+docs/internal/daemon.md
+  s_3b0d4ac429b85c::t_a74c82ecf06fe5 74-75,77
+  s_3b0d4ac429b85c::t_2a1dd553300f34 82-83,85-96
+  s_3b0d4ac429b85c::t_c18791b73ed338 195,198-203
+  s_3b0d4ac429b85c::t_a5bff7753a8c0d 58-60
+.github/workflows/test.yml
+  s_3b0d4ac429b85c::t_7b823029152e6f 14-18
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_3b0d4ac429b85c::t_5f735420e415d0 269-270,276,282,288-289,295
+  s_3b0d4ac429b85c::t_46e80db326e6ff 227
+  s_3b0d4ac429b85c::t_51f9d87dea9206 237,243
+  s_3b0d4ac429b85c::t_4620a5805dbe64 326-328
+  s_3b0d4ac429b85c::t_4bb5e1e920af76 221,231
+  s_3b0d4ac429b85c::t_8c66d766901cad 266
+  s_3b0d4ac429b85c::t_01a1d1e5835188 250,256,260
+docs/migration-guide.md
+  s_3b0d4ac429b85c::t_e14ab5ab357517 1-96
+src/tools/read_file.ts
+  s_3b0d4ac429b85c::t_16ca752faca862 59
+tests/unit/version.test.ts
+  s_3b0d4ac429b85c::t_750a6a1e8c0e82 1-57
+tests/unit/paths.test.ts
+  s_3b0d4ac429b85c::t_e2fefca2738453 1,12-14,18,26-27,31-39
+  s_3b0d4ac429b85c::t_fce175a217f4ba 2-11,15-17,19-25,28-30,40-41
+src/mcp-plugins/devops-bridge.ts
+  s_3b0d4ac429b85c::t_553a0b6750ad3e 461
+src/daemon/pipeline.ts
+  s_3b0d4ac429b85c::t_0a03730720b669 182
+  s_3b0d4ac429b85c::t_cf26f74709bc99 305
+  s_3b0d4ac429b85c::t_4d2f56638d8937 21-24,30-33
+  s_3b0d4ac429b85c::t_992243f0f63ca7 20
+  s_3b0d4ac429b85c::t_9048cd941ad249 45,54,58
+  s_3b0d4ac429b85c::t_d42f1bce10dee0 268
+  s_3b0d4ac429b85c::t_8d93e4d0220210 73-74
+  s_3b0d4ac429b85c::t_4ac5076603ec4c 19,25-26
+  s_3b0d4ac429b85c::t_824d2868f1fe8e 12
+  s_3b0d4ac429b85c::t_19efb5173cb39e 75-81
+  s_3b0d4ac429b85c::t_b68b21a9077200 177
+  s_3b0d4ac429b85c::t_8c06c94955c2fa 142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "5c7272b909695ea64c726b4345890a83fde2b2a2",
+  "prompts": {},
+  "sessions": {
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
