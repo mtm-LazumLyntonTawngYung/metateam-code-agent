@@ -1,0 +1,53 @@
+src/ui/App.tsx
+  s_3b0d4ac429b85c::t_6021f64867a7e6 218-222
+  s_3b0d4ac429b85c::t_16e092147a2e84 277-281,290-300
+  s_3b0d4ac429b85c::t_db7cd9b14654ea 126,301
+  s_3b0d4ac429b85c::t_7983b40ab2a836 330,342,347-348,350-354,356
+tests/unit/session.test.ts
+  s_3b0d4ac429b85c::t_5a845a6b10e6b3 1-126
+src/agents/agent-loop.ts
+  s_3b0d4ac429b85c::t_a52228b8ef68b3 150
+  s_3b0d4ac429b85c::t_4f680e8c132d6d 5,7
+  s_3b0d4ac429b85c::t_fff0f1845fce28 102-106,108-113
+  s_3b0d4ac429b85c::t_80a52a50b716ac 170
+  s_3b0d4ac429b85c::t_182788f97dbce4 138
+  s_3b0d4ac429b85c::t_d80875ed03bf0f 107
+  s_3b0d4ac429b85c::t_e8163219ca3771 1,3-4,11,20,30-41,91-101,119,121,131,133-137,139-148,151-158,161-168,172-182,184-188
+  s_3b0d4ac429b85c::t_95fb5a7e6dbc6b 213
+src/agents/index.ts
+  s_3b0d4ac429b85c::t_55f31071e66a10 34-41
+src/session/db.ts
+  s_3b0d4ac429b85c::t_95d4b34014d7fe 26-89
+package.json
+  s_3b0d4ac429b85c::t_4cf393eb1445b0 15
+tests/unit/correctness.test.ts
+  s_3b0d4ac429b85c::t_af32b7afb16431 124-173
+  s_3b0d4ac429b85c::t_dc91e4e94c9de3 7
+src/llm/client.ts
+  s_3b0d4ac429b85c::t_f48d1e30bd986c 36-60
+  s_3b0d4ac429b85c::t_286d2c3fae10ad 500
+  s_3b0d4ac429b85c::t_0f7e296f47db6e 540
+  s_3b0d4ac429b85c::t_db254fafa3b7f3 423-468,470,510-524,526-528,531-532,535-536,539,541-544,551-685
+  s_3b0d4ac429b85c::t_cf457d100c8e84 482
+  s_3b0d4ac429b85c::t_0a12326de5e66d 469,471-481,483-499,501-509,525,529-530,533-534,537-538,545-550
+.github/workflows/test.yml
+  s_3b0d4ac429b85c::t_64f8ff72b83589 1-39
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_3b0d4ac429b85c::t_b26e3a73bf15ef 144-145,151-152,158,162,168-169,175-176,183,189,195,198-199,206,212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "68c876c8874a48c6fde184b0fd5d42161794fd67",
+  "prompts": {},
+  "sessions": {
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
