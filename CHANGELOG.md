@@ -1,8 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0] - 2026-08-03
 
 ### Added
+- **Agent-driven eval & benchmarking** — `mtc eval run <task> --model <id>` drives the real agent loop against sandboxed tasks; `mtc eval bench` runs all tasks and prints a pass/fail score table
 - **Webhook security gateway** — constant-time GitHub signature and GitLab token validation (`crypto.timingSafeEqual`); unauthenticated webhook requests now return 401
 - **Clone URL and path traversal validation** — strict regex on repository clone URLs and resolved-path containment checks for LLM-written files in the autofix pipeline
 - **SSO public-client device flow** — `MTC_AZURE_CLIENT_SECRET` is now optional; auth tokens written with 0600 permissions; exact `@metateammyanmar.com` domain check
@@ -10,8 +11,19 @@
 - **Cross-platform hardening** — CRLF normalization in `read_file` and MCP plugins; daemon temp dir uses OS temp path; `join()`-based path handling in the autofix pipeline; CI tests on Linux, macOS, and Windows
 - **Structured JSON logging** — daemon logs JSON lines with levels, job IDs, and secret redaction; `GET /health` liveness endpoint
 - **Opt-in telemetry** — disabled by default with full privacy disclosure on `mtc analytics enable`; see `docs/internal/privacy-policy.md`
-- **Property tests** — Property 9 (cross-platform paths) and Property 12 (build/version determinism)
+- **Property tests** — Property 9 (cross-platform paths), Property 12 (build/version determinism), and Property 13 (user management consistency)
 - **Migration guide** — `docs/migration-guide.md` for license format, SSO, agent permission, and telemetry changes
+- **Dashboard user management** — `POST /api/users/create`, `PUT/DELETE /api/users/:userId` with email validation, org membership checks, seat enforcement, and per-IP rate limiting; Manage Users UI with create/edit/deactivate/reactivate, search, role filtering, and CSV export
+- **Dashboard organization management** — `POST /api/orgs/create`, `PUT/DELETE /api/orgs/:orgId`, and settings endpoints with slug validation/uniqueness and cascade deletes; Manage Organizations UI with tier editing and settings configuration
+- **Dashboard license management** — `POST /api/license/activate`, `GET /api/license/validate`, `POST /api/license/deactivate`, and seat-adjustment endpoints; License UI with activation wizard, re-validation, seat management, and expiration warnings
+- **Dashboard configuration system** — `GET/PUT /api/config`, `GET /api/config/schema`, `POST /api/config/validate`, and `GET /api/config/defaults` driven by a self-describing schema (`src/config/schema.ts`) with secret masking, defaults, and validation; Configuration UI with general/auth/telemetry/routing editors, provider inventory, JSON export, and reset-to-defaults
+- **Real-time dashboard updates** — WebSocket endpoint (`/ws`) with Bun pub/sub topics for audit, license, sessions, notifications, and health; live audit log streaming, live session monitoring (`/api/sessions`), health pings, and a resilient auto-reconnecting client
+- **Dashboard notification & alerting system** — full CRUD API (`/api/notifications`) with levels, filters, mark-all-read, clear, preferences, and best-effort webhook delivery; Notification center UI with unread badge, filtering, and delivery preferences
+- **Property 14 test** — configuration management consistency (defaults completeness, unknown-key stripping, type-violation detection, secret masking)
+- **Dashboard advanced analytics & reporting** — granular analytics endpoints (`GET /api/analytics/detailed` with date/source/actor/model/event filters, `GET /api/analytics/trends`, `POST /api/analytics/report`), model/tool performance breakdowns, cost analysis with per-model pricing, optimization recommendations, trend forecasting, and period-over-period comparison; Analytics UI with interactive charts, time-range selectors, and a report builder
+- **Dashboard export capabilities** — `GET /api/export/audit|analytics|users|config` (CSV/JSON), export history with download/clear, bulk export-all, and export templates with scheduled execution (`src/enterprise/exports.ts`, 15-minute scheduler)
+- **Dashboard API documentation & testing console** — `GET /api/docs/openapi` (OpenAPI spec), `GET /api/docs/markdown`, and an interactive API test console with request/response inspection
+- **Property 15 & 16 tests** — analytics data integrity (cost additivity, trend consistency, forecast invariants) and export serialization/scheduling correctness
 
 ### Changed
 - **GitLab daemon (BREAKING behavior)** — GitLab webhook events are now explicitly rejected with a logged warning instead of silently no-oping; only GitHub repositories can be autofixed

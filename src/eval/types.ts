@@ -25,4 +25,5 @@ export type EvalResult = {
   toolCalls: number;
   steps: EvalStep[];
   error?: string;
+  model?: string;
 };

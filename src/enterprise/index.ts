@@ -18,6 +18,19 @@ export type { Organization, OrgMember, OrgSettings } from "./types";
 
 export { ensureUserProvisioned, getAllUsers } from "./user";
 
+export {
+  createNotification,
+  listNotifications,
+  getNotificationStats,
+  updateNotification,
+  markAllRead,
+  deleteNotification,
+  clearNotifications,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+} from "./notifications";
+export type { DashboardNotification, NotificationPreferences, NotificationLevel } from "./notifications";
+
 export { getAvailableFeatures, getSystemStatus, gateEnterprise } from "./tier";
 export type { FeatureCheck } from "./tier";
 

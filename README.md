@@ -119,6 +119,33 @@ This project uses:
 - [Ink](https://github.com/vadimdemedes/ink) for the TUI
 - [TypeScript](https://www.typescriptlang.org/) for type safety
 
+### Eval & Benchmarking
+
+The eval suite in `tests/evals/` runs the agent against real coding tasks
+(sandboxed) and checks the result with an assertion script:
+
+```bash
+# List available tasks
+mtc eval list
+
+# Run one task with the agent (requires a configured LLM provider)
+mtc eval run add-unit-tests --model deepseek-chat
+
+# Benchmark all tasks and print a pass/fail score table
+mtc eval bench
+
+# Replay a scripted solution against the task tools (no LLM)
+mtc eval run add-unit-tests --solution tests/evals/add-unit-tests/solution.mtc
+```
+
+Requires an LLM provider key configured via `mtc llm set-provider`. The
+benchmark output (`Score: N/M passed`) is what you'd use to compare model
+and prompt changes against OpenCode/Kilo on the same tasks.
+
 ## License
 
-MIT
+Dual-licensed:
+
+- **MIT** — all code except `src/enterprise/`. See [LICENSE](LICENSE).
+- **Proprietary (Enterprise Edition)** — `src/enterprise/` is commercial
+  and requires a license key. See [LICENSE.ENTERPRISE](LICENSE.ENTERPRISE).

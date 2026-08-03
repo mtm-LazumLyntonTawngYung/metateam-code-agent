@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { run, all, get } from "./db";
 import { countTokens } from "./tokens";
+import { broadcastSessionActivity } from "../enterprise/realtime";
 
 export type MessageRole = "user" | "assistant" | "tool" | "system";
 
@@ -32,6 +33,7 @@ export function createSession(label?: string): string {
     label ?? null,
     "{}",
   ]);
+  broadcastSessionActivity({ action: "create", id });
   return id;
 }
 

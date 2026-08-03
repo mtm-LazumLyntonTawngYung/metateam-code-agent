@@ -42,10 +42,14 @@ Open `http://localhost:3000` in your browser.
 | Section | Description |
 |---------|-------------|
 | **Overview** | System status, feature availability, license info |
-| **License** | License details, seat usage, expiration, feature list |
-| **Audit Logs** | Searchable event history with actor/action/resource |
+| **License** | License details, seat usage, expiration, feature list, activation wizard |
+| **Audit Logs** | Searchable event history with actor/action/resource, live streaming |
 | **Analytics** | 30-day usage report: sessions, tokens, model usage, tool success rates |
-| **Organizations** | Multi-tenant org management |
+| **Organizations** | Multi-tenant org management with member/settings editing |
+| **Users** | User CRUD, roles, deactivation, search, CSV export |
+| **Sessions** | Live session monitoring (messages, token usage) |
+| **Notifications** | Alert center with levels, filters, preferences, and webhook delivery |
+| **Configuration** | Schema-driven editor for auth, telemetry, routing, and providers |
 | **Connections** | MCP server status and agent inventory |
 
 ### API Endpoints
@@ -54,12 +58,34 @@ Open `http://localhost:3000` in your browser.
 |----------|-------------|
 | `GET /api/status` | System status and feature flags |
 | `GET /api/license` | License information |
+| `GET /api/license/validate` | Real-time license validation with seat usage |
+| `POST /api/license/activate` | Activate a license key |
+| `POST /api/license/deactivate` | Deactivate the current license |
+| `POST /api/license/seats` | Adjust license seats (requires `MTC_LICENSE_SECRET`) |
 | `GET /api/audit` | Audit log entries (paginated) |
 | `GET /api/analytics` | 30-day usage report |
 | `GET /api/orgs` | Organization list |
+| `POST /api/orgs/create` | Create an organization |
+| `PUT /api/orgs/:orgId` | Update an organization or its settings |
+| `DELETE /api/orgs/:orgId` | Delete an organization (cascade) |
+| `GET /api/users` | User list |
+| `POST /api/users/create` | Create a user |
+| `PUT /api/users/:userId` | Update a user (role/status/email) |
+| `DELETE /api/users/:userId` | Deactivate a user |
+| `GET /api/sessions` | Recent agent sessions |
+| `GET/POST /api/notifications` | List or create notifications |
+| `PUT/DELETE /api/notifications/:id` | Update or delete a notification |
+| `POST /api/notifications/mark-all` | Mark all notifications read |
+| `POST /api/notifications/clear` | Clear notifications |
+| `GET/PUT /api/notifications/preferences` | Notification delivery preferences |
+| `GET/PUT /api/config` | Read or update runtime configuration |
+| `GET /api/config/schema` | Configuration schema (drives the editor) |
+| `POST /api/config/validate` | Validate a configuration patch |
+| `GET /api/config/defaults` | Default configuration values |
 | `GET /api/servers` | Connected MCP servers |
 | `GET /api/agents` | Available agents |
 | `GET /api/health` | Health check |
+| `WS /ws` | WebSocket for real-time updates (audit, license, sessions, notifications, health) |
 
 ---
 

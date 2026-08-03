@@ -11,6 +11,7 @@ import { getDb } from "../session/db";
 import { getLicense } from "./license";
 import type { AuditEvent } from "./types";
 import { hasFeature } from "./license";
+import { broadcastAudit } from "./realtime";
 
 let auditDbInitialized = false;
 
@@ -57,6 +58,17 @@ export function recordAuditEvent(event: Omit<AuditEvent, "id" | "timestamp">): v
     "INSERT INTO audit_log (id, timestamp, actor, action, resource, detail, ip, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [id, timestamp, event.actor, event.action, event.resource, event.detail, event.ip ?? null, event.sessionId ?? null],
   );
+
+  broadcastAudit({
+    id,
+    timestamp,
+    actor: event.actor,
+    action: event.action,
+    resource: event.resource,
+    detail: event.detail,
+    ip: event.ip,
+    sessionId: event.sessionId,
+  });
 }
 
 export function queryAuditLogs(options: {

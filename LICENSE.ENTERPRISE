@@ -1,0 +1,57 @@
+# Enterprise Edition License
+
+Copyright (c) 2026 MetaTeam Technologies. All rights reserved.
+
+The Enterprise Edition of Metateam Code Agent (all source files under
+`src/enterprise/`, and any binary distribution built from them) is
+proprietary and is NOT licensed under the MIT License.
+
+## License Grant
+
+Subject to payment of the applicable license fee and acceptance of a
+commercial license agreement with MetaTeam Technologies, you are granted a
+non-exclusive, non-transferable, revocable license to use the Enterprise
+Edition for internal business purposes, in the number of seats purchased.
+No rights are granted to sublicense, redistribute, resell, or make the
+software available to third parties as a service.
+
+## Restrictions
+
+You may not, and may not permit others to:
+
+- Copy, modify, merge, publish, distribute, sublicense, or sell the
+  Enterprise Edition, in source or binary form, except as expressly
+  permitted by a written commercial agreement.
+- Reverse engineer, decompile, or disassemble the Enterprise Edition, or
+  attempt to discover its source code or internal algorithms.
+- Remove, obscure, or alter any copyright, trademark, or proprietary
+  notices.
+- Bypass, disable, or defeat the license-key verification or any other
+  technological protection measures of the Enterprise Edition.
+
+## Activation & Verification
+
+Enterprise features are enabled only by a valid license key issued by
+MetaTeam Technologies. Keys are verified by HMAC-SHA256 against a secret
+managed by MetaTeam. Using the software without a valid key, or tampering
+with key verification, terminates this license immediately.
+
+## Disclaimer of Warranty
+
+THE ENTERPRISE EDITION IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN
+NO EVENT SHALL META TEAM TECHNOLOGIES BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+ARISING FROM, OUT OF, OR IN CONNECTION WITH THE ENTERPRISE EDITION OR THE
+USE OR OTHER DEALINGS IN THE ENTERPRISE EDITION.
+
+## Contact
+
+For commercial licensing terms, contact legal@metateam.io.
+
+---
+
+*Note: This document is a template for internal diligence. It must be
+reviewed and finalized by qualified legal counsel before any commercial
+distribution or sale.*
