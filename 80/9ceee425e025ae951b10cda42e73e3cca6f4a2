@@ -1,0 +1,49 @@
+src/multi-agent/integration.ts
+  s_17d8e048342fb1::t_98b4073c0fe5d9 1-122,124-295
+  s_17d8e048342fb1::t_4125415c54057c 123
+src/multi-agent/types.ts
+  s_17d8e048342fb1::t_fd9429219a952d 1-198
+src/multi-agent/metrics.ts
+  s_17d8e048342fb1::t_ce5bd3ba8588df 1-322
+src/multi-agent/workspace.ts
+  s_17d8e048342fb1::t_40be10240f87fc 1-225
+src/multi-agent/index.ts
+  s_17d8e048342fb1::t_4cc772bef117d2 1-135
+src/multi-agent/task-router.ts
+  s_17d8e048342fb1::t_0eda66241d2319 1-69,71-332
+  s_17d8e048342fb1::t_e88d5765573eba 70
+src/multi-agent/coordinator.ts
+  s_17d8e048342fb1::t_cba46fba25db00 1-262
+tests/unit/multi-agent.test.ts
+  s_17d8e048342fb1::t_2e5bdb850e2efe 1-46,48-338,340-599,603-744
+  s_17d8e048342fb1::t_1b70641198fdae 47
+  s_17d8e048342fb1::t_95649c811093a3 339
+  s_17d8e048342fb1::t_489636ed65bea5 600-602
+src/multi-agent/fault-detection.ts
+  s_17d8e048342fb1::t_289690fbcd8fa4 165-169,179-189
+  s_17d8e048342fb1::t_b8575e7751be38 88-90,93-95
+  s_17d8e048342fb1::t_60127c6b59f77b 1-87,91-92,96-124,129-164,170-178,190-318
+  s_17d8e048342fb1::t_dfd4e516e328c4 125-128
+src/multi-agent/concurrency.ts
+  s_17d8e048342fb1::t_738739ad916c66 1-281
+src/multi-agent/orchestrator.ts
+  s_17d8e048342fb1::t_9ea53234ed13ac 1-11,13-47,49-305
+  s_17d8e048342fb1::t_a43a28df643490 12
+  s_17d8e048342fb1::t_41bc63908387ff 48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "809ceee425e025ae951b10cda42e73e3cca6f4a2",
+  "prompts": {},
+  "sessions": {
+    "s_17d8e048342fb1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03a57b54cffeZF2T0EeFJbdIpL",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
