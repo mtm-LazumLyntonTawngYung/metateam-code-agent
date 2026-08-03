@@ -5,7 +5,7 @@ import { loadRules, getRules, reloadRules } from "./rules";
 
 const toolCategoryMap: Record<string, string[]> = {
   edit: ["edit_file", "write_file"],
-  bash: ["run_bash"],
+  bash: ["run_bash", "websearch"],
   read: ["read_file", "glob_files"],
 };
 

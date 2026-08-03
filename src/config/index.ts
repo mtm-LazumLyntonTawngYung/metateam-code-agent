@@ -21,6 +21,7 @@ export type MtcConfig = {
   auth?: { clientId?: string; tenantId?: string; clientSecret?: string };
   organization?: { name?: string };
   themeId?: string;
+  webSearch?: { enabled?: boolean };
 };
 
 const configDir = join(homedir(), ".config", "mtc");

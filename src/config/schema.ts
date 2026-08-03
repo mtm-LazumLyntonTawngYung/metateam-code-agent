@@ -110,6 +110,21 @@ export const CONFIG_SCHEMA: ConfigField[] = [
     ],
   },
   {
+    key: "webSearch",
+    label: "Web Search",
+    type: "object",
+    description: "Configuration for web search integration.",
+    fields: [
+      {
+        key: "enabled",
+        label: "Enabled",
+        type: "boolean",
+        description: "Enable web search tool. Requires agent bash permission.",
+        default: false,
+      },
+    ],
+  },
+  {
     key: "llm",
     label: "LLM Providers",
     type: "object",
