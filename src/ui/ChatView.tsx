@@ -201,7 +201,16 @@ export default function ChatView({
   const [spinnerFrame, setSpinnerFrame] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [stickToBottom, setStickToBottom] = useState(true);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const showingAgent = isAgentRunning || agentLogs.length > 0;
+
+  const historyRef = useRef(history);
+  const historyIndexRef = useRef(historyIndex);
+  const savedInputRef = useRef("");
+
+  useEffect(() => { historyRef.current = history; }, [history]);
+  useEffect(() => { historyIndexRef.current = historyIndex; }, [historyIndex]);
 
   useEffect(() => {
     if (!isAgentRunning && !busy) return;
@@ -237,13 +246,58 @@ export default function ChatView({
   useInput((_input, key) => {
     if (key.escape && !busy) onBack();
     if (key.upArrow) {
-      setStickToBottom(false);
-      setScrollTop((s) => Math.max(0, s - 1));
+      const currentInput = toolInput;
+      const hist = historyRef.current;
+      if (hist.length === 0) return;
+      const matches = currentInput ? hist.filter((h) => h.startsWith(currentInput)) : [...hist];
+      if (matches.length === 0) return;
+      const currentIdx = historyIndexRef.current;
+      const isSynced = currentIdx >= 0 && currentIdx < hist.length && hist[currentIdx] === currentInput;
+      if (!isSynced || currentIdx < 0) {
+        savedInputRef.current = currentInput;
+        const newestMatch = matches[matches.length - 1];
+        const newIndex = hist.lastIndexOf(newestMatch);
+        setHistoryIndex(newIndex);
+        setToolInput(newestMatch);
+      } else {
+        const currentMatchIdx = matches.indexOf(currentInput);
+        if (currentMatchIdx > 0) {
+          const olderMatch = matches[currentMatchIdx - 1];
+          const newIndex = hist.lastIndexOf(olderMatch);
+          setHistoryIndex(newIndex);
+          setToolInput(olderMatch);
+        }
+      }
     }
     if (key.downArrow) {
-      const next = Math.min(maxScrollTop, scrollTop + 1);
-      setScrollTop(next);
-      setStickToBottom(next === maxScrollTop);
+      const currentInput = toolInput;
+      const hist = historyRef.current;
+      const currentIdx = historyIndexRef.current;
+      if (currentIdx < 0) return;
+      const matches = currentInput ? hist.filter((h) => h.startsWith(currentInput)) : [...hist];
+      if (matches.length === 0) {
+        setHistoryIndex(-1);
+        setToolInput(savedInputRef.current);
+        return;
+      }
+      const currentHistItem = hist[currentIdx];
+      if (currentHistItem !== currentInput) {
+        const newestMatch = matches[matches.length - 1];
+        const newIndex = hist.lastIndexOf(newestMatch);
+        setHistoryIndex(newIndex);
+        setToolInput(newestMatch);
+        return;
+      }
+      const currentMatchIdx = matches.indexOf(currentInput);
+      if (currentMatchIdx < matches.length - 1) {
+        const newerMatch = matches[currentMatchIdx + 1];
+        const newIndex = hist.lastIndexOf(newerMatch);
+        setHistoryIndex(newIndex);
+        setToolInput(newerMatch);
+      } else {
+        setHistoryIndex(-1);
+        setToolInput(savedInputRef.current);
+      }
     }
     if (key.pageUp) {
       setStickToBottom(false);
@@ -287,11 +341,23 @@ export default function ChatView({
       if (!trimmed || busy || isAgentRunning) return;
 
       if (!trimmed.startsWith("/")) {
+        setHistory((prev) => {
+          const next = [...prev, trimmed];
+          historyRef.current = next;
+          return next;
+        });
+        setHistoryIndex(-1);
         setToolInput("");
         onFreeformInput(trimmed);
         return;
       }
 
+      setHistory((prev) => {
+        const next = [...prev, trimmed];
+        historyRef.current = next;
+        return next;
+      });
+      setHistoryIndex(-1);
       setLogs((prev) => [
         ...prev,
         { kind: "tool_call", toolName: "input", args: { line: trimmed } },
@@ -414,9 +480,9 @@ export default function ChatView({
       </Box>
 
       <Box marginTop={1}>
-        <Text color={theme.colors.muted}>
-          <Text bold>esc</Text> back  {"\u2191\u2193"} scroll  <Text bold>end</Text> bottom
-        </Text>
+          <Text color={theme.colors.muted}>
+            <Text bold>esc</Text> back  <Text bold>↑↓</Text> history  <Text bold>end</Text> bottom  mouse wheel to scroll
+          </Text>
       </Box>
     </Box>
   );

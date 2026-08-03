@@ -51,7 +51,7 @@ The CLI binary is `mtc`.
 | `Tab` | Open agent selector |
 | `Ctrl+P` / `/` | Open command palette |
 | `Esc` | Close overlay / go back to home |
-| `↑` / `↓` | Scroll log or navigate lists |
+| `↑` / `↓` | Navigate command history / partial history search |
 | `PageUp` / `PageDown` | Scroll by one viewport |
 | `Home` / `End` | Jump to top / bottom |
 | `Enter` | Submit input |
