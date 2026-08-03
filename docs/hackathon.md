@@ -94,7 +94,10 @@ You are a <description of what the agent does>.
 ## Tools Available
 - /read — Read files in the project
 - /glob — Search for files
-- /bash — Run bash commands (read-only, no side effects)
+- /call — Call any registered tool (respects permissions)
+
+Subagents execute tool commands only — `/read`, `/glob`, and `/call` — and
+return the results. They do not run free-form prompts or the agent loop.
 
 ## Behavior Rules
 1. <rule 1>
@@ -111,8 +114,8 @@ You are a <description of what the agent does>.
 # Load the agent and try it
 mtc
 
-# Tab to switch to your agent
-# Or use it directly:
+# Select your subagent in the Agent selector (Tab) — it pre-fills /subagent
+# Or run it directly:
 /subagent <name> /read src/index.ts
 ```
 
@@ -276,4 +279,5 @@ for everyone to use.
 - [Custom Agents](../src/agents/custom.ts) — Agent loading logic
 - [MCP Client](../src/mcp/client.ts) — MCP JSON-RPC implementation
 - [MCP Config](../src/mcp/config.ts) — MCP server configuration
-- [Plugin Registry](../.mtc/plugins/) — Internal plugin directory
+- [MCP Integrations](./internal/mcp-integrations.md) — Plugin development and registration
+- [Multi-Department Workflows](./internal/multi-department-workflows.md) — Bundled bridge examples (Figma, DevOps)

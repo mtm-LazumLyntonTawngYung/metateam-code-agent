@@ -44,7 +44,7 @@ export function loadRules(): string {
 
   const agentsMd = loadFile(AGENTS_MD);
   if (agentsMd) {
-    const body = agentsMd.replace(/^---[\s\S]*?---\n?/, "").trim();
+    const body = agentsMd.replace(/\r\n/g, "\n").replace(/^---[\s\S]*?---\n?/, "").trim();
     if (body) {
       parts.push(`## Agent Guidelines\n\n${body}`);
     }

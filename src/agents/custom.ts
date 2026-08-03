@@ -8,10 +8,10 @@ const PROJECT_AGENTS_DIR = join(process.cwd(), ".mtc", "agents");
 const GLOBAL_AGENTS_DIR = join(homedir(), ".config", "mtc", "agents");
 
 const DEFAULT_PERMS: AgentPermissions = {
-  edit: "allow",
-  bash: "allow",
   read: "allow",
-  execute: "allow",
+  edit: "deny",
+  bash: "deny",
+  execute: "deny",
 };
 
 function loadAgentFile(filePath: string): AgentDefinition | null {
@@ -35,10 +35,10 @@ function loadAgentFile(filePath: string): AgentDefinition | null {
       | undefined;
     const permissions: AgentPermissions = { ...DEFAULT_PERMS };
     if (permsRaw) {
-      if (permsRaw.edit === "deny") permissions.edit = "deny";
-      if (permsRaw.bash === "deny") permissions.bash = "deny";
-      if (permsRaw.read === "deny") permissions.read = "deny";
-      if (permsRaw.execute === "deny") permissions.execute = "deny";
+      permissions.read = permsRaw.read === "allow" ? "allow" : "deny";
+      permissions.edit = permsRaw.edit === "allow" ? "allow" : "deny";
+      permissions.bash = permsRaw.bash === "allow" ? "allow" : "deny";
+      permissions.execute = permsRaw.execute === "allow" ? "allow" : "deny";
     }
 
     if (!body) return null;

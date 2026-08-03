@@ -61,7 +61,9 @@ export type OrgMember = {
   userId: string;
   email: string;
   role: "admin" | "member" | "viewer";
+  status: "active" | "deactivated";
   joinedAt: string;
+  lastActiveAt?: string;
 };
 
 export type OrgSettings = {

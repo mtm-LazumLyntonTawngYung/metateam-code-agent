@@ -1,6 +1,6 @@
 {
   "name": "metateam-code-agent",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "AI-powered, terminal-first coding assistant for MetaTeam engineers",
   "license": "MIT",
   "type": "module",
@@ -11,6 +11,8 @@
     "dev": "bun run src/cli.tsx",
     "build": "bun build --compile --outfile bin/mtc src/cli.tsx",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "test:eval": "bun run src/cli.tsx eval"
   },
   "dependencies": {

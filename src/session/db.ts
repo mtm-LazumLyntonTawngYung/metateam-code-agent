@@ -23,59 +23,70 @@ export function getDb(): Database {
 }
 
 function migrate(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id TEXT PRIMARY KEY,
-      label TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      metadata TEXT
-    )
-  `);
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-      role TEXT NOT NULL CHECK(role IN ('user','assistant','tool','system')),
-      content TEXT NOT NULL,
-      tool_name TEXT,
-      tool_args TEXT,
-      tool_result TEXT,
-      token_count INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now')),
-      pruned INTEGER DEFAULT 0
-    )
-  `);
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS patches (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-      file_path TEXT NOT NULL,
-      original_content TEXT NOT NULL,
-      new_content TEXT NOT NULL,
-      tool_name TEXT,
-      tool_args TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `);
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS summaries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-      summary_text TEXT NOT NULL,
-      pruned_until INTEGER,
-      token_count INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `);
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_messages_session
-    ON messages(session_id, created_at)
-  `);
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_patches_session
-    ON patches(session_id, created_at)
-  `);
+  const current = db.query("PRAGMA user_version").get() as { user_version: number };
+  const from = current.user_version;
+  const migrations: Array<() => void> = [
+    () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS sessions (
+          id TEXT PRIMARY KEY,
+          label TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          metadata TEXT
+        )
+      `);
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+          role TEXT NOT NULL CHECK(role IN ('user','assistant','tool','system')),
+          content TEXT NOT NULL,
+          tool_name TEXT,
+          tool_args TEXT,
+          tool_result TEXT,
+          token_count INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          pruned INTEGER DEFAULT 0
+        )
+      `);
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS patches (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+          file_path TEXT NOT NULL,
+          original_content TEXT NOT NULL,
+          new_content TEXT NOT NULL,
+          tool_name TEXT,
+          tool_args TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `);
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS summaries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+          summary_text TEXT NOT NULL,
+          pruned_until INTEGER,
+          token_count INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_messages_session
+        ON messages(session_id, created_at)
+      `);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_patches_session
+        ON patches(session_id, created_at)
+      `);
+    },
+  ];
+
+  for (let v = from; v < migrations.length; v++) {
+    migrations[v]();
+    db.exec(`PRAGMA user_version = ${v + 1}`);
+  }
 }
 
 export function run(sql: string, bindings: unknown[] = []): { changes: number; lastInsertRowid: number } {

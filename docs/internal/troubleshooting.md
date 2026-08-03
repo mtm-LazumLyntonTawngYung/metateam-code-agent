@@ -35,9 +35,8 @@ bun link
 ### TUI doesn't render properly
 
 Possible causes:
-- Terminal doesn't support Unicode/emoji: Set `MTC_NO_EMOJI=1`
 - Terminal too small: Resize to at least 80x24
-- Windows Terminal: Use Windows Terminal, not cmd.exe
+- Windows: Use Windows Terminal, not cmd.exe (or a terminal with SGR mouse support)
 - SSH session: Ensure terminal type is `xterm-256color`
 
 ### Agent produces gibberish
@@ -63,7 +62,7 @@ Error: Tool call timed out after 120000ms
 
 ```yaml
 permissions:
-  write: allow   # skip confirmation for write
+  edit: allow    # skip confirmation for edits
   bash: allow    # skip confirmation for bash
 ```
 
@@ -71,7 +70,7 @@ permissions:
 
 ### MCP server won't connect
 
-1. Verify the server is running: `/call list-tools`
+1. Verify the server is running: `/mcps` (shows connection state)
 2. Check `.mtc/mcp.json` syntax
 3. Try running the server command directly in your terminal
 4. Check the server's stdout for errors
@@ -83,8 +82,8 @@ Error: Tool not found: my_tool
 ```
 
 1. Make sure the MCP server is running
-2. Check the tool name matches what's registered
-3. Run `/call list-tools` to see available tools
+2. Check the tool name matches what's registered (server-prefixed)
+3. Run `/status` to confirm the server is connected
 
 ## Performance Issues
 
@@ -100,7 +99,7 @@ Error: Tool not found: my_tool
 - Use specific file paths instead of broad globs
 - Break large tasks into multiple smaller sessions
 - Use `Plan` mode to narrow scope before building
-- Run token audit: `mtc analytics`
+- Run token audit: `mtc analytics report`
 
 ## VS Code Extension Issues
 

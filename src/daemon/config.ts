@@ -1,3 +1,6 @@
+import { tmpdir } from "os";
+import { join } from "path";
+
 export type DaemonConfig = {
   port: number;
   host: string;
@@ -16,11 +19,12 @@ export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
   host: "0.0.0.0",
   autofixLabel: "autofix",
   maxConcurrentJobs: 3,
-  tempDir: "/tmp/mtc-daemon",
+  tempDir: join(tmpdir(), "mtc-daemon"),
 };
 
 function warnCliSecret(name: string): void {
-  console.error(`[mtc] WARNING: ${name} passed via CLI flag — visible in process listings. Use MTC_${name.replace(/[A-Z]/g, "_$&").toUpperCase()} env var instead.`);
+  const envVar = `MTC_${name.replace(/-/g, "_").replace(/[A-Z]/g, "_$&").toUpperCase()}`;
+  console.error(`[mtc] WARNING: ${name} passed via CLI flag — visible in process listings. Use ${envVar} env var instead.`);
 }
 
 export function loadDaemonConfig(options: {

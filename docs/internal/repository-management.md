@@ -7,10 +7,10 @@ and CI/CD.
 
 ## Repository Structure
 
-The mtc codebase lives in a private GitHub repository:
+The mtc codebase lives in a GitHub repository:
 
 ```
-github.com/metateam/mtc
+github.com/mtm-LazumLyntonTawngYung/metateam-code-agent
 ```
 
 ### Repository Contents
@@ -29,8 +29,8 @@ github.com/metateam/mtc
 
 ```
 main        — Production-ready releases
-next        — Staging branch for next release
-feature/*   — Feature branches
+develop     — Integration branch for the next release
+feature/*   — Feature branches (feature/#<issue>-<description>)
 fix/*       — Bug fix branches
 docs/*      — Documentation changes
 release/*   — Release preparation
@@ -53,16 +53,14 @@ The `.github/workflows/` directory contains:
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
-| CI | PR, push to `next` | Type check, eval tests, lint |
-| Release | Tag push (`v*`) | Build binaries, create GitHub Release |
-| Review | PR opened | Run `mtc review` on diff |
+| MTC Review (`mtc-review.yml`) | PR opened/synchronize/reopened | Runs `mtc review --files ... --json` on changed files, posts a summary comment and commit status |
+| Release (`release.yml`) | Tag push (`v*`) | Compiles binaries for macOS (ARM64), Linux (x64), Windows (x64); creates a GitHub Release with checksums |
 
 ### CI Requirements
 
 All checks must pass before merge:
-1. TypeScript type check
-2. Eval tests pass
-3. No secrets detected
+1. MTC review passes (zero critical findings)
+2. No secrets detected
 
 ## Secrets Management
 
@@ -70,8 +68,7 @@ Repository secrets (GitHub Actions):
 
 | Secret | Used For |
 |--------|----------|
-| `OPENAI_API_KEY` | Eval tests in CI |
-| `GITHUB_TOKEN` | Auto-generated, used for release |
+| `GITHUB_TOKEN` | Auto-generated, used by the review workflow and releases |
 
 Never commit secrets to the repository. Use environment variables or
 `.env` files (added to `.gitignore`).
@@ -93,4 +90,4 @@ GitHub Release.
 - **Runtime deps:** Declared in `package.json` — review before adding
 - **Dev deps:** Keep minimal; prefer Bun built-ins
 - **Updates:** Dependencies reviewed monthly for security patches
-- **Audits:** Run `bun audit` before each release
+- **Audits:** Run `npm audit` before each release

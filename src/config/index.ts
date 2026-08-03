@@ -18,6 +18,8 @@ export type MtcConfig = {
   telemetry?: TelemetryConfig;
   llm?: Record<string, unknown>;
   license?: Record<string, unknown>;
+  auth?: { clientId?: string; tenantId?: string; clientSecret?: string };
+  organization?: { name?: string };
   themeId?: string;
 };
 

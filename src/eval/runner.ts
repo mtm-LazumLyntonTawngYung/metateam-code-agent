@@ -5,6 +5,10 @@ import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { executeTool } from "../tools/index";
+import { runAgentLoop, type AgentUpdate } from "../agents/agent-loop";
+import { buildAgent } from "../agents/builtin";
+import { getConfiguredModelIds, loadLlmConfig } from "../llm/config";
+import type { ToolResult } from "../tools/schema";
 import type { EvalTask, EvalStep, EvalResult } from "./types";
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
@@ -179,4 +183,104 @@ export async function runTask(taskName: string, solutionPath?: string): Promise<
   try { rmSync(sandboxDir, { recursive: true, force: true }); } catch { /* ignore */ }
 
   return { task: taskName, passed, duration, toolCalls: steps.length, steps, error: passed ? undefined : "Assertion failed" };
+}
+
+export type AgentEvalOptions = {
+  modelId?: string;
+  stream?: boolean;
+};
+
+export function resolveEvalModel(modelId?: string): string {
+  const configured = getConfiguredModelIds();
+  if (modelId && configured.includes(modelId)) return modelId;
+  const cfg = loadLlmConfig();
+  const defaultCandidate = cfg.routing?.defaultModel;
+  if (defaultCandidate && configured.includes(defaultCandidate)) return defaultCandidate;
+  if (configured.length > 0) return configured[0];
+  throw new Error(
+    "No LLM provider is configured. Configure one with: mtc llm set-provider --id <provider> --key <api-key>",
+  );
+}
+
+export function sandboxExecutor(
+  sandboxDir: string,
+): (name: string, args: Record<string, unknown>) => Promise<ToolResult> {
+  return async (name: string, args: Record<string, unknown>): Promise<ToolResult> => {
+    if (["read_file", "write_file", "edit_file", "glob_files"].includes(name) && typeof args.path === "string") {
+      args.path = join(sandboxDir, args.path);
+    }
+    if (name === "run_bash") {
+      (args as Record<string, unknown>).workdir = sandboxDir;
+    }
+    return executeTool(name, args);
+  };
+}
+
+export async function runAgentEval(
+  taskName: string,
+  options: AgentEvalOptions = {},
+): Promise<EvalResult | null> {
+  const task = findEvals().find((t) => t.name === taskName);
+  if (!task) return null;
+
+  const modelId = resolveEvalModel(options.modelId);
+  const sandboxDir = createSandbox(task.dir);
+  const query = readFileSync(join(task.dir, "task.md"), "utf-8");
+
+  const steps: EvalStep[] = [];
+  let error: string | undefined;
+  const start = Date.now();
+
+  try {
+    await runAgentLoop(query, buildAgent, [], (update: AgentUpdate) => {
+      switch (update.kind) {
+        case "tool_call":
+          steps.push({
+            toolName: update.toolCall.name,
+            args: update.toolCall.args,
+            result: { success: true, data: "(pending)" },
+            duration: 0,
+          });
+          break;
+        case "tool_result": {
+          const last = steps.findLast((s) => s.toolName === update.toolCall.name);
+          if (last) {
+            last.result = update.result.success
+              ? { success: true, data: update.result.data }
+              : { success: false, error: update.result.error };
+          }
+          break;
+        }
+        case "error":
+          error = update.error;
+          break;
+        case "text":
+        case "stream":
+        case "done":
+          break;
+      }
+    }, {
+      modelId,
+      executeToolFn: sandboxExecutor(sandboxDir),
+      stream: options.stream ?? false,
+    });
+  } catch (err) {
+    error = err instanceof Error ? err.message : String(err);
+  }
+
+  const duration = Date.now() - start;
+  const toolCalls = steps.length;
+  const passed = error ? false : runAssert(task.dir, sandboxDir);
+
+  try { rmSync(sandboxDir, { recursive: true, force: true }); } catch { /* ignore */ }
+
+  return {
+    task: taskName,
+    passed,
+    duration,
+    toolCalls,
+    steps,
+    error: error ?? (passed ? undefined : "Assertion failed"),
+    model: modelId,
+  };
 }

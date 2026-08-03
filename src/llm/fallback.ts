@@ -13,7 +13,7 @@ export async function completeWithFallback(
   const errors: ProviderError[] = [];
 
   const orderedProviders = [...cfg.providers].sort((a, b) => {
-    const priority: Record<string, number> = { deepseek: 0, openai: 1, anthropic: 2 };
+    const priority: Record<string, number> = { deepseek: 0, openai: 1, anthropic: 2, openrouter: 3 };
     return (priority[a.id] ?? 99) - (priority[b.id] ?? 99);
   });
 
@@ -21,18 +21,20 @@ export async function completeWithFallback(
     if (!provider.apiKey) continue;
     if (!provider.models.includes(req.model)) continue;
 
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
+    try {
       const response = await complete({
         ...req,
         model: req.model,
+        signal: controller.signal,
       });
 
       clearTimeout(timeout);
       return { ok: true, response };
     } catch (err) {
+      clearTimeout(timeout);
       const providerErr: ProviderError = {
         type: err instanceof Error && err.name === "AbortError" ? "timeout" : "unknown",
         message: err instanceof Error ? err.message : String(err),

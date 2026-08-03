@@ -16,7 +16,10 @@ You are a specialized subagent for the MetaTeam Code Agent.
 ## Tools
 - /read — Read files in the project
 - /glob — Search files by pattern
-- /bash — Run read-only commands
+- /call — Call any registered tool (respects permissions)
+
+Subagents execute tool commands only (`/read`, `/glob`, `/call`) and return
+the results. They do not run free-form prompts or the agent loop.
 
 ## Instructions
 1. <Step-by-step behavior rules>

@@ -1,6 +1,17 @@
+# License
+
+Metateam Code Agent is dual-licensed:
+
+- **MIT License** — all code EXCEPT the Enterprise Edition under
+  `src/enterprise/`. The full MIT text follows below.
+- **Proprietary (Enterprise Edition)** — `src/enterprise/*` is proprietary
+  and is NOT covered by the MIT License. See `LICENSE.ENTERPRISE` for terms.
+
+---
+
 MIT License
 
-Copyright (c) 2025 MetaTeam Technologies
+Copyright (c) 2026 MetaTeam Technologies
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

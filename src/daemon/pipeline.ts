@@ -8,16 +8,29 @@ import { sendNotification } from "./notifier";
 import { complete } from "../llm/client";
 import { routeTask } from "../llm/router";
 import { executeTool } from "../tools/index";
+import { validateCloneUrl, validateFilePath } from "../utils/security";
+import { logger } from "../utils/logger";
 
 const activeJobs = new Map<string, PipelineJob>();
 
 let jobCounter = 0;
 
 export async function runPipeline(event: WebhookEvent, config: DaemonConfig): Promise<void> {
+  if (event.platform === "gitlab") {
+    const repoName = event.event === "push" ? event.repo.fullName : event.issue.repoFullName;
+    logger.warn("Ignoring GitLab event — autofix only supports GitHub repositories", {
+      event: event.event,
+      repo: repoName,
+    });
+    return;
+  }
   if (event.event !== "issue.labeled") return;
   if (!event.issue.labels.some((l) => l.toLowerCase() === config.autofixLabel.toLowerCase())) return;
   if (activeJobs.size >= config.maxConcurrentJobs) {
-    console.warn("Max concurrent jobs reached, dropping event");
+    logger.warn("Max concurrent jobs reached, dropping event", {
+      repo: event.issue.repoFullName,
+      issue: event.issue.number,
+    });
     return;
   }
 
@@ -29,7 +42,7 @@ export async function runPipeline(event: WebhookEvent, config: DaemonConfig): Pr
   };
 
   activeJobs.set(job.id, job);
-  console.log(`[${job.id}] Starting autofix for ${event.issue.repoFullName}#${event.issue.number}`);
+  logger.info("Starting autofix", { jobId: job.id, repo: event.issue.repoFullName, issue: event.issue.number });
 
   try {
     job.status = "running";
@@ -38,11 +51,11 @@ export async function runPipeline(event: WebhookEvent, config: DaemonConfig): Pr
     await executeAutofix(job, config);
 
     job.status = "success";
-    console.log(`[${job.id}] Success: ${job.prUrl}`);
+    logger.info("Autofix succeeded", { jobId: job.id, prUrl: job.prUrl });
   } catch (err) {
     job.status = "failure";
     job.error = err instanceof Error ? err.message : String(err);
-    console.error(`[${job.id}] Failed: ${job.error}`);
+    logger.error("Autofix failed", { jobId: job.id, error: job.error });
   }
 
   job.completedAt = new Date();
@@ -53,8 +66,19 @@ export async function runPipeline(event: WebhookEvent, config: DaemonConfig): Pr
 async function executeAutofix(job: PipelineJob, config: DaemonConfig): Promise<void> {
   const issue = job.issue;
 
-  const tempDir = `${config.tempDir}/${job.id}`;
-  const cloneDir = `${tempDir}/repo`;
+  if (!validateCloneUrl(issue.repoCloneUrl)) {
+    throw new Error("Invalid clone URL");
+  }
+
+  const tempDir = join(config.tempDir, job.id);
+  const cloneDir = join(tempDir, "repo");
+
+  if (issue.repoCloneUrl.startsWith("https://gitlab") || issue.repoCloneUrl.startsWith("git@gitlab")) {
+    throw new Error(
+      "GitLab repositories are not supported by the autofix pipeline yet. " +
+        "Only GitHub repositories can be autonomously fixed; GitLab webhook events are acknowledged but ignored.",
+    );
+  }
 
   if (issue.repoCloneUrl.startsWith("https://github.com") || issue.repoCloneUrl.startsWith("git@github.com")) {
     if (!config.githubToken) throw new Error("GitHub token required for GitHub repos");
@@ -111,8 +135,11 @@ FILE: <relative path>
     await notifyStatus(job, "fixing", `Applying fix to ${changes.length} file(s)...`);
 
     for (const change of changes) {
+      if (!validateFilePath(cloneDir, change.path)) {
+        throw new Error(`Refusing to write outside clone directory: ${change.path}`);
+      }
       const writeResult = await executeTool("write_file", {
-        path: `${cloneDir}/${change.path}`,
+        path: join(cloneDir, change.path),
         content: change.content,
       });
       if (!writeResult.success) throw new Error(`Failed to write ${change.path}: ${writeResult.error}`);
@@ -143,13 +170,16 @@ FILE: <relative path>
 
       const retryChanges = extractFileChanges(retryResponse.content);
       for (const change of retryChanges) {
+        if (!validateFilePath(cloneDir, change.path)) {
+          throw new Error(`Refusing to write outside clone directory: ${change.path}`);
+        }
         await executeTool("write_file", {
-          path: `${cloneDir}/${change.path}`,
+          path: join(cloneDir, change.path),
           content: change.content,
         });
       }
 
-      const retestResult = await executeTool("run_bash", {
+      await executeTool("run_bash", {
         command: `cd "${cloneDir}" && (bun test 2>&1 || npm test 2>&1 || pytest 2>&1 || echo "NO_TEST_FRAMEWORK")`,
         timeout: 120_000,
       });
@@ -235,7 +265,7 @@ async function readRelevantFiles(
     if (bashResult.success) {
       const files = String(bashResult.data).split("\n").filter(Boolean).slice(0, 10);
       for (const file of files) {
-        const readResult = await executeTool("read_file", { path: `${cloneDir}/${file}`, limit: 100 });
+        const readResult = await executeTool("read_file", { path: join(cloneDir, file), limit: 100 });
         if (readResult.success) {
           results.push(`--- ${file} ---\n${String(readResult.data)}`);
         }
@@ -272,7 +302,7 @@ async function notify(job: PipelineJob, config: DaemonConfig): Promise<void> {
 }
 
 async function notifyStatus(job: PipelineJob, _status: string, _message: string): Promise<void> {
-  console.log(`[${job.id}] ${_status}: ${_message}`);
+  logger.debug("Pipeline status update", { jobId: job.id, status: _status, message: _message });
 }
 
 function extractPlan(content: string): string {

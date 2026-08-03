@@ -1,10 +1,14 @@
-import { complete } from "../llm/client";
+import { complete, completeStream } from "../llm/client";
 import { executeTool, getToolSpecs } from "../tools/index";
-import { addMessage } from "../session/history";
-import type { CompletionMessage, CompletionResponse, ToolCallInfo } from "../llm/types";
+import { addMessage, getMessages } from "../session/history";
+import { buildContext, rotateIfNeeded } from "../session/summary";
+import type { CompletionMessage, CompletionRequest, CompletionResponse, ToolCallInfo } from "../llm/types";
 import type { AgentDefinition } from "./types";
+import type { MessageRow } from "../session/history";
 import type { ToolResult } from "../tools/schema";
 import { loadConfig } from "../config";
+import { findModel } from "../llm/config";
+import { getEffectiveSystemPrompt } from "./index";
 
 export type ToolCall = {
   name: string;
@@ -13,6 +17,7 @@ export type ToolCall = {
 
 export type AgentUpdate =
   | { kind: "text"; content: string }
+  | { kind: "stream"; content: string }
   | { kind: "tool_call"; toolCall: ToolCall }
   | { kind: "tool_result"; toolCall: ToolCall; result: ToolResult }
   | { kind: "done"; content: string; toolCalls: number; duration: number; agentName: string; modelName: string }
@@ -20,7 +25,19 @@ export type AgentUpdate =
 
 export const MAX_AGENT_ITERATIONS = 25;
 
-export const DEFAULT_MAX_TOKENS = 1024;
+export const DEFAULT_MAX_TOKENS = 4096;
+
+export type RunAgentOptions = {
+  executeToolFn?: (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<ToolResult>;
+  modelId?: string;
+  sessionId?: string;
+  skillBody?: string;
+  signal?: AbortSignal;
+  stream?: boolean;
+};
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
   const summary = result.success
@@ -29,32 +46,7 @@ function wrapToolResult(toolName: string, result: ToolResult): string {
   return `IMPORTANT: Do not echo the raw tool output below. Use only what you need from it, then answer concisely in your own words.\n\nTool result from ${toolName}:\n${summary}`;
 }
 
-export function parseToolCalls(text: string): { toolCalls: ToolCall[]; cleanText: string } {
-  const toolCalls: ToolCall[] = [];
-  const regex = /<TOOL_CALL>([\s\S]*?)<\/TOOL_CALL>/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    const block = match[1].trim();
-    const nameMatch = block.match(/<name>([\s\S]*?)<\/name>/);
-    const argsMatch = block.match(/<args>([\s\S]*?)<\/args>/);
-    if (nameMatch) {
-      const name = nameMatch[1].trim();
-      let args: Record<string, unknown> = {};
-      if (argsMatch) {
-        try {
-          args = JSON.parse(argsMatch[1].trim());
-        } catch {
-          args = { input: argsMatch[1].trim() };
-        }
-      }
-      toolCalls.push({ name, args });
-    }
-  }
-  const cleanText = text.replace(regex, "").trim();
-  return { toolCalls, cleanText };
-}
-
-function parseToolCallArguments(argumentsJson: string): Record<string, unknown> {
+export function parseToolCallArguments(argumentsJson: string): Record<string, unknown> {
   try {
     const parsed = JSON.parse(argumentsJson || "{}") as unknown;
     return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
@@ -71,18 +63,37 @@ function truncateResult(data: unknown, maxLen = 2000): string {
   return str.slice(0, maxLen) + "\n... (truncated)";
 }
 
+function systemPromptFor(agent: AgentDefinition, skillBody?: string): string {
+  const effective = getEffectiveSystemPrompt(agent, skillBody);
+  return `${effective}
+
+You are an autonomous agent in a CLI environment. Be direct and terse:
+- Never greet the user, never narrate your plans, never write "I will..." or "Let me...". Act, don't describe.
+- For each request, immediately call the appropriate tool(s) and wait for the results before continuing.
+- Prefer read_file and write_file directly when you already know the path. Use glob_files only to discover paths, with a targeted pattern.
+- Once you have everything you need, answer the user's request concisely with the actual result.`;
+}
+
+function rowsToCompletionMessages(rows: MessageRow[]): CompletionMessage[] {
+  const out: CompletionMessage[] = [];
+  for (const row of rows) {
+    if (row.role === "user" || row.role === "assistant" || row.role === "system") {
+      if (row.content.trim()) {
+        out.push({ role: row.role as CompletionMessage["role"], content: row.content });
+      }
+    }
+  }
+  return out;
+}
+
 export async function runAgentLoop(
   query: string,
   agent: AgentDefinition,
   history: CompletionMessage[],
   onUpdate: (update: AgentUpdate) => void,
-  executeToolFn?: (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<ToolResult>,
-  modelName = "unknown",
-  sessionId?: string,
+  options: RunAgentOptions = {},
 ): Promise<string> {
+  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true } = options;
   const startTime = performance.now();
   let toolCalls = 0;
   const exec = executeToolFn ?? executeTool;
@@ -92,34 +103,64 @@ export async function runAgentLoop(
   }
 
   const tools = getToolSpecs();
-  const systemPrompt = `${agent.systemPrompt}
+  const systemPrompt = systemPromptFor(agent, skillBody);
 
-You are an autonomous agent in a CLI environment. Be direct and terse:
-- Never greet the user, never narrate your plans, never write "I will..." or "Let me...". Act, don't describe.
-- For each request, immediately call the appropriate tool(s) and wait for the results before continuing.
-- Prefer read_file and write_file directly when you already know the path. Use glob_files only to discover paths, with a targeted pattern.
-- Once you have everything you need, answer the user's request concisely with the actual result.`;
+  let messages: CompletionMessage[];
+  if (sessionId) {
+    const ctx = buildContext(sessionId, systemPrompt);
+    const rows = getMessages(sessionId, true);
+    messages = [
+      ...ctx.systemMessages.map((content) => ({ role: "system" as const, content })),
+      ...rowsToCompletionMessages(rows),
+      { role: "user", content: query },
+    ];
+  } else {
+    messages = [
+      { role: "system", content: systemPrompt },
+      ...history,
+      { role: "user", content: query },
+    ];
+  }
 
-  const messages: CompletionMessage[] = [
-    { role: "system", content: systemPrompt },
-    ...history,
-    { role: "user", content: query },
-  ];
+  const buildRequest = (): CompletionRequest => ({
+    model: modelId,
+    messages,
+    temperature: 0.7,
+    maxTokens: findModel(modelId)?.maxTokens ?? DEFAULT_MAX_TOKENS,
+    tools,
+    toolChoice: "auto",
+    signal,
+  });
 
   for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
+    if (signal?.aborted) {
+      const msg = "Agent aborted by user.";
+      onUpdate({ kind: "error", error: msg });
+      return msg;
+    }
+
+    if (sessionId) rotateIfNeeded(sessionId);
+
     let response: CompletionResponse;
+    let streamedContent = "";
     try {
-      const cfg = loadConfig();
-      const model = cfg.selectedModel ?? "deepseek-chat";
-      response = await complete({
-        model,
-        messages,
-        temperature: 0.7,
-        maxTokens: DEFAULT_MAX_TOKENS,
-        tools,
-        toolChoice: "auto",
-      });
+      const req = buildRequest();
+      if (stream) {
+        response = await completeStream(req, (delta) => {
+          if (delta.kind === "text") {
+            streamedContent += delta.text;
+            onUpdate({ kind: "stream", content: streamedContent });
+          }
+        });
+      } else {
+        response = await complete(req);
+      }
     } catch (err) {
+      if (signal?.aborted) {
+        const msg = "Agent aborted by user.";
+        onUpdate({ kind: "error", error: msg });
+        return msg;
+      }
       const msg = err instanceof Error ? err.message : String(err);
       onUpdate({ kind: "error", error: msg });
       return `LLM call failed: ${msg}`;
@@ -144,18 +185,19 @@ You are an autonomous agent in a CLI environment. Be direct and terse:
       addMessage(sessionId, "assistant", persistedContent);
     }
 
-    if (calls.length === 0 && content.trim()) {
+    if (calls.length === 0 && content.trim() && !streamedContent) {
       onUpdate({ kind: "text", content });
     }
 
     if (calls.length === 0) {
+      const modelDisplayName = findModel(modelId)?.displayName ?? modelId;
       onUpdate({
         kind: "done",
         content,
         toolCalls,
         duration: Math.round(performance.now() - startTime),
         agentName: agent.name,
-        modelName,
+        modelName: modelDisplayName,
       });
       return content;
     }

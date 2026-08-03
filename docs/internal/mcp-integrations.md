@@ -27,8 +27,19 @@ JSON-RPC over stdin/stdout.
 ```
 
 3. Restart mtc
-4. Verify: `/call list-tools`
-5. Use: `/call my_tool param=value`
+4. Verify the server appears: `/mcps` (or `/status` for connected count)
+5. Use its tools: `/call <server>/<toolName> {jsonArgs}`
+
+**Tool namespacing:** MCP tools are exposed with a `<server>/<tool>` prefix
+(e.g. `figma/list_components`) to keep tool names unique when multiple
+servers are connected. Use the full `server/tool` name in `/call`. When a
+server is disconnected, its tools are removed from the registry and calls
+to them fail with a clear "tool not found" error.
+
+MCP servers are loaded from the first matching source:
+`.mtc/mcp.json`, `~/.config/mtc/mcp.json`, then OpenCode config files
+(`~/.config/opencode/opencode.json`, `~/.opencode/config.json`,
+`.opencode.json`).
 
 ## Building a Plugin
 
@@ -57,13 +68,40 @@ cp docs/templates/mcp-plugin-scaffold.ts my-plugin.ts
 - No dynamic code execution (eval, etc.)
 - All dependencies audited
 
-## Available Plugins (Internal Registry)
+## Available Plugins
+
+### Bundled Bridges (`src/mcp-plugins/`)
+
+These ship with mtc and are registered like any MCP server in `.mtc/mcp.json`:
+
+| Plugin | Description | Tools |
+|--------|-------------|-------|
+| [Figma Bridge](../../src/mcp-plugins/figma-bridge.ts) | Convert Figma files/components to React/Tailwind | `figma_fetch_file`, `figma_list_components`, `figma_export_component`, `figma_export_image` |
+| [DevOps Bridge](../../src/mcp-plugins/devops-bridge.ts) | Infrastructure log analysis and diagnostics | `datadog_query_logs`, `datadog_query_metrics`, `cloudwatch_query_logs`, `k8s_analyze_manifest`, `terraform_analyze_plan`, `devops_diagnose_logs` |
+
+Example registration:
+
+```json
+{
+  "mcpServers": {
+    "figma": {
+      "command": "bun",
+      "args": ["run", "src/mcp-plugins/figma-bridge.ts"]
+    }
+  }
+}
+```
+
+See [Multi-Department Workflows](./multi-department-workflows.md) for full
+setup and usage of both bridges.
+
+### Internal Registry
 
 | Plugin | Description | Maintainer |
 |--------|-------------|------------|
 | (List internal plugins here) | | |
 
-See internal plugin registry for the full list.
+See the internal plugin registry for the full list.
 
 ## Plugin Lifecycle
 

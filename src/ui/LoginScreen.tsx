@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import { initiateSSOLogin } from "../auth/index";
 import { theme } from "./theme";
 
-type LoginState = "init" | "no_secret" | "waiting" | "success" | "error";
+type LoginState = "init" | "waiting" | "success" | "error";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -26,11 +26,6 @@ export default function LoginScreen({ onLogin, onSkip, onExit }: LoginScreenProp
   }, []);
 
   useEffect(() => {
-    const hasSecret = !!(process.env.MTC_AZURE_CLIENT_SECRET ?? "");
-    if (!hasSecret) {
-      setLoginState("no_secret");
-      return;
-    }
     startLogin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -132,25 +127,6 @@ export default function LoginScreen({ onLogin, onSkip, onExit }: LoginScreenProp
             <Text color={theme.colors.warning}>
               Requesting device code from Microsoft{dots}
             </Text>
-          </Box>
-        )}
-
-        {loginState === "no_secret" && (
-          <Box flexDirection="column" marginTop={1}>
-            <Text color={theme.colors.warning}>
-              Microsoft SSO is not configured.
-            </Text>
-            <Box marginTop={1}>
-              <Text color={theme.colors.muted}>
-                Copy <Text bold>.env.example</Text> to <Text bold>.env</Text> and set{" "}
-                <Text bold>MTC_AZURE_CLIENT_SECRET</Text> to enable SSO.
-              </Text>
-            </Box>
-            <Box marginTop={1}>
-              <Text color={theme.colors.muted}>
-                Press <Text bold>s</Text> or <Text bold>esc</Text> to continue in offline mode.
-              </Text>
-            </Box>
           </Box>
         )}
 

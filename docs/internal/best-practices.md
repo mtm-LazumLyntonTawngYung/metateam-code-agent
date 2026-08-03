@@ -17,8 +17,8 @@ Recommendations for getting the most out of **mtc**.
 - **Start fresh for each task** — Don't accumulate context from unrelated work
 - **Use git branches** — mtc works best on a clean branch
 - **Break large tasks** — Split into <5 file batches
-- **Clear context** — Use `/clear` between unrelated tasks
-- **Review history** — Use `/history` to review what was done
+- **New session per task** — Use `/new` (or `/sessions`) to switch between tasks
+- **Review history** — Use `/sessions` to revisit past conversations
 
 ## Agent Selection
 
@@ -39,7 +39,7 @@ Recommendations for getting the most out of **mtc**.
 - **Point to files** — Use `/read path` instead of broad searches
 - **Use glob to narrow** — Find files before reading them
 - **Batch wisely** — 5 files per batch is a good limit
-- **Watch token usage** — Check `mtc analytics` for trends
+- **Watch token usage** — Check `mtc analytics report` for trends
 
 ## Security
 

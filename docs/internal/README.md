@@ -49,7 +49,14 @@ reference for MetaTeam engineers using, extending, and maintaining the platform.
 | [IP Governance](./ip-governance.md) | Licensing boundaries, patent strategy, trademarks |
 | [Release Process](./release-process.md) | Versioning, changelog, publishing |
 | [Security Policy](./security-policy.md) | Vulnerability handling, access control |
+| [Telemetry & Privacy Policy](./privacy-policy.md) | Opt-in telemetry, data collection disclosure |
 | [Repository Management](./repository-management.md) | Branch strategy, CI/CD, RBAC |
+
+## Upgrades
+
+| Guide | Description |
+|-------|-------------|
+| [Migration Guide](../migration-guide.md) | Breaking-change migration (license format, SSO, agent permissions, telemetry) |
 
 ## Training & Adoption
 

@@ -3,8 +3,9 @@ import { registerCleanup } from "./ui/clean-exit";
 import { MouseInputStream, enableMouseMode, disableMouseMode } from "./ui/mouse";
 import { Command } from "commander";
 import App from "./ui/App";
+import { VERSION } from "./version";
 import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
-import { listTasks, runTask } from "./eval/index";
+import { listTasks, runTask, runAgentEval } from "./eval/index";
 import { ensureTelemetryConfig, saveConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
 import { generateReport, printReport } from "./telemetry/reporter";
@@ -43,13 +44,14 @@ const program = new Command();
 program
   .name("mtc")
   .description("Metateam Code Agent — AI-powered terminal-first coding assistant")
-  .version("1.0.0")
+  .version(VERSION)
   .action(async () => {
     if (process.stdin.isTTY) {
       enableMouseMode();
       const mouseInput = new MouseInputStream(process.stdin);
       const { waitUntilExit, cleanup } = render(<App />, {
         stdin: mouseInput as unknown as NodeJS.ReadStream,
+        exitOnCtrlC: false,
       });
       registerCleanup(() => {
         disableMouseMode();
@@ -81,12 +83,15 @@ evalCmd
 
 evalCmd
   .command("run")
-  .description("Run an eval task")
+  .description("Run an eval task with the agent (or replay a solution script with --solution)")
   .argument("<name>", "Task name (directory under tests/evals/)")
-  .option("-s, --solution <path>", "Path to solution file")
-  .action(async (name: string, options: { solution?: string }) => {
+  .option("-s, --solution <path>", "Replay a solution script instead of driving the agent")
+  .option("-m, --model <id>", "LLM model to use (defaults to the configured routing model)")
+  .action(async (name: string, options: { solution?: string; model?: string }) => {
     console.log(`Running eval: ${name}...\n`);
-    const result = await runTask(name, options.solution);
+    const result = options.solution
+      ? await runTask(name, options.solution)
+      : await runAgentEval(name, { modelId: options.model });
     if (!result) {
       console.error(`Eval task not found: ${name}`);
       console.error("Use `mtc eval list` to see available tasks.");
@@ -94,6 +99,7 @@ evalCmd
     }
 
     console.log(`Task:     ${result.task}`);
+    console.log(`Model:    ${result.model ?? "n/a"}`);
     console.log(`Duration: ${result.duration}ms`);
     console.log(`Calls:    ${result.toolCalls} tools`);
     console.log(`Result:   ${result.passed ? "PASS" : "FAIL"}`);
@@ -111,6 +117,47 @@ evalCmd
     }
 
     process.exit(result.passed ? 0 : 1);
+  });
+
+evalCmd
+  .command("bench")
+  .description("Run all eval tasks with the agent and print a score table")
+  .option("-m, --model <id>", "LLM model to use (defaults to the configured routing model)")
+  .action(async (options: { model?: string }) => {
+    const tasks = listTasks();
+    if (tasks.length === 0) {
+      console.log("No eval tasks found in tests/evals/");
+      return;
+    }
+
+    console.log(`Benchmarking ${tasks.length} tasks...\n`);
+    const rows: { name: string; passed: boolean; duration: number; toolCalls: number; error?: string }[] = [];
+
+    for (const t of tasks) {
+      process.stdout.write(`  ${t.name} ... `);
+      try {
+        const r = await runAgentEval(t.name, { modelId: options.model });
+        if (!r) {
+          console.log("SKIP");
+          continue;
+        }
+        rows.push({ name: r.task, passed: r.passed, duration: r.duration, toolCalls: r.toolCalls, error: r.error });
+        console.log(r.passed ? "PASS" : "FAIL");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.log("ERROR");
+        console.error(`    ${msg}`);
+      }
+    }
+
+    const passedCount = rows.filter((r) => r.passed).length;
+    console.log(`\nScore: ${passedCount}/${rows.length} passed`);
+    for (const r of rows) {
+      const suffix = r.passed || !r.error ? "" : `  (${r.error})`;
+      console.log(`  ${r.passed ? "PASS" : "FAIL"}  ${r.name.padEnd(28)} ${String(r.duration).padStart(6)}ms  ${String(r.toolCalls).padStart(3)} tools${suffix}`);
+    }
+
+    process.exit(passedCount === rows.length ? 0 : 1);
   });
 
 const analyticsCmd = program.command("analytics").description("View telemetry and usage analytics");
@@ -136,6 +183,13 @@ analyticsCmd
     const { deviceId } = ensureTelemetryConfig();
     saveConfig({ telemetry: { enabled: true, deviceId } });
     console.log("\n  Telemetry enabled. Usage data will be collected locally.\n");
+    console.log("  What is collected (stored locally only):");
+    console.log("    - Session start/end timestamps and session IDs");
+    console.log("    - Tool calls, their success/failure and duration");
+    console.log("    - Model names and token usage");
+    console.log("    - An anonymous device ID");
+    console.log("  What is NOT collected: file contents, prompts, or code.");
+    console.log("  Disable anytime with: mtc analytics disable\n");
   });
 
 analyticsCmd
@@ -260,6 +314,9 @@ enterpriseCmd
   .option("-e, --expires <date>", "Expiration date (ISO 8601)", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString())
   .option("-s, --seats <number>", "Max seats", "50")
   .action((options: { tier: string; org: string; expires: string; seats: string }) => {
+    if (!process.env.MTC_LICENSE_SECRET) {
+      console.error("\n  WARNING: MTC_LICENSE_SECRET is not set. Keys generated without it cannot be verified and will be rejected on activation. Set MTC_LICENSE_SECRET in your environment.\n");
+    }
     const key = generateLicenseKey(
       options.tier as Tier,
       options.org,
@@ -459,7 +516,7 @@ llmCmd
 llmCmd
   .command("set-provider")
   .description("Configure a provider")
-  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter)")
+  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter, llamacpp)")
   .requiredOption("-k, --key <key>", "API key")
   .option("-u, --url <url>", "API base URL")
   .option("-m, --models <models...>", "Model IDs to enable")
@@ -467,16 +524,17 @@ llmCmd
     const cfg = loadLlmConfig();
     const existing = cfg.providers.find((p) => p.id === options.id);
     const labels: Record<string, string> = {
-      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter",
+      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter", llamacpp: "Local Llama",
     };
     const defaultUrls: Record<string, string> = {
       deepseek: "https://api.deepseek.com/v1",
       openai: "https://api.openai.com/v1",
       anthropic: "https://api.anthropic.com/v1",
       openrouter: "https://openrouter.ai/api/v1",
+      llamacpp: "http://localhost:8080/v1",
     };
     updateProvider({
-      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter",
+      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter" | "llamacpp",
       label: existing?.label ?? labels[options.id] ?? options.id,
       apiKey: options.key,
       baseUrl: options.url ?? existing?.baseUrl ?? defaultUrls[options.id] ?? `https://api.${options.id}.com/v1`,

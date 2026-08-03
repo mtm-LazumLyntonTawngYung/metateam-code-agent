@@ -37,12 +37,12 @@ git checkout -b release/v<version>
 
 ### 2. Staging (2 days before release)
 
-Merge to `next` branch and deploy to internal staging:
+Merge to `develop` and validate internally:
 
 ```bash
-git checkout next
+git checkout develop
 git merge release/v<version>
-git push origin next
+git push origin develop
 ```
 
 Notify #mtc-users for testing.
@@ -97,7 +97,7 @@ For P0/P1 issues:
 1. Branch from `main`: `git checkout -b hotfix/<description>`
 2. Fix, test, and merge directly to `main`
 3. Tag and release immediately
-4. Backport to `next` branch
+4. Backport to `develop` branch
 5. Post-mortem within 24h
 
 ## Binary Distribution
