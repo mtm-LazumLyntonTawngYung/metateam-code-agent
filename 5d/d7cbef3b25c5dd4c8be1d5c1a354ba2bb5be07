@@ -1,0 +1,20 @@
+README.md
+  h_10671eecd6b5d0 54
+docs/internal/commands.md
+  h_10671eecd6b5d0 91
+src/ui/ChatView.tsx
+  h_10671eecd6b5d0 204-205,208-214,249-270,273-300,344-349,355-360,483-485
+src/ui/GitDiffView.tsx
+  h_10671eecd6b5d0 239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "5dd7cbef3b25c5dd4c8be1d5c1a354ba2bb5be07",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
