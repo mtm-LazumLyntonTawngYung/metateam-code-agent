@@ -126,10 +126,9 @@ type FlatLine = {
   error?: boolean;
   muted?: boolean;
   indent?: boolean;
-  animate?: boolean;
 };
 
-function flattenEntries(entries: LogEntry[], lastMsgSeq: number, revealChars: number): FlatLine[] {
+function flattenEntries(entries: LogEntry[]): FlatLine[] {
   const lines: FlatLine[] = [];
   let seq = 0;
   let msgSeq = 0;
@@ -147,26 +146,11 @@ function flattenEntries(entries: LogEntry[], lastMsgSeq: number, revealChars: nu
       prevKind = "query";
     } else if (entry.kind === "message") {
       if (prevKind) spacer();
-      const isLast = msgSeq === lastMsgSeq;
-      const textLines = entry.text.split("\n");
-      let charStart = 0;
-      for (let i = 0; i < textLines.length; i++) {
-        const len = textLines[i].length;
-        if (isLast && revealChars <= charStart) break;
-        let t = textLines[i];
-        let animate = false;
-        if (isLast && revealChars < charStart + len) {
-          t = t.slice(0, Math.max(0, revealChars - charStart));
-          animate = true;
-        }
-        push(t, {
-          arrow: i === 0 ? "system" : undefined,
-          color: entry.color,
-          indent: i > 0,
-          ...(animate ? { animate: true } : {}),
-        });
-        charStart += len + 1;
-      }
+      entry.text.split("\n").forEach((t, i) => push(t, {
+        arrow: i === 0 ? "system" : undefined,
+        color: entry.color,
+        indent: i > 0,
+      }));
       msgSeq++;
       prevKind = "message";
     } else if (entry.kind === "tool_call") {
@@ -236,44 +220,11 @@ export default function ChatView({
 
   const allEntries = showingAgent ? agentLogs : logs;
 
-  const msgMeta = useMemo(() => {
-    let total = 0;
-    let last = "";
-    for (const e of allEntries) {
-      if (e.kind === "message") {
-        last = e.text;
-        total++;
-      }
-    }
-    return { total, last };
-  }, [allEntries]);
-  const lastMsgSeq = msgMeta.total - 1;
-  const lastMsgTotalChars = msgMeta.last.length;
-
-  const [revealChars, setRevealChars] = useState(0);
   const flatLines = useMemo(
-    () => flattenEntries(allEntries, lastMsgSeq, revealChars),
-    [allEntries, lastMsgSeq, revealChars],
+    () => flattenEntries(allEntries),
+    [allEntries],
   );
   const maxScrollTop = Math.max(0, flatLines.length - maxVisibleLogLines);
-
-  useEffect(() => {
-    setRevealChars(0);
-    if (!showingAgent || lastMsgTotalChars <= 0) return;
-    const duration = Math.max(600, Math.min(3200, lastMsgTotalChars * 4));
-    const chunk = Math.max(1, Math.ceil(lastMsgTotalChars / (duration / 16)));
-    const id = setInterval(() => {
-      setRevealChars((prev) => {
-        const next = prev + chunk;
-        if (next >= lastMsgTotalChars) {
-          clearInterval(id);
-          return lastMsgTotalChars;
-        }
-        return next;
-      });
-    }, 16);
-    return () => clearInterval(id);
-  }, [showingAgent, lastMsgTotalChars, lastMsgSeq]);
 
   useEffect(() => {
     if (stickToBottom) {
@@ -418,7 +369,6 @@ export default function ChatView({
         ) : (
           visibleLines.map((line) => {
             let text = line.text;
-            if (line.animate) text += "\u258d";
             const arrow = line.arrow === "user"
               ? <Text color={theme.colors.primary}>{"\u25b6"} </Text>
               : line.arrow === "system"

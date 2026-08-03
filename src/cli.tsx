@@ -51,6 +51,7 @@ program
       const mouseInput = new MouseInputStream(process.stdin);
       const { waitUntilExit, cleanup } = render(<App />, {
         stdin: mouseInput as unknown as NodeJS.ReadStream,
+        exitOnCtrlC: false,
       });
       registerCleanup(() => {
         disableMouseMode();
@@ -515,7 +516,7 @@ llmCmd
 llmCmd
   .command("set-provider")
   .description("Configure a provider")
-  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter)")
+  .requiredOption("-i, --id <id>", "Provider ID (deepseek, openai, anthropic, openrouter, llamacpp)")
   .requiredOption("-k, --key <key>", "API key")
   .option("-u, --url <url>", "API base URL")
   .option("-m, --models <models...>", "Model IDs to enable")
@@ -523,16 +524,17 @@ llmCmd
     const cfg = loadLlmConfig();
     const existing = cfg.providers.find((p) => p.id === options.id);
     const labels: Record<string, string> = {
-      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter",
+      deepseek: "DeepSeek", openai: "OpenAI", anthropic: "Anthropic", openrouter: "OpenRouter", llamacpp: "Local Llama",
     };
     const defaultUrls: Record<string, string> = {
       deepseek: "https://api.deepseek.com/v1",
       openai: "https://api.openai.com/v1",
       anthropic: "https://api.anthropic.com/v1",
       openrouter: "https://openrouter.ai/api/v1",
+      llamacpp: "http://localhost:8080/v1",
     };
     updateProvider({
-      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter",
+      id: options.id as "deepseek" | "openai" | "anthropic" | "openrouter" | "llamacpp",
       label: existing?.label ?? labels[options.id] ?? options.id,
       apiKey: options.key,
       baseUrl: options.url ?? existing?.baseUrl ?? defaultUrls[options.id] ?? `https://api.${options.id}.com/v1`,

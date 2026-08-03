@@ -1,6 +1,6 @@
 import type { JsonSchema } from "../tools/schema";
 
-export type ProviderId = "openai" | "anthropic" | "deepseek" | "openrouter";
+export type ProviderId = "openai" | "anthropic" | "deepseek" | "openrouter" | "llamacpp";
 
 export type ModelTier = "fast" | "default" | "reasoning";
 
@@ -207,10 +207,20 @@ export const KNOWN_MODELS: ModelConfig[] = [
     maxTokens: 8192,
     contextWindow: 1000000,
   },
+  {
+    id: "qwen2.5-1.5b-instruct",
+    displayName: "Qwen 2.5 1.5B Instruct (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
 ];
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
-  fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
+  fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "qwen2.5-1.5b-instruct"],
   default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };

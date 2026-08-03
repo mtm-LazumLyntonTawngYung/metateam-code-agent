@@ -38,6 +38,13 @@ export const DEFAULT_PROVIDERS: ProviderConfig[] = [
     baseUrl: "https://openrouter.ai/api/v1",
     models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat", "poolside/laguna-s-2.1:free"],
   },
+  {
+    id: "llamacpp",
+    label: "Local Llama",
+    apiKey: "",
+    baseUrl: "http://localhost:8080/v1",
+    models: ["qwen2.5-1.5b-instruct"],
+  },
 ];
 
 const CONFIG_KEY = "llm";
@@ -46,26 +53,29 @@ export function loadLlmConfig(): LlmConfig {
   const cfg = loadConfig();
   const raw = (cfg as Record<string, unknown>)[CONFIG_KEY] as Partial<LlmConfig> | undefined;
 
+  const defaults = DEFAULT_PROVIDERS.map((p) => ({ ...p, models: [...p.models] }));
+  if (raw?.providers?.length) {
+    for (const saved of raw.providers) {
+      const existing = defaults.find((p) => p.id === saved.id);
+      if (existing) {
+        existing.models = [...new Set([...(existing.models ?? []), ...(saved.models ?? [])])];
+        if (saved.apiKey) existing.apiKey = saved.apiKey;
+        if (saved.baseUrl) existing.baseUrl = saved.baseUrl;
+        if (saved.label) existing.label = saved.label;
+      } else {
+        defaults.push({ ...saved });
+      }
+    }
+  }
+
   return {
-    providers: raw?.providers?.length
-      ? mergeProviders(raw.providers, DEFAULT_PROVIDERS)
-      : DEFAULT_PROVIDERS,
+    providers: defaults,
     routing: raw?.routing ?? {
       simpleModel: "deepseek-chat",
       defaultModel: "deepseek-chat",
       reasoningModel: "claude-sonnet-4-20250514",
     },
   };
-}
-
-function mergeProviders(saved: ProviderConfig[], defaults: ProviderConfig[]): ProviderConfig[] {
-  const defaultByProvider = new Map(defaults.map((p) => [p.id, p]));
-  return saved.map((p) => {
-    const def = defaultByProvider.get(p.id);
-    if (!def) return p;
-    const models = [...new Set([...(p.models ?? []), ...def.models])];
-    return { ...p, models };
-  });
 }
 
 export function saveLlmConfig(partial: Partial<LlmConfig>): LlmConfig {
