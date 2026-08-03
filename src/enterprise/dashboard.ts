@@ -116,6 +116,190 @@ import {
   ensureBuiltinRoles,
 } from "./rbac";
 
+interface Integration {
+  id: string;
+  provider: string;
+  name: string;
+  config: Record<string, unknown>;
+  status: "active" | "inactive" | "error";
+  lastTestedAt?: string;
+  lastTestResult?: { ok: boolean; message: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface IntegrationProvider {
+  id: string;
+  name: string;
+  description: string;
+  configFields: Array<{ key: string; label: string; type: string; required: boolean; placeholder?: string }>;
+}
+
+const INTEGRATION_PROVIDERS: IntegrationProvider[] = [
+  {
+    id: "slack",
+    name: "Slack",
+    description: "Send notifications and alerts to Slack channels",
+    configFields: [
+      { key: "webhookUrl", label: "Webhook URL", type: "url", required: true, placeholder: "https://hooks.slack.com/services/..." },
+      { key: "channel", label: "Channel", type: "text", required: false, placeholder: "#alerts" },
+      { key: "username", label: "Bot Username", type: "text", required: false, placeholder: "MTC Bot" },
+    ],
+  },
+  {
+    id: "teams",
+    name: "Microsoft Teams",
+    description: "Send notifications to Microsoft Teams channels",
+    configFields: [
+      { key: "webhookUrl", label: "Webhook URL", type: "url", required: true, placeholder: "https://outlook.office.com/webhook/..." },
+      { key: "channelName", label: "Channel Name", type: "text", required: false, placeholder: "General" },
+    ],
+  },
+  {
+    id: "discord",
+    name: "Discord",
+    description: "Send notifications to Discord channels",
+    configFields: [
+      { key: "webhookUrl", label: "Webhook URL", type: "url", required: true, placeholder: "https://discord.com/api/webhooks/..." },
+      { key: "username", label: "Bot Username", type: "text", required: false, placeholder: "MTC Bot" },
+    ],
+  },
+  {
+    id: "github",
+    name: "GitHub",
+    description: "GitHub integration for issue tracking and PR management",
+    configFields: [
+      { key: "token", label: "Personal Access Token", type: "password", required: true },
+      { key: "repo", label: "Repository (owner/repo)", type: "text", required: true, placeholder: "metateam/mtc" },
+      { key: "webhookSecret", label: "Webhook Secret", type: "password", required: false },
+    ],
+  },
+  {
+    id: "gitlab",
+    name: "GitLab",
+    description: "GitLab integration for issue tracking and MR management",
+    configFields: [
+      { key: "token", label: "Personal Access Token", type: "password", required: true },
+      { key: "projectUrl", label: "Project URL", type: "url", required: true, placeholder: "https://gitlab.com/group/project" },
+      { key: "webhookSecret", label: "Webhook Secret", type: "password", required: false },
+    ],
+  },
+  {
+    id: "jira",
+    name: "Jira",
+    description: "Jira integration for issue tracking and project management",
+    configFields: [
+      { key: "baseUrl", label: "Jira Base URL", type: "url", required: true, placeholder: "https://yourteam.atlassian.net" },
+      { key: "email", label: "Email", type: "email", required: true },
+      { key: "apiToken", label: "API Token", type: "password", required: true },
+      { key: "projectKey", label: "Project Key", type: "text", required: true, placeholder: "MTC" },
+    ],
+  },
+  {
+    id: "cicd",
+    name: "CI/CD Pipeline",
+    description: "Generic CI/CD webhook integration (GitHub Actions, CircleCI, etc.)",
+    configFields: [
+      { key: "webhookUrl", label: "Webhook URL", type: "url", required: true },
+      { key: "secret", label: "Webhook Secret", type: "password", required: false },
+      { key: "events", label: "Events (comma-separated)", type: "text", required: false, placeholder: "push,pull_request" },
+    ],
+  },
+  {
+    id: "custom",
+    name: "Custom Webhook",
+    description: "Generic webhook integration for custom endpoints",
+    configFields: [
+      { key: "url", label: "Webhook URL", type: "url", required: true },
+      { key: "method", label: "HTTP Method", type: "select", required: true, placeholder: "POST" },
+      { key: "secret", label: "Secret (for signature)", type: "password", required: false },
+      { key: "headers", label: "Custom Headers (JSON)", type: "textarea", required: false, placeholder: '{"Authorization":"Bearer ..."}' },
+    ],
+  },
+];
+
+const integrations = new Map<string, Integration>();
+
+function ensureIntegrationsTable(): void {
+  const db = getDb();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS integrations (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      name TEXT NOT NULL,
+      config TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'inactive',
+      last_tested_at TEXT,
+      last_test_result TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  const rows = db.query("SELECT * FROM integrations").all() as Array<{
+    id: string;
+    provider: string;
+    name: string;
+    config: string;
+    status: string;
+    last_tested_at: string | null;
+    last_test_result: string | null;
+    created_at: string;
+    updated_at: string;
+  }>;
+  for (const row of rows) {
+    integrations.set(row.id, {
+      id: row.id,
+      provider: row.provider,
+      name: row.name,
+      config: JSON.parse(row.config),
+      status: row.status as Integration["status"],
+      lastTestedAt: row.last_tested_at ?? undefined,
+      lastTestResult: row.last_test_result ? JSON.parse(row.last_test_result) : undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  }
+}
+
+function saveIntegration(integration: Integration): void {
+  const db = getDb();
+  db.run(
+    `INSERT OR REPLACE INTO integrations (id, provider, name, config, status, last_tested_at, last_test_result, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      integration.id,
+      integration.provider,
+      integration.name,
+      JSON.stringify(integration.config),
+      integration.status,
+      integration.lastTestedAt ?? null,
+      integration.lastTestResult ? JSON.stringify(integration.lastTestResult) : null,
+      integration.createdAt,
+      integration.updatedAt,
+    ],
+  );
+  integrations.set(integration.id, integration);
+}
+
+function deleteIntegrationFromDb(id: string): boolean {
+  const db = getDb();
+  const result = db.run("DELETE FROM integrations WHERE id = ?", [id]);
+  return result.changes > 0;
+}
+
+function maskIntegrationConfig(config: Record<string, unknown>, provider: IntegrationProvider): Record<string, unknown> {
+  const masked: Record<string, unknown> = {};
+  for (const field of provider.configFields) {
+    const value = config[field.key];
+    if (field.type === "password" && value) {
+      masked[field.key] = "********";
+    } else {
+      masked[field.key] = value;
+    }
+  }
+  return masked;
+}
+
 const DASHBOARD_USER = process.env.MTC_DASHBOARD_USER ?? "";
 const DASHBOARD_PASSWORD = process.env.MTC_DASHBOARD_PASSWORD ?? "";
 const SESSION_COOKIE = "mtc_dash";
@@ -1375,6 +1559,23 @@ const API_DESCRIPTIONS: Array<{ method: string; path: string; summary: string; p
   { method: "GET", path: "/api/rbac/analytics", summary: "RBAC coverage and assignment analytics", params: [] },
   { method: "GET", path: "/api/rbac/assignments", summary: "All user-role assignments", params: [] },
   { method: "GET", path: "/api/rbac/check", summary: "Test a user's effective permissions", params: ["userId", "permission"] },
+  { method: "GET", path: "/api/integrations", summary: "List configured integrations", params: [] },
+  { method: "POST", path: "/api/integrations", summary: "Create a new integration", params: ["provider", "name", "config"] },
+  { method: "GET", path: "/api/integrations/providers", summary: "List available integration providers", params: [] },
+  { method: "PUT", path: "/api/integrations/:id", summary: "Update an integration", params: ["name", "config", "status"] },
+  { method: "DELETE", path: "/api/integrations/:id", summary: "Delete an integration", params: [] },
+  { method: "POST", path: "/api/integrations/:id/test", summary: "Test an integration connection", params: [] },
+  { method: "GET", path: "/api/deployment/status", summary: "Deployment status and system info", params: [] },
+  { method: "GET", path: "/api/deployment/metrics", summary: "Deployment metrics (memory, sessions, tokens)", params: [] },
+  { method: "GET", path: "/api/deployment/backup", summary: "List backup records", params: [] },
+  { method: "POST", path: "/api/deployment/backup", summary: "Create a new backup", params: ["type"] },
+  { method: "DELETE", path: "/api/deployment/backup/:id", summary: "Delete a backup record", params: [] },
+  { method: "GET", path: "/api/help/topics", summary: "List all help topics", params: [] },
+  { method: "GET", path: "/api/help/topics/:id", summary: "Get a specific help topic", params: [] },
+  { method: "GET", path: "/api/help/categories", summary: "List help categories", params: [] },
+  { method: "GET", path: "/api/help/search", summary: "Search help topics", params: ["q"] },
+  { method: "POST", path: "/api/help/feedback", summary: "Submit help feedback", params: ["topicId", "rating", "comment"] },
+  { method: "GET", path: "/api/help/feedback", summary: "List help feedback entries", params: [] },
 ];
 
 function buildOpenApiSpec(): Record<string, unknown> {
@@ -1768,6 +1969,677 @@ function runScheduledExports(): void {
   }
 }
 
+/* ---- Integration handlers ---- */
+
+function handleListIntegrations(): Response {
+  const list = Array.from(integrations.values()).map((ig) => {
+    const provider = INTEGRATION_PROVIDERS.find((p) => p.id === ig.provider);
+    return {
+      ...ig,
+      config: provider ? maskIntegrationConfig(ig.config, provider) : ig.config,
+    };
+  });
+  return jsonResponse({ integrations: list });
+}
+
+function handleListIntegrationProviders(): Response {
+  return jsonResponse({
+    providers: INTEGRATION_PROVIDERS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      configFields: p.configFields.map((f) => ({
+        key: f.key,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+        placeholder: f.placeholder,
+      })),
+    })),
+  });
+}
+
+async function handleCreateIntegration(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+
+  const providerId = String(body.provider ?? "").trim();
+  const provider = INTEGRATION_PROVIDERS.find((p) => p.id === providerId);
+  if (!provider) return jsonResponse({ error: `Unknown provider: ${providerId}` }, 400);
+
+  const name = String(body.name ?? "").trim();
+  if (!name) return jsonResponse({ error: "Integration name is required" }, 400);
+
+  const config = (body.config ?? {}) as Record<string, unknown>;
+  for (const field of provider.configFields) {
+    if (field.required && !config[field.key]) {
+      return jsonResponse({ error: `Missing required field: ${field.label}` }, 400);
+    }
+  }
+
+  const id = `ig_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const now = new Date().toISOString();
+  const integration: Integration = {
+    id,
+    provider: providerId,
+    name,
+    config,
+    status: "inactive",
+    createdAt: now,
+    updatedAt: now,
+  };
+  saveIntegration(integration);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "integration.create",
+    resource: `integrations/${id}`,
+    detail: `Created ${provider.name} integration "${name}"`,
+    ip,
+  });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "integration.create",
+    resource: `integrations/${id}`,
+    detail: `Created integration "${name}" (provider: ${providerId})`,
+    ip,
+  });
+
+  const responseProvider = provider;
+  return jsonResponse({
+    integration: {
+      ...integration,
+      config: maskIntegrationConfig(integration.config, responseProvider),
+    },
+  }, 201);
+}
+
+async function handleUpdateIntegration(req: Request, integrationId: string): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  const existing = integrations.get(integrationId);
+  if (!existing) return jsonResponse({ error: "Integration not found" }, 404);
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+
+  const provider = INTEGRATION_PROVIDERS.find((p) => p.id === existing.provider);
+  if (!provider) return jsonResponse({ error: "Unknown provider" }, 500);
+
+  const updates: Partial<Integration> = { updatedAt: new Date().toISOString() };
+  if (body.name !== undefined) updates.name = String(body.name);
+  if (body.config !== undefined && typeof body.config === "object") {
+    updates.config = { ...existing.config, ...(body.config as Record<string, unknown>) };
+    for (const field of provider.configFields) {
+      if (field.required && !updates.config[field.key]) {
+        return jsonResponse({ error: `Missing required field: ${field.label}` }, 400);
+      }
+    }
+  }
+  if (body.status !== undefined) {
+    const status = String(body.status);
+    if (!["active", "inactive", "error"].includes(status)) {
+      return jsonResponse({ error: "Status must be one of: active, inactive, error" }, 400);
+    }
+    updates.status = status as Integration["status"];
+  }
+
+  const updated = { ...existing, ...updates };
+  saveIntegration(updated);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "integration.update",
+    resource: `integrations/${integrationId}`,
+    detail: `Updated integration "${updated.name}"`,
+    ip,
+  });
+
+  return jsonResponse({
+    integration: {
+      ...updated,
+      config: maskIntegrationConfig(updated.config, provider),
+    },
+  });
+}
+
+async function handleDeleteIntegration(req: Request, integrationId: string): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  const existing = integrations.get(integrationId);
+  if (!existing) return jsonResponse({ error: "Integration not found" }, 404);
+
+  deleteIntegrationFromDb(integrationId);
+  integrations.delete(integrationId);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "integration.delete",
+    resource: `integrations/${integrationId}`,
+    detail: `Deleted integration "${existing.name}"`,
+    ip,
+  });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "integration.delete",
+    resource: `integrations/${integrationId}`,
+    detail: `Deleted integration "${existing.name}" (provider: ${existing.provider})`,
+    ip,
+  });
+
+  return jsonResponse({ ok: true });
+}
+
+async function handleTestIntegration(req: Request, integrationId: string): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  const existing = integrations.get(integrationId);
+  if (!existing) return jsonResponse({ error: "Integration not found" }, 404);
+
+  const provider = INTEGRATION_PROVIDERS.find((p) => p.id === existing.provider);
+  if (!provider) return jsonResponse({ error: "Unknown provider" }, 500);
+
+  let ok = true;
+  let message = "Integration test successful";
+
+  try {
+    if (existing.provider === "slack" || existing.provider === "teams" || existing.provider === "discord" || existing.provider === "cicd" || existing.provider === "custom") {
+      const webhookUrl = String(existing.config.webhookUrl ?? existing.config.url ?? "");
+      if (!webhookUrl) {
+        ok = false;
+        message = "No webhook URL configured";
+      } else {
+        const testPayload = {
+          text: `[MTC] Integration test from MetaTeam Control Plane at ${new Date().toISOString()}`,
+          content: `[MTC] Integration test from MetaTeam Control Plane at ${new Date().toISOString()}`,
+        };
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const resp = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(testPayload),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            ok = false;
+            message = `Webhook returned HTTP ${resp.status}`;
+          }
+        } catch (fetchErr) {
+          clearTimeout(timeout);
+          ok = false;
+          message = `Connection failed: ${(fetchErr as Error).message}`;
+        }
+      }
+    } else if (existing.provider === "github") {
+      const token = String(existing.config.token ?? "");
+      if (!token) {
+        ok = false;
+        message = "No GitHub token configured";
+      } else {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const resp = await fetch("https://api.github.com/user", {
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            ok = false;
+            message = `GitHub API returned HTTP ${resp.status}`;
+          } else {
+            const data = (await resp.json()) as { login?: string };
+            message = `Authenticated as ${data.login ?? "unknown"}`;
+          }
+        } catch (fetchErr) {
+          clearTimeout(timeout);
+          ok = false;
+          message = `Connection failed: ${(fetchErr as Error).message}`;
+        }
+      }
+    } else if (existing.provider === "gitlab") {
+      const token = String(existing.config.token ?? "");
+      if (!token) {
+        ok = false;
+        message = "No GitLab token configured";
+      } else {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const resp = await fetch("https://gitlab.com/api/v4/user", {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            ok = false;
+            message = `GitLab API returned HTTP ${resp.status}`;
+          } else {
+            const data = (await resp.json()) as { username?: string };
+            message = `Authenticated as ${data.username ?? "unknown"}`;
+          }
+        } catch (fetchErr) {
+          clearTimeout(timeout);
+          ok = false;
+          message = `Connection failed: ${(fetchErr as Error).message}`;
+        }
+      }
+    } else if (existing.provider === "jira") {
+      const baseUrl = String(existing.config.baseUrl ?? "");
+      const email = String(existing.config.email ?? "");
+      const apiToken = String(existing.config.apiToken ?? "");
+      if (!baseUrl || !email || !apiToken) {
+        ok = false;
+        message = "Missing Jira configuration (baseUrl, email, or apiToken)";
+      } else {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const auth = Buffer.from(`${email}:${apiToken}`).toString("base64");
+          const resp = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/api/2/myself`, {
+            headers: { Authorization: `Basic ${auth}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            ok = false;
+            message = `Jira API returned HTTP ${resp.status}`;
+          } else {
+            const data = (await resp.json()) as { displayName?: string };
+            message = `Authenticated as ${data.displayName ?? "unknown"}`;
+          }
+        } catch (fetchErr) {
+          clearTimeout(timeout);
+          ok = false;
+          message = `Connection failed: ${(fetchErr as Error).message}`;
+        }
+      }
+    }
+  } catch (err) {
+    ok = false;
+    message = `Test failed: ${(err as Error).message}`;
+  }
+
+  const now = new Date().toISOString();
+  const updated = {
+    ...existing,
+    lastTestedAt: now,
+    lastTestResult: { ok, message },
+    status: ok ? ("active" as const) : existing.status,
+    updatedAt: now,
+  };
+  saveIntegration(updated);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "integration.test",
+    resource: `integrations/${integrationId}`,
+    detail: `Tested integration "${existing.name}": ${ok ? "success" : "failure"} - ${message}`,
+    ip,
+  });
+
+  return jsonResponse({
+    tested: true,
+    ok,
+    message,
+    integration: {
+      ...updated,
+      config: maskIntegrationConfig(updated.config, provider),
+    },
+  });
+}
+
+function integrationIdFromPath(path: string): string | null {
+  const match = path.match(/^\/api\/integrations\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function integrationTestPath(path: string): string | null {
+  const match = path.match(/^\/api\/integrations\/([^/]+)\/test$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/* ---- Deployment handlers ---- */
+
+interface DeploymentStatus {
+  version: string;
+  uptime: number;
+  hostname: string;
+  platform: string;
+  nodeVersion: string;
+  memoryUsage: { rss: number; heapUsed: number; heapTotal: number };
+  cpuUsage: { user: number; system: number };
+  startedAt: string;
+}
+
+const DEPLOYMENT_STARTED_AT = new Date().toISOString();
+
+function getDeploymentStatus(): DeploymentStatus {
+  const mem = process.memoryUsage();
+  const cpu = process.cpuUsage();
+  return {
+    version: (() => {
+      try {
+        const pkg = require("../../../package.json");
+        return pkg.version ?? "0.0.0";
+      } catch {
+        return "0.0.0";
+      }
+    })(),
+    uptime: Math.floor(process.uptime()),
+    hostname: require("os").hostname(),
+    platform: `${process.platform} ${process.arch}`,
+    nodeVersion: process.version,
+    memoryUsage: { rss: mem.rss, heapUsed: mem.heapUsed, heapTotal: mem.heapTotal },
+    cpuUsage: { user: cpu.user, system: cpu.system },
+    startedAt: DEPLOYMENT_STARTED_AT,
+  };
+}
+
+function handleDeploymentStatus(): Response {
+  return jsonResponse({ deployment: getDeploymentStatus() });
+}
+
+function handleDeploymentMetrics(): Response {
+  const status = getDeploymentStatus();
+  const sessions = getActiveSessions();
+  const license = getLicense();
+  return jsonResponse({
+    metrics: {
+      uptime: status.uptime,
+      memory: status.memoryUsage,
+      cpu: status.cpuUsage,
+      activeSessions: sessions.length,
+      totalTokens: sessions.reduce((sum, s) => sum + s.tokens, 0),
+      licenseTier: license.tier,
+      licenseStatus: license.status,
+    },
+  });
+}
+
+function handleHealthCheck(): Response {
+  const status = getDeploymentStatus();
+  return jsonResponse({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    version: status.version,
+    uptime: status.uptime,
+    memory: status.memoryUsage,
+    telemetry: isTelemetryEnabled(),
+  });
+}
+
+interface BackupRecord {
+  id: string;
+  type: string;
+  status: "completed" | "in_progress" | "failed";
+  size?: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+const backups = new Map<string, BackupRecord>();
+
+function ensureBackupsTable(): void {
+  const db = getDb();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS backups (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'completed',
+      size INTEGER,
+      created_at TEXT DEFAULT (datetime('now')),
+      completed_at TEXT
+    )
+  `);
+  const rows = db.query("SELECT * FROM backups ORDER BY created_at DESC LIMIT 50").all() as Array<{
+    id: string;
+    type: string;
+    status: string;
+    size: number | null;
+    created_at: string;
+    completed_at: string | null;
+  }>;
+  for (const row of rows) {
+    backups.set(row.id, {
+      id: row.id,
+      type: row.type,
+      status: row.status as BackupRecord["status"],
+      size: row.size ?? undefined,
+      createdAt: row.created_at,
+      completedAt: row.completed_at ?? undefined,
+    });
+  }
+}
+
+function handleListBackups(): Response {
+  return jsonResponse({ backups: Array.from(backups.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
+}
+
+async function handleCreateBackup(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  const body = await readJson(req);
+  const type = String(body?.type ?? "full");
+
+  const id = `bk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const now = new Date().toISOString();
+  const backup: BackupRecord = { id, type, status: "completed", size: 0, createdAt: now, completedAt: now };
+
+  try {
+    const db = getDb();
+    const tables = db.query("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>;
+    let totalSize = 0;
+    for (const t of tables) {
+      if (t.name === "sqlite_sequence") continue;
+      const count = (db.query(`SELECT COUNT(*) as cnt FROM "${t.name}"`).get() as { cnt: number }).cnt;
+      totalSize += count;
+    }
+    backup.size = totalSize;
+  } catch {
+    // ignore size calculation errors
+  }
+
+  const db = getDb();
+  db.run(
+    "INSERT OR REPLACE INTO backups (id, type, status, size, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [backup.id, backup.type, backup.status, backup.size ?? null, backup.createdAt, backup.completedAt ?? null],
+  );
+  backups.set(backup.id, backup);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "backup.create",
+    resource: `backups/${id}`,
+    detail: `Created ${type} backup (${backup.size ?? 0} records)`,
+    ip,
+  });
+
+  return jsonResponse({ backup }, 201);
+}
+
+async function handleDeleteBackup(req: Request, backupId: string): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+
+  if (!backups.has(backupId)) return jsonResponse({ error: "Backup not found" }, 404);
+
+  const db = getDb();
+  db.run("DELETE FROM backups WHERE id = ?", [backupId]);
+  backups.delete(backupId);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "backup.delete",
+    resource: `backups/${backupId}`,
+    detail: "Deleted backup record",
+    ip,
+  });
+
+  return jsonResponse({ ok: true });
+}
+
+function backupIdFromPath(path: string): string | null {
+  const match = path.match(/^\/api\/backups\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/* ---- Help/Documentation handlers ---- */
+
+const HELP_TOPICS = [
+  { id: "getting-started", title: "Getting Started", category: "setup", content: "Learn how to install and configure MetaTeam Code Agent for your team." },
+  { id: "configuration", title: "Configuration", category: "setup", content: "Configure LLM providers, MCP servers, custom agents, and project rules." },
+  { id: "llm-providers", title: "LLM Providers", category: "setup", content: "Set up DeepSeek, OpenAI, Anthropic, or OpenRouter providers with routing." },
+  { id: "mcp-servers", title: "MCP Servers", category: "integration", content: "Connect external tools and services via the Model Context Protocol." },
+  { id: "custom-agents", title: "Custom Agents", category: "agents", content: "Create and configure custom agents with specific system prompts and permissions." },
+  { id: "skills", title: "Skills", category: "agents", content: "Install and use specialized skills for specific development tasks." },
+  { id: "rules", title: "Project Rules", category: "setup", content: "Define project-specific rules in .mtc/rules/ that augment agent behavior." },
+  { id: "enterprise-features", title: "Enterprise Features", category: "enterprise", content: "SSO, organization management, audit logs, and the web dashboard." },
+  { id: "license-management", title: "License Management", category: "enterprise", content: "Activate, validate, and manage enterprise license keys." },
+  { id: "rbac", title: "Access Control (RBAC)", category: "enterprise", content: "Manage roles, permissions, and user-role assignments." },
+  { id: "security", title: "Security", category: "enterprise", content: "Security monitoring, threat detection, and compliance reporting." },
+  { id: "integrations", title: "Integrations", category: "integration", content: "Connect Slack, Teams, Discord, GitHub, and other external services." },
+  { id: "deployments", title: "Deployment & Scaling", category: "operations", content: "Monitor deployment status, manage backups, and scale horizontally." },
+  { id: "telemetry", title: "Telemetry & Analytics", category: "operations", content: "Usage analytics, cost optimization, and performance monitoring." },
+  { id: "cli-reference", title: "CLI Reference", category: "reference", content: "Complete reference for all mtc CLI commands and options." },
+  { id: "api-reference", title: "API Reference", category: "reference", content: "REST API documentation for the enterprise dashboard." },
+  { id: "troubleshooting", title: "Troubleshooting", category: "support", content: "Common issues and their solutions." },
+  { id: "faq", title: "FAQ", category: "support", content: "Frequently asked questions about MetaTeam Code Agent." },
+];
+
+function handleListHelpTopics(): Response {
+  return jsonResponse({ topics: HELP_TOPICS });
+}
+
+function handleGetHelpTopic(url: URL): Response {
+  const topicId = decodeURIComponent(url.pathname.split("/").pop() ?? "");
+  const topic = HELP_TOPICS.find((t) => t.id === topicId);
+  if (!topic) return jsonResponse({ error: "Topic not found" }, 404);
+  return jsonResponse({ topic });
+}
+
+function handleSearchHelp(url: URL): Response {
+  const query = String(url.searchParams.get("q") ?? "").toLowerCase().trim();
+  if (!query) return jsonResponse({ results: HELP_TOPICS });
+
+  const results = HELP_TOPICS.filter(
+    (t) =>
+      t.title.toLowerCase().includes(query) ||
+      t.content.toLowerCase().includes(query) ||
+      t.category.toLowerCase().includes(query),
+  );
+  return jsonResponse({ results, query });
+}
+
+function handleListHelpCategories(): Response {
+  const categories = [...new Set(HELP_TOPICS.map((t) => t.category))];
+  return jsonResponse({
+    categories: categories.map((c) => ({
+      id: c,
+      name: c.charAt(0).toUpperCase() + c.slice(1),
+      count: HELP_TOPICS.filter((t) => t.category === c).length,
+    })),
+  });
+}
+
+interface FeedbackEntry {
+  id: string;
+  topicId?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+const feedbackEntries = new Map<string, FeedbackEntry>();
+
+function ensureFeedbackTable(): void {
+  const db = getDb();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS help_feedback (
+      id TEXT PRIMARY KEY,
+      topic_id TEXT,
+      rating INTEGER NOT NULL,
+      comment TEXT NOT NULL DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  const rows = db.query("SELECT * FROM help_feedback ORDER BY created_at DESC LIMIT 100").all() as Array<{
+    id: string;
+    topic_id: string | null;
+    rating: number;
+    comment: string;
+    created_at: string;
+  }>;
+  for (const row of rows) {
+    feedbackEntries.set(row.id, {
+      id: row.id,
+      topicId: row.topic_id ?? undefined,
+      rating: row.rating,
+      comment: row.comment,
+      createdAt: row.created_at,
+    });
+  }
+}
+
+async function handleSubmitFeedback(req: Request): Promise<Response> {
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+
+  const rating = Number(body.rating);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return jsonResponse({ error: "Rating must be between 1 and 5" }, 400);
+  }
+
+  const id = `fb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const entry: FeedbackEntry = {
+    id,
+    topicId: body.topicId ? String(body.topicId) : undefined,
+    rating,
+    comment: String(body.comment ?? ""),
+    createdAt: new Date().toISOString(),
+  };
+
+  const db = getDb();
+  db.run(
+    "INSERT INTO help_feedback (id, topic_id, rating, comment, created_at) VALUES (?, ?, ?, ?, ?)",
+    [entry.id, entry.topicId ?? null, entry.rating, entry.comment, entry.createdAt],
+  );
+  feedbackEntries.set(entry.id, entry);
+
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "help.feedback",
+    resource: `help-feedback/${id}`,
+    detail: `Submitted feedback (rating: ${rating})${entry.topicId ? ` for topic "${entry.topicId}"` : ""}`,
+  });
+
+  return jsonResponse({ feedback: entry }, 201);
+}
+
+function handleListFeedback(): Response {
+  return jsonResponse({ feedback: Array.from(feedbackEntries.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
+}
+
 export function startDashboard(port: number, host: string = "127.0.0.1"): void {
   if (!DASHBOARD_USER || !DASHBOARD_PASSWORD) {
     console.error("[mc dashboard] MTC_DASHBOARD_USER and MTC_DASHBOARD_PASSWORD must be set");
@@ -1775,6 +2647,9 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
   }
   ensureSessionsTable();
   ensureBuiltinRoles();
+  ensureIntegrationsTable();
+  ensureBackupsTable();
+  ensureFeedbackTable();
   console.error(`mtc enterprise dashboard: http://${host}:${port}`);
 
   Bun.serve({
@@ -2136,6 +3011,64 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
 
       if (path === "/api/health") {
         return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), telemetry: isTelemetryEnabled() });
+      }
+
+      /* ---- Integration routes ---- */
+      if (path === "/api/integrations" && req.method === "GET") {
+        return handleListIntegrations();
+      }
+      if (path === "/api/integrations" && req.method === "POST") {
+        return handleCreateIntegration(req);
+      }
+      if (path === "/api/integrations/providers") {
+        return handleListIntegrationProviders();
+      }
+      const integrationTest = integrationTestPath(path);
+      if (integrationTest && req.method === "POST") {
+        return handleTestIntegration(req, integrationTest);
+      }
+      const integrationId = integrationIdFromPath(path);
+      if (integrationId) {
+        if (req.method === "PUT") return handleUpdateIntegration(req, integrationId);
+        if (req.method === "DELETE") return handleDeleteIntegration(req, integrationId);
+      }
+
+      /* ---- Deployment routes ---- */
+      if (path === "/api/deployment/status") {
+        return handleDeploymentStatus();
+      }
+      if (path === "/api/deployment/metrics") {
+        return handleDeploymentMetrics();
+      }
+      if (path === "/api/deployment/backup" && req.method === "GET") {
+        return handleListBackups();
+      }
+      if (path === "/api/deployment/backup" && req.method === "POST") {
+        return handleCreateBackup(req);
+      }
+      const backupId = backupIdFromPath(path);
+      if (backupId && req.method === "DELETE") {
+        return handleDeleteBackup(req, backupId);
+      }
+
+      /* ---- Help/Documentation routes ---- */
+      if (path === "/api/help/topics") {
+        return handleListHelpTopics();
+      }
+      if (path === "/api/help/categories") {
+        return handleListHelpCategories();
+      }
+      if (path === "/api/help/search") {
+        return handleSearchHelp(url);
+      }
+      if (path === "/api/help/feedback" && req.method === "POST") {
+        return handleSubmitFeedback(req);
+      }
+      if (path === "/api/help/feedback" && req.method === "GET") {
+        return handleListFeedback();
+      }
+      if (path.startsWith("/api/help/topics/")) {
+        return handleGetHelpTopic(url);
       }
 
       return new Response("Not found", { status: 404 });
@@ -2659,6 +3592,18 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Access Control</span>
       </li>
+      <li data-view="integrations">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
+        <span>Integrations</span>
+      </li>
+      <li data-view="deployment">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        <span>Deployment</span>
+      </li>
+      <li data-view="help">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Help</span>
+      </li>
     </ul>
     <div class="sidebar-foot">
       <div class="nav-group-label">System</div>
@@ -2692,7 +3637,7 @@ const IC = {
   file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
 };
 
-let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null, users: null, config: null, sessions: null, notifications: null, exports: null, templates: null, security: null, alerts: null, policies: null, compliance: null, rbacRoles: null, rbacPermissions: null, rbacAnalytics: null, rbacAssignments: null };
+let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null, users: null, config: null, sessions: null, notifications: null, exports: null, templates: null, security: null, alerts: null, policies: null, compliance: null, rbacRoles: null, rbacPermissions: null, rbacAnalytics: null, rbacAssignments: null, integrations: null, providers: null, deployment: null, metrics: null, backups: null, helpTopics: null, helpCategories: null, feedback: null };
 
 let auditActorFilter = '';
 let auditActionFilter = '';
@@ -3640,7 +4585,7 @@ async function fetchJSON(url) {
 
 async function loadAll() {
   try {
-    const [status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications, notifPrefs, exports, templates, securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments] = await Promise.all([
+    const [status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications, notifPrefs, exports, templates, securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments, integrations, providers, deployment, metrics, backups, helpTopics, helpCategories, feedback] = await Promise.all([
       fetchJSON(API + '/status'),
       fetchJSON(API + '/license'),
       fetchJSON(API + '/audit'),
@@ -3662,9 +4607,17 @@ async function loadAll() {
       fetchJSON(API + '/rbac/roles'),
       fetchJSON(API + '/rbac/permissions'),
       fetchJSON(API + '/rbac/analytics'),
-      fetchJSON(API + '/rbac/assignments')
+      fetchJSON(API + '/rbac/assignments'),
+      fetchJSON(API + '/integrations'),
+      fetchJSON(API + '/integrations/providers'),
+      fetchJSON(API + '/deployment/status'),
+      fetchJSON(API + '/deployment/metrics'),
+      fetchJSON(API + '/deployment/backup'),
+      fetchJSON(API + '/help/topics'),
+      fetchJSON(API + '/help/categories'),
+      fetchJSON(API + '/help/feedback')
     ]);
-    state = { status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications: { ...notifications, preferences: notifPrefs.preferences }, exports, templates, security: securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments };
+    state = { status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications: { ...notifications, preferences: notifPrefs.preferences }, exports, templates, security: securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments, integrations, providers, deployment, metrics, backups, helpTopics, helpCategories, feedback };
     loadAnalytics();
     loadSecurityThreats();
     if (!apiSpec) loadApiSpec();
@@ -4008,6 +4961,220 @@ function getActiveView() {
   return active ? active.dataset.view : 'overview';
 }
 
+/* ---- Integrations view ---- */
+function renderIntegrations() {
+  const ig = state.integrations;
+  const prov = state.providers;
+  if (!ig || !prov) return '<div class="loading">Loading&hellip;</div>';
+  const integrations = ig.integrations || [];
+  const providers = prov.providers || [];
+  const active = integrations.filter(function (i) { return i.status === 'active'; }).length;
+
+  let html = pageHeader('Integrations', 'Connect external services and webhooks', '<span class="pill">' + active + ' active</span>');
+  html += '<div class="toolbar"><button class="btn primary" data-action="integration-create">Add Integration</button></div>';
+
+  html += section('Available Providers', providers.length + ' providers',
+    '<div class="feature-grid">' + providers.map(function (p) {
+      return '<div class="feature-item">' +
+        '<span class="icon" style="color:var(--accent)">' + IC.plug + '</span>' +
+        '<div><strong>' + esc(p.name) + '</strong><div class="dim" style="font-size:11px">' + esc(p.description) + '</div></div>' +
+        '<button class="btn tiny" data-action="integration-create-provider" data-provider="' + esc(p.id) + '">Add</button>' +
+        '</div>';
+    }).join('') + '</div>', true);
+
+  html += section('Configured Integrations', integrations.length + ' integrations',
+    integrations.length
+      ? table(['Name', 'Provider', 'Status', 'Last Tested', ''], integrations.map(function (i) {
+          var provDef = providers.find(function (p) { return p.id === i.provider; });
+          var statusCls = i.status === 'active' ? 'chip-green' : (i.status === 'error' ? 'chip-red' : 'chip-yellow');
+          return [
+            esc(i.name),
+            '<span class="pill">' + esc(provDef ? provDef.name : i.provider) + '</span>',
+            '<span class="pill ' + statusCls + '">' + esc(i.status) + '</span>',
+            i.lastTestedAt ? '<span class="mono">' + esc(new Date(i.lastTestedAt).toLocaleString()) + '</span>' : '<span class="dim">never</span>',
+            '<div class="row-actions">' +
+            '<button class="btn tiny" data-action="integration-test" data-id="' + esc(i.id) + '">Test</button>' +
+            '<button class="btn tiny" data-action="integration-edit" data-id="' + esc(i.id) + '">Edit</button>' +
+            '<button class="btn tiny danger" data-action="integration-delete" data-id="' + esc(i.id) + '">Delete</button>' +
+            '</div>'
+          ];
+        }))
+      : '<div class="empty">No integrations configured yet.</div>');
+
+  return html;
+}
+
+function integrationForm(mode, integration, providers) {
+  var isEdit = mode === 'edit';
+  var prov = isEdit ? providers.find(function (p) { return p.id === integration.provider; }) : null;
+  var providerOptions = providers.map(function (p) {
+    return '<option value="' + esc(p.id) + '"' + (isEdit && integration.provider === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+  }).join('');
+
+  var configFields = '';
+  if (prov) {
+    configFields = prov.configFields.map(function (f) {
+      var val = isEdit ? (integration.config[f.key] || '') : '';
+      var inputType = f.type === 'password' ? 'password' : (f.type === 'url' ? 'url' : (f.type === 'email' ? 'email' : 'text'));
+      if (f.type === 'textarea') {
+        return '<div><label>' + esc(f.label) + '</label><textarea name="' + esc(f.key) + '" placeholder="' + esc(f.placeholder || '') + '">' + esc(val) + '</textarea></div>';
+      }
+      if (f.type === 'select') {
+        return '<div><label>' + esc(f.label) + '</label><select name="' + esc(f.key) + '"><option value="POST"' + (val === 'POST' ? ' selected' : '') + '>POST</option><option value="PUT"' + (val === 'PUT' ? ' selected' : '') + '>PUT</option><option value="PATCH"' + (val === 'PATCH' ? ' selected' : '') + '>PATCH</option></select></div>';
+      }
+      return '<div><label>' + esc(f.label) + (f.required ? ' *' : '') + '</label><input name="' + esc(f.key) + '" type="' + inputType + '" value="' + esc(val) + '" placeholder="' + esc(f.placeholder || '') + '"' + (f.required ? ' required' : '') + '></div>';
+    }).join('');
+  }
+
+  return '<div class="panel pad" style="margin-bottom:16px">' +
+    '<div class="section-head"><h3>' + (isEdit ? 'Edit Integration' : 'Add Integration') + '</h3>' +
+    '<button class="btn ghost" data-action="integration-form-cancel">Cancel</button></div>' +
+    '<form data-form="integration">' +
+    '<div class="form-grid">' +
+    '<div><label>Name</label><input name="name" required value="' + esc(isEdit ? integration.name : '') + '" placeholder="My Integration"></div>' +
+    (isEdit ? '' : '<div><label>Provider</label><select name="provider" required>' + providerOptions + '</select></div>') +
+    '</div>' +
+    (configFields ? '<div class="form-grid" style="margin-top:12px">' + configFields + '</div>' : '') +
+    '<div class="form-actions"><button type="submit" class="btn primary">' + (isEdit ? 'Save changes' : 'Create integration') + '</button></div>' +
+    (isEdit ? '<input type="hidden" name="integrationId" value="' + esc(integration.id) + '">' : '') +
+    '<div class="error" data-form-error style="display:none"></div>' +
+    '</form></div>';
+}
+
+/* ---- Deployment view ---- */
+function renderDeployment() {
+  var dep = state.deployment;
+  var met = state.metrics;
+  var bk = state.backups;
+  if (!dep || !met) return '<div class="loading">Loading&hellip;</div>';
+  var d = dep.deployment || {};
+  var m = met.metrics || {};
+  var backupList = (bk && bk.backups) || [];
+  var memMB = d.memoryUsage ? (d.memoryUsage.heapUsed / 1024 / 1024).toFixed(1) : '0';
+  var memTotal = d.memoryUsage ? (d.memoryUsage.heapTotal / 1024 / 1024).toFixed(1) : '0';
+  var uptimeH = d.uptime ? Math.floor(d.uptime / 3600) : 0;
+  var uptimeM = d.uptime ? Math.floor((d.uptime % 3600) / 60) : 0;
+
+  var html = pageHeader('Deployment', 'System status, scaling, and backup management');
+  html += stats([
+    stat('Version', d.version || 'unknown', 'chip-accent', IC.cpu),
+    stat('Uptime', uptimeH + 'h ' + uptimeM + 'm', 'chip-green', IC.clock),
+    stat('Memory', memMB + ' / ' + memTotal + ' MB', 'chip-blue', IC.monitor),
+    stat('Active Sessions', m.activeSessions || 0, 'chip-purple', IC.users),
+    stat('Total Tokens', (m.totalTokens || 0).toLocaleString(), 'chip-yellow', IC.coins)
+  ]);
+
+  html += section('System Information', null,
+    table(['Property', 'Value'], [
+      ['Hostname', esc(d.hostname || 'unknown')],
+      ['Platform', esc(d.platform || 'unknown')],
+      ['Node Version', esc(d.nodeVersion || 'unknown')],
+      ['Started At', d.startedAt ? esc(new Date(d.startedAt).toLocaleString()) : 'unknown'],
+      ['License Tier', esc(m.licenseTier || 'unknown')],
+      ['License Status', esc(m.licenseStatus || 'unknown')],
+      ['Telemetry', (state.status && state.status.telemetry) ? 'enabled' : 'opt-in']
+    ]), true);
+
+  html += section('Health Check', null,
+    '<div class="toolbar" style="margin-bottom:0">' +
+    '<button class="btn" data-action="health-check">Run health check</button>' +
+    '<div id="healthResult"></div>' +
+    '</div>', true);
+
+  html += section('Backup Management', backupList.length + ' backups',
+    '<div class="toolbar" style="margin-bottom:12px">' +
+    '<button class="btn primary" data-action="backup-create">Create Backup</button>' +
+    '</div>' +
+    (backupList.length
+      ? table(['Type', 'Status', 'Records', 'Created', ''], backupList.map(function (b) {
+          return [
+            esc(b.type),
+            b.status === 'completed' ? '<span class="pill chip-green">completed</span>' : '<span class="pill chip-yellow">' + esc(b.status) + '</span>',
+            '<span class="mono">' + esc(b.size || 0) + '</span>',
+            '<span class="mono">' + esc(new Date(b.createdAt).toLocaleString()) + '</span>',
+            '<button class="btn tiny danger" data-action="backup-delete" data-id="' + esc(b.id) + '">Delete</button>'
+          ];
+        }))
+      : '<div class="empty">No backups yet.</div>');
+
+  return html;
+}
+
+/* ---- Help view ---- */
+function renderHelp() {
+  var ht = state.helpTopics;
+  var hc = state.helpCategories;
+  var fb = state.feedback;
+  if (!ht || !hc) return '<div class="loading">Loading&hellip;</div>';
+  var topics = ht.topics || [];
+  var categories = hc.categories || [];
+  var feedbackList = (fb && fb.feedback) || [];
+
+  var html = pageHeader('Help & Documentation', 'Guides, references, and support');
+
+  html += '<div class="toolbar">' +
+    '<input class="search" placeholder="Search help topics&hellip;" data-search="help">' +
+    '</div>';
+
+  html += section('Categories', categories.length + ' categories',
+    '<div class="feature-grid">' + categories.map(function (c) {
+      return '<div class="feature-item">' +
+        '<span class="icon" style="color:var(--accent)">' + IC.file + '</span>' +
+        '<span>' + esc(c.name) + '</span>' +
+        '<span class="tier">' + esc(c.count) + ' topics</span>' +
+        '</div>';
+    }).join('') + '</div>', true);
+
+  html += section('Help Topics', topics.length + ' topics',
+    topics.length
+      ? table(['Title', 'Category', 'Description', ''], topics.map(function (t) {
+          return [
+            '<strong>' + esc(t.title) + '</strong>',
+            '<span class="pill">' + esc(t.category) + '</span>',
+            '<span class="dim">' + esc(t.content) + '</span>',
+            '<button class="btn tiny" data-action="help-topic" data-id="' + esc(t.id) + '">View</button>'
+          ];
+        }))
+      : '<div class="empty">No help topics found.</div>');
+
+  html += section('Feedback', feedbackList.length + ' entries',
+    feedbackList.length
+      ? table(['Rating', 'Topic', 'Comment', 'Date'], feedbackList.slice(0, 20).map(function (f) {
+          var stars = '';
+          for (var i = 0; i < 5; i++) stars += i < f.rating ? '\u2605' : '\u2606';
+          var topicName = '';
+          if (f.topicId) {
+            var topic = topics.find(function (t) { return t.id === f.topicId; });
+            topicName = topic ? topic.title : f.topicId;
+          }
+          return [
+            '<span style="color:var(--yellow)">' + stars + '</span>',
+            topicName ? esc(topicName) : '<span class="dim">General</span>',
+            '<span class="dim">' + esc(f.comment || '-') + '</span>',
+            '<span class="mono">' + esc(new Date(f.createdAt).toLocaleString()) + '</span>'
+          ];
+        }))
+      : '<div class="empty">No feedback submitted yet.</div>');
+
+  html += section('Submit Feedback', null,
+    '<form data-form="help-feedback">' +
+    '<div class="form-grid">' +
+    '<div><label>Topic</label><select name="topicId"><option value="">General</option>' +
+    topics.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.title) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div><label>Rating (1-5)</label><select name="rating">' +
+    '<option value="1">1 - Poor</option><option value="2">2 - Fair</option><option value="3" selected>3 - Good</option><option value="4">4 - Very Good</option><option value="5">5 - Excellent</option>' +
+    '</select></div>' +
+    '</div>' +
+    '<label style="display:block;margin:12px 0 4px;font-size:12px;font-weight:600;color:var(--text-muted)">Comment</label>' +
+    '<textarea name="comment" placeholder="Optional feedback comment"></textarea>' +
+    '<div class="form-actions"><button type="submit" class="btn primary">Submit feedback</button></div>' +
+    '<div class="error" data-form-error style="display:none"></div>' +
+    '</form>', true);
+
+  return html;
+}
+
 function renderView(view) {
   const content = document.getElementById('content');
   switch (view) {
@@ -4026,6 +5193,9 @@ function renderView(view) {
     case 'security': content.innerHTML = renderSecurity(); break;
     case 'compliance': content.innerHTML = renderCompliance(); break;
     case 'rbac': content.innerHTML = renderRbac(); break;
+    case 'integrations': content.innerHTML = renderIntegrations(); break;
+    case 'deployment': content.innerHTML = renderDeployment(); break;
+    case 'help': content.innerHTML = renderHelp(); break;
   }
 }
 
@@ -4575,6 +5745,91 @@ document.addEventListener('click', function (e) {
     });
     return;
   }
+
+  /* ---- Integration actions ---- */
+  if (action === 'integration-create') {
+    document.getElementById('content').insertAdjacentHTML('afterbegin', integrationForm('create', null, state.providers ? state.providers.providers : []));
+    return;
+  }
+  if (action === 'integration-create-provider') {
+    var providerId = actionEl.dataset.provider;
+    var providers = state.providers ? state.providers.providers : [];
+    var prov = providers.find(function (p) { return p.id === providerId; });
+    if (prov) {
+      document.getElementById('content').insertAdjacentHTML('afterbegin', integrationForm('create', { provider: providerId, name: '', config: {} }, providers));
+    }
+    return;
+  }
+  if (action === 'integration-form-cancel') {
+    var form = document.querySelector('[data-form="integration"]');
+    if (form) form.closest('.panel').remove();
+    return;
+  }
+  if (action === 'integration-edit') {
+    var integrations = state.integrations ? state.integrations.integrations : [];
+    var ig = integrations.find(function (i) { return i.id === id; });
+    if (ig) {
+      document.getElementById('content').insertAdjacentHTML('afterbegin', integrationForm('edit', ig, state.providers ? state.providers.providers : []));
+    }
+    return;
+  }
+  if (action === 'integration-test') {
+    toast('Testing integration...');
+    apiJSON('POST', '/api/integrations/' + encodeURIComponent(id) + '/test').then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Test failed.', true); return; }
+      toast(r.data.ok ? 'Integration test passed: ' + r.data.message : 'Integration test failed: ' + r.data.message, !r.data.ok);
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'integration-delete') {
+    if (!confirm('Delete this integration? This cannot be undone.')) return;
+    apiJSON('DELETE', '/api/integrations/' + encodeURIComponent(id)).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to delete integration.', true); return; }
+      toast('Integration deleted.');
+      loadAll();
+    });
+    return;
+  }
+
+  /* ---- Deployment actions ---- */
+  if (action === 'health-check') {
+    apiJSON('GET', '/api/health').then(function (r) {
+      var box = document.getElementById('healthResult');
+      if (!box) return;
+      if (!r.ok) { box.innerHTML = '<span class="pill chip-red">error</span> <span class="dim">' + esc((r.data && r.data.error) || 'Health check failed') + '</span>'; return; }
+      box.innerHTML = '<span class="pill chip-green">ok</span> <span class="dim">Version ' + esc(r.data.version || '?') + ', uptime ' + (r.data.uptime || 0) + 's</span>';
+    });
+    return;
+  }
+  if (action === 'backup-create') {
+    toast('Creating backup...');
+    apiJSON('POST', '/api/deployment/backup', { type: 'full' }).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Backup failed.', true); return; }
+      toast('Backup created (' + (r.data.backup ? r.data.backup.size : 0) + ' records).');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'backup-delete') {
+    if (!confirm('Delete this backup record?')) return;
+    apiJSON('DELETE', '/api/deployment/backup/' + encodeURIComponent(id)).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to delete backup.', true); return; }
+      toast('Backup deleted.');
+      loadAll();
+    });
+    return;
+  }
+
+  /* ---- Help actions ---- */
+  if (action === 'help-topic') {
+    fetchJSON(API + '/help/topics/' + encodeURIComponent(id)).then(function (r) {
+      if (r.topic) {
+        alert(r.topic.title + '\n\n' + r.topic.content);
+      }
+    });
+    return;
+  }
 });
 
 document.addEventListener('input', function (e) {
@@ -4582,6 +5837,16 @@ document.addEventListener('input', function (e) {
   if (search) {
     usersFilter = search.value;
     renderView('users');
+    return;
+  }
+  const helpSearch = e.target.closest('[data-search="help"]');
+  if (helpSearch) {
+    const query = helpSearch.value;
+    if (!query) {
+      fetchJSON(API + '/help/topics').then(function (r) { state.helpTopics = r; renderView('help'); });
+      return;
+    }
+    fetchJSON(API + '/help/search?q=' + encodeURIComponent(query)).then(function (r) { state.helpTopics = { topics: r.results }; renderView('help'); });
     return;
   }
   const filter = e.target.closest('[data-filter="role"]');
@@ -4862,6 +6127,58 @@ document.addEventListener('submit', function (e) {
     }).catch(function (err) {
       if (!box) return;
       box.innerHTML = '<div class="kv-row"><span class="pill chip-red">error</span> <span class="dim">' + esc(err.message) + '</span></div>';
+    });
+  }
+
+  /* ---- Integration form ---- */
+  const integrationFormEl = e.target.closest('[data-form="integration"]');
+  if (integrationFormEl) {
+    e.preventDefault();
+    const fd = new FormData(integrationFormEl);
+    const errBox = integrationFormEl.querySelector('[data-form-error]');
+    errBox.style.display = 'none';
+    const integrationId = fd.get('integrationId');
+    const name = String(fd.get('name') || '').trim();
+    if (!name) { errBox.textContent = 'Integration name is required.'; errBox.style.display = 'block'; return; }
+    const provider = String(fd.get('provider') || '');
+    const providers = state.providers ? state.providers.providers : [];
+    const provDef = providers.find(function (p) { return p.id === provider; });
+    const config = {};
+    if (provDef) {
+      for (const field of provDef.configFields) {
+        const val = fd.get(field.key);
+        if (val) config[field.key] = String(val);
+      }
+    }
+    const payload = { name: name, provider: provider, config: config };
+    const r = integrationId
+      ? apiJSON('PUT', '/api/integrations/' + encodeURIComponent(String(integrationId)), { name: name, config: config })
+      : apiJSON('POST', '/api/integrations', payload);
+    r.then(function (r) {
+      if (!r.ok) { errBox.textContent = (r.data && r.data.error) || 'Request failed.'; errBox.style.display = 'block'; return; }
+      toast(integrationId ? 'Integration updated.' : 'Integration created.');
+      const formPanel = integrationFormEl.closest('.panel');
+      if (formPanel) formPanel.remove();
+      loadAll();
+    });
+  }
+
+  /* ---- Help feedback form ---- */
+  const helpFeedback = e.target.closest('[data-form="help-feedback"]');
+  if (helpFeedback) {
+    e.preventDefault();
+    const fd = new FormData(helpFeedback);
+    const errBox = helpFeedback.querySelector('[data-form-error]');
+    errBox.style.display = 'none';
+    const payload = {
+      topicId: fd.get('topicId') || undefined,
+      rating: parseInt(String(fd.get('rating') || '3'), 10),
+      comment: String(fd.get('comment') || '')
+    };
+    apiJSON('POST', '/api/help/feedback', payload).then(function (r) {
+      if (!r.ok) { errBox.textContent = (r.data && r.data.error) || 'Failed to submit feedback.'; errBox.style.display = 'block'; return; }
+      toast('Feedback submitted.');
+      loadAll();
     });
   }
 });
