@@ -1,0 +1,14 @@
+README.md
+  h_10671eecd6b5d0 14-15,17,36-41,82,117-125,130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "50aa010da80e211440e29af0dea5cfac68d529c4",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
