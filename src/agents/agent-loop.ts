@@ -21,7 +21,8 @@ export type AgentUpdate =
   | { kind: "tool_call"; toolCall: ToolCall }
   | { kind: "tool_result"; toolCall: ToolCall; result: ToolResult }
   | { kind: "done"; content: string; toolCalls: number; duration: number; agentName: string; modelName: string }
-  | { kind: "error"; error: string };
+  | { kind: "error"; error: string }
+  | { kind: "reasoning"; text: string };
 
 export const MAX_AGENT_ITERATIONS = 25;
 
@@ -37,6 +38,7 @@ export type RunAgentOptions = {
   skillBody?: string;
   signal?: AbortSignal;
   stream?: boolean;
+  reasoning?: boolean;
 };
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
@@ -63,9 +65,12 @@ function truncateResult(data: unknown, maxLen = 2000): string {
   return str.slice(0, maxLen) + "\n... (truncated)";
 }
 
-function systemPromptFor(agent: AgentDefinition, skillBody?: string): string {
+function systemPromptFor(agent: AgentDefinition, skillBody?: string, reasoning?: boolean): string {
   const effective = getEffectiveSystemPrompt(agent, skillBody);
-  return `${effective}
+  const reasoningBlock = reasoning
+    ? "\n\nREASONING MODE: Before taking any action, think step by step about the problem. Break it into subproblems, list assumptions, consider edge cases, and explain your reasoning briefly before calling tools."
+    : "";
+  return `${effective}${reasoningBlock}
 
 You are an autonomous agent in a CLI environment. Be direct and terse:
 - Never greet the user, never narrate your plans, never write "I will..." or "Let me...". Act, don't describe.
@@ -93,7 +98,7 @@ export async function runAgentLoop(
   onUpdate: (update: AgentUpdate) => void,
   options: RunAgentOptions = {},
 ): Promise<string> {
-  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true } = options;
+  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true, reasoning } = options;
   const startTime = performance.now();
   let toolCalls = 0;
   const exec = executeToolFn ?? executeTool;
@@ -103,7 +108,7 @@ export async function runAgentLoop(
   }
 
   const tools = getToolSpecs();
-  const systemPrompt = systemPromptFor(agent, skillBody);
+  const systemPrompt = systemPromptFor(agent, skillBody, reasoning);
 
   let messages: CompletionMessage[];
   if (sessionId) {
@@ -130,6 +135,7 @@ export async function runAgentLoop(
     tools,
     toolChoice: "auto",
     signal,
+    reasoning,
   });
 
   for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
@@ -140,6 +146,10 @@ export async function runAgentLoop(
     }
 
     if (sessionId) rotateIfNeeded(sessionId);
+
+    if (iteration === 0 && reasoning) {
+      onUpdate({ kind: "reasoning", text: "Reasoning about the task..." });
+    }
 
     let response: CompletionResponse;
     let streamedContent = "";

@@ -139,6 +139,13 @@ export const CONFIG_SCHEMA: ConfigField[] = [
             description: "Capable model for complex reasoning.",
             default: "claude-sonnet-4-20250514",
           },
+          {
+            key: "reasoningEnabled",
+            label: "Reasoning Mode",
+            type: "boolean",
+            description: "Enable chain-of-thought reasoning for complex tasks.",
+            default: false,
+          },
         ],
       },
       {
