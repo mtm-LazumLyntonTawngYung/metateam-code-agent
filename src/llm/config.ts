@@ -7,6 +7,7 @@ export type LlmConfig = {
     simpleModel: string;
     defaultModel: string;
     reasoningModel: string;
+    reasoningEnabled: boolean;
   };
 };
 export const DEFAULT_PROVIDERS: ProviderConfig[] = [
@@ -74,6 +75,7 @@ export function loadLlmConfig(): LlmConfig {
       simpleModel: "deepseek-chat",
       defaultModel: "deepseek-chat",
       reasoningModel: "claude-sonnet-4-20250514",
+      reasoningEnabled: false,
     },
   };
 }

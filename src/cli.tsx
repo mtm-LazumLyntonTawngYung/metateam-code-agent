@@ -510,6 +510,7 @@ llmCmd
     console.log(`    Simple tasks:    ${cfg.routing.simpleModel}`);
     console.log(`    Default tasks:   ${cfg.routing.defaultModel}`);
     console.log(`    Complex tasks:   ${cfg.routing.reasoningModel}`);
+    console.log(`    Reasoning mode:  ${cfg.routing.reasoningEnabled ? "enabled" : "disabled"}`);
     console.log();
   });
 
@@ -549,13 +550,15 @@ llmCmd
   .option("-s, --simple <model>", "Model for simple tasks")
   .option("-d, --default <model>", "Model for medium tasks")
   .option("-r, --reasoning <model>", "Model for complex tasks")
-  .action((options: { simple?: string; default?: string; reasoning?: string }) => {
+  .option("--reasoning-enabled", "Enable reasoning mode for complex tasks")
+  .action((options: { simple?: string; default?: string; reasoning?: string; reasoningEnabled?: boolean }) => {
     const cfg = loadLlmConfig();
     saveLlmConfig({
       routing: {
         simpleModel: options.simple ?? cfg.routing.simpleModel,
         defaultModel: options.default ?? cfg.routing.defaultModel,
         reasoningModel: options.reasoning ?? cfg.routing.reasoningModel,
+        reasoningEnabled: options.reasoningEnabled ?? cfg.routing.reasoningEnabled,
       },
     });
     console.log(`\n  Routing updated.\n`);

@@ -104,11 +104,14 @@ async function completeOpenAI(
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
     max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
-    stream: false,
+    stream: true,
   };
   if (req.tools?.length) {
     body.tools = toOpenAITools(req.tools);
     body.tool_choice = req.toolChoice ?? "auto";
+  }
+  if (req.reasoning) {
+    body.reasoning_effort = "high";
   }
 
   const res = await fetch(url, {
@@ -264,6 +267,9 @@ async function completeOpenRouter(
   if (req.tools?.length) {
     body.tools = toOpenAITools(req.tools);
     body.tool_choice = req.toolChoice ?? "auto";
+  }
+  if (req.reasoning) {
+    body.reasoning_effort = "high";
   }
 
   const res = await fetch(url, {
@@ -436,11 +442,14 @@ async function streamOpenAICompatible(
     messages: toOpenAIMessages(req.messages),
     temperature: req.temperature ?? 0.7,
     max_tokens: req.maxTokens ?? findModel(req.model)?.maxTokens ?? 4096,
-    stream: true,
+    stream: false,
   };
   if (req.tools?.length) {
     body.tools = toOpenAITools(req.tools);
     body.tool_choice = req.toolChoice ?? "auto";
+  }
+  if (req.reasoning) {
+    body.reasoning_effort = "high";
   }
 
   const headers: Record<string, string> = {

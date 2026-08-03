@@ -22,7 +22,8 @@ type LogEntry =
   | { kind: "tool_call"; toolName: string; args: Record<string, unknown>; agent?: boolean }
   | { kind: "tool_result"; result: ToolResult }
   | { kind: "message"; text: string; color?: string }
-  | { kind: "status"; agentName: string; modelName: string; duration: number };
+  | { kind: "status"; agentName: string; modelName: string; duration: number }
+  | { kind: "reasoning"; text: string };
 
 type CommandHandler = {
   validate: (args: string[]) => boolean;
@@ -171,6 +172,10 @@ function flattenEntries(entries: LogEntry[]): FlatLine[] {
       const secs = (entry.duration / 1000).toFixed(1);
       push(`\u25a3  ${entry.agentName} \u00b7 ${entry.modelName} \u00b7 ${secs}s`, { muted: true });
       prevKind = "status";
+    } else if (entry.kind === "reasoning") {
+      if (prevKind) spacer();
+      push(`\u29d9 ${entry.text}`, { muted: true });
+      prevKind = "reasoning";
     }
   }
   return lines;

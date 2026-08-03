@@ -64,6 +64,7 @@ export default function ConnectForm({ onSave }: ConnectFormProps) {
             simpleModel: "openai/gpt-4o-mini",
             defaultModel: "openai/gpt-4o",
             reasoningModel: "anthropic/claude-sonnet-4",
+            reasoningEnabled: false,
           },
         });
       }

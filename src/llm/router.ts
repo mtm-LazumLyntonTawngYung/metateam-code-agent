@@ -76,3 +76,10 @@ export function routeTask(query: string, fileCount: number): RoutingDecision {
     reason: `Model '${modelId}' not found, fell back to '${fallbackId}'`,
   };
 }
+
+export function shouldUseReasoning(query: string, fileCount: number): boolean {
+  const cfg = loadLlmConfig();
+  if (!cfg.routing.reasoningEnabled) return false;
+  const complexity = classifyTask(query, fileCount);
+  return complexity === "complex";
+}
