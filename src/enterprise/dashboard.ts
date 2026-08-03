@@ -13,7 +13,7 @@ import { getLicense, formatLicenseInfo, activateLicense, deactivateLicense, gene
 function generateLicenseKeyFor(tier: Tier, organization: string, expiresAt: string, maxSeats: number): string {
   return generateLicenseKey(tier, organization, expiresAt, maxSeats);
 }
-import { recordAuditEvent, queryAuditLogs, getAuditStats } from "./audit";
+import { recordAuditEvent, queryAuditLogs, getAuditStats, verifyAuditIntegrity } from "./audit";
 import { listOrganizations, getOrganization, createOrganization, updateOrganization, deleteOrganization, updateOrgSettings, isValidSlug, slugExists } from "./org";
 import { getAllUsers, createUser, updateUser, deactivateUser, countActiveUsers } from "./user";
 import {
@@ -82,6 +82,39 @@ import {
   dueScheduledTemplates,
 } from "./exports";
 import type { ExportFormat, ExportTemplate } from "./exports";
+import {
+  recordSecurityEvent,
+  querySecurityEvents,
+  getSecurityEventStats,
+  detectThreats,
+  listSecurityAlerts,
+  createSecurityAlert,
+  resolveSecurityAlert,
+  deleteSecurityAlert,
+  clearSecurityAlerts,
+  getSecurityPolicies,
+  updateSecurityPolicy,
+  getSecurityPolicy,
+  computeComplianceStatus,
+} from "./security";
+import type { SecurityPolicy, SecuritySeverity } from "./security";
+import {
+  listRoles,
+  getRole,
+  createRole,
+  updateRole,
+  deleteRole,
+  cloneRole,
+  assignRoleToUser,
+  removeRoleFromUser,
+  getUserRoles,
+  getUsersForRole,
+  listRoleAssignments,
+  PERMISSION_CATALOG,
+  resolveEffectivePermissionsForUser,
+  getRbacAnalytics,
+  ensureBuiltinRoles,
+} from "./rbac";
 
 const DASHBOARD_USER = process.env.MTC_DASHBOARD_USER ?? "";
 const DASHBOARD_PASSWORD = process.env.MTC_DASHBOARD_PASSWORD ?? "";
@@ -211,6 +244,15 @@ async function handleLogin(req: Request): Promise<Response> {
       resource: "dashboard",
       detail: `Failed attempt from ${sanitizeIp(ip)}`,
     });
+    recordSecurityEvent({
+      category: "auth",
+      severity: "medium",
+      actor: username || "unknown",
+      action: "auth.login.failed",
+      resource: "dashboard",
+      detail: `Failed login attempt from ${sanitizeIp(ip)}`,
+      ip: sanitizeIp(ip),
+    });
     return jsonResponse({ error: "Invalid username or password" }, 401);
   }
 
@@ -219,6 +261,15 @@ async function handleLogin(req: Request): Promise<Response> {
     action: "dashboard.login",
     resource: "dashboard",
     detail: `Login from ${ip}`,
+  });
+  recordSecurityEvent({
+    category: "auth",
+    severity: "info",
+    actor: username || "dashboard",
+    action: "auth.login.success",
+    resource: "dashboard",
+    detail: `Successful login from ${sanitizeIp(ip)}`,
+    ip: sanitizeIp(ip),
   });
 
   const token = randomBytes(32).toString("hex");
@@ -261,6 +312,30 @@ function mgmtRateResponse(): Response {
   return jsonResponse({ error: "Too many management operations. Try again later." }, 429, { "Retry-After": "60" });
 }
 
+function permissionDeniedResponse(permission: string): Response {
+  return jsonResponse({ error: `Forbidden: requires permission "${permission}"` }, 403);
+}
+
+function rbacEnabled(): boolean {
+  return getSecurityPolicy("enforceRbac")?.enabled ?? true;
+}
+
+function requirePermission(permission: string): Response | null {
+  if (!rbacEnabled()) return null;
+  const user = getAllUsers().find((u) => u.email.toLowerCase() === DASHBOARD_USER.toLowerCase());
+  if (!user) return null;
+  return resolveEffectivePermissionsForUser(user.userId).has(permission)
+    ? null
+    : permissionDeniedResponse(permission);
+}
+
+function currentUserHasPermission(permission: string): boolean {
+  if (!rbacEnabled()) return true;
+  const user = getAllUsers().find((u) => u.email.toLowerCase() === DASHBOARD_USER.toLowerCase());
+  if (!user) return true;
+  return resolveEffectivePermissionsForUser(user.userId).has(permission);
+}
+
 async function handleCreateUser(req: Request): Promise<Response> {
   const ip = clientIp(req);
   const limit = checkMgmtRateLimit(ip);
@@ -282,6 +357,15 @@ async function handleCreateUser(req: Request): Promise<Response> {
     action: "user.create",
     resource: `users/${result.user.userId}`,
     detail: `Created user ${result.user.email} (${result.user.role}) in ${result.user.orgName}`,
+    ip,
+  });
+  recordSecurityEvent({
+    category: "access",
+    severity: "info",
+    actor: "dashboard",
+    action: "user.create",
+    resource: `users/${result.user.userId}`,
+    detail: `Created user ${result.user.email} with role ${result.user.role}`,
     ip,
   });
   return jsonResponse({ user: result.user }, 201);
@@ -310,6 +394,15 @@ async function handleUpdateUser(req: Request, userId: string): Promise<Response>
     detail: `Updated user ${result.user.email} (role: ${result.user.role}, status: ${result.user.status})`,
     ip,
   });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "user.update",
+    resource: `users/${userId}`,
+    detail: `Updated user ${result.user.email} (role: ${result.user.role}, status: ${result.user.status})`,
+    ip,
+  });
   return jsonResponse({ user: result.user });
 }
 
@@ -322,6 +415,15 @@ async function handleDeleteUser(req: Request, userId: string): Promise<Response>
   if (!result.ok) return jsonResponse({ error: result.error }, 400);
 
   recordAuditEvent({
+    actor: "dashboard",
+    action: "user.deactivate",
+    resource: `users/${userId}`,
+    detail: `Deactivated user ${result.user.email}`,
+    ip,
+  });
+  recordSecurityEvent({
+    category: "access",
+    severity: "medium",
     actor: "dashboard",
     action: "user.deactivate",
     resource: `users/${userId}`,
@@ -1209,7 +1311,7 @@ const API_DESCRIPTIONS: Array<{ method: string; path: string; summary: string; p
   { method: "POST", path: "/api/license/activate", summary: "Activate or upgrade a license", params: ["key"] },
   { method: "POST", path: "/api/license/deactivate", summary: "Deactivate the current license", params: [] },
   { method: "POST", path: "/api/license/seats", summary: "Adjust license seat count", params: ["maxSeats"] },
-  { method: "GET", path: "/api/audit", summary: "Query audit log events with pagination", params: ["limit", "offset"] },
+  { method: "GET", path: "/api/audit", summary: "Query audit log events with pagination and advanced filters", params: ["limit", "offset", "actor", "action", "since", "until"] },
   { method: "GET", path: "/api/analytics", summary: "Aggregate usage report (30 days)", params: [] },
   { method: "GET", path: "/api/analytics/detailed", summary: "Granular analytics with filtering", params: ["days", "eventType", "model", "tool", "deviceId", "limit", "offset"] },
   { method: "POST", path: "/api/analytics/report", summary: "Build a custom analytics report", params: ["days", "include", "model", "tool"] },
@@ -1248,6 +1350,31 @@ const API_DESCRIPTIONS: Array<{ method: string; path: string; summary: string; p
   { method: "DELETE", path: "/api/export-templates/:id", summary: "Delete an export template", params: [] },
   { method: "GET", path: "/api/docs/openapi", summary: "OpenAPI 3.0 specification for this dashboard", params: [] },
   { method: "GET", path: "/api/docs/markdown", summary: "Markdown API documentation", params: [] },
+  { method: "GET", path: "/api/audit/integrity", summary: "Verify audit log hash-chain integrity", params: [] },
+  { method: "GET", path: "/api/audit/compliance", summary: "SOC 2 and GDPR compliance status", params: [] },
+  { method: "POST", path: "/api/compliance/report", summary: "Generate a compliance report snapshot", params: [] },
+  { method: "GET", path: "/api/security/events", summary: "List security events with filtering", params: ["limit", "offset", "severity", "category", "actor", "since", "until"] },
+  { method: "GET", path: "/api/security/stats", summary: "Security event statistics by severity and category", params: [] },
+  { method: "GET", path: "/api/security/threats", summary: "Detected security threats from recent events", params: [] },
+  { method: "GET", path: "/api/security/alerts", summary: "List security alerts", params: [] },
+  { method: "POST", path: "/api/security/alerts", summary: "Create a security alert", params: ["level", "title", "detail"] },
+  { method: "POST", path: "/api/security/alerts/:id/resolve", summary: "Resolve a security alert", params: [] },
+  { method: "DELETE", path: "/api/security/alerts/:id", summary: "Delete a security alert", params: [] },
+  { method: "GET", path: "/api/security/policies", summary: "List security policies", params: [] },
+  { method: "PUT", path: "/api/security/policies", summary: "Update a security policy", params: ["key", "enabled", "value"] },
+  { method: "GET", path: "/api/security/compliance", summary: "Compliance score and requirement breakdown", params: [] },
+  { method: "GET", path: "/api/rbac/roles", summary: "List RBAC roles", params: [] },
+  { method: "POST", path: "/api/rbac/roles", summary: "Create an RBAC role", params: ["name", "description", "permissions", "deny", "parentRoleId"] },
+  { method: "PUT", path: "/api/rbac/roles/:roleId", summary: "Update an RBAC role", params: ["name", "description", "permissions", "deny", "parentRoleId"] },
+  { method: "DELETE", path: "/api/rbac/roles/:roleId", summary: "Delete an RBAC role", params: [] },
+  { method: "POST", path: "/api/rbac/roles/:roleId/clone", summary: "Clone an RBAC role under a new name", params: ["name"] },
+  { method: "GET", path: "/api/rbac/permissions", summary: "Permission catalog grouped by resource", params: [] },
+  { method: "POST", path: "/api/rbac/assign", summary: "Assign a role to a user", params: ["userId", "roleId"] },
+  { method: "DELETE", path: "/api/rbac/assign", summary: "Remove a role from a user", params: ["userId", "roleId"] },
+  { method: "GET", path: "/api/rbac/users/:userId", summary: "Roles assigned to a user", params: [] },
+  { method: "GET", path: "/api/rbac/analytics", summary: "RBAC coverage and assignment analytics", params: [] },
+  { method: "GET", path: "/api/rbac/assignments", summary: "All user-role assignments", params: [] },
+  { method: "GET", path: "/api/rbac/check", summary: "Test a user's effective permissions", params: ["userId", "permission"] },
 ];
 
 function buildOpenApiSpec(): Record<string, unknown> {
@@ -1294,6 +1421,331 @@ function handleDocsMarkdown(): Response {
   return downloadResponse("text/markdown; charset=utf-8", lines.join("\n"), "mtc-api-docs.md");
 }
 
+function handleSecurityEvents(url: URL): Response {
+  return jsonResponse({
+    events: querySecurityEvents({
+      limit: Math.min(Math.max(parseIntParam(url, "limit", 100), 1), 1000),
+      offset: Math.max(parseIntParam(url, "offset", 0), 0),
+      severity: url.searchParams.get("severity") ?? undefined,
+      category: url.searchParams.get("category") ?? undefined,
+      actor: url.searchParams.get("actor") ?? undefined,
+      since: url.searchParams.get("since") ?? undefined,
+      until: url.searchParams.get("until") ?? undefined,
+    }),
+    stats: getSecurityEventStats(),
+  });
+}
+
+function handleComplianceReport(): Response {
+  const policies = getSecurityPolicies();
+  const compliance = computeComplianceStatus(policies, isTelemetryEnabled());
+  const integrity = verifyAuditIntegrity();
+  const security = getSecurityEventStats();
+  const events = querySecurityEvents({ limit: 100 });
+  const threats = detectThreats(events);
+  const report = {
+    generatedAt: new Date().toISOString(),
+    organization: getLicense().organization,
+    tier: getLicense().tier,
+    score: compliance.score,
+    frameworks: compliance.frameworks,
+    requirements: compliance.requirements,
+    auditIntegrity: integrity,
+    securityStats: security,
+    activeThreats: threats.map((t) => ({
+      category: t.category,
+      severity: t.severity,
+      eventCount: t.eventCount,
+      recommendation: t.recommendation,
+    })),
+    openAlerts: listSecurityAlerts().filter((a) => a.status === "open").length,
+    policies: policies.map((p) => ({ key: p.key, enabled: p.enabled, value: p.value })),
+  };
+  recordAuditEvent({
+    actor: "dashboard",
+    action: "compliance.report",
+    resource: "compliance",
+    detail: "Generated compliance report",
+  });
+  return jsonResponse(report);
+}
+
+async function handleCreateSecurityAlert(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("security.manage");
+  if (perm) return perm;
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const level = String(body.level ?? "medium") as SecuritySeverity;
+  if (!["info", "low", "medium", "high", "critical"].includes(level)) {
+    return jsonResponse({ error: "Level must be one of: info, low, medium, high, critical" }, 400);
+  }
+  const title = String(body.title ?? "").trim();
+  if (!title) return jsonResponse({ error: "Alert title is required" }, 400);
+  const alert = createSecurityAlert({ level, title, detail: String(body.detail ?? "") });
+  recordAuditEvent({ actor: "dashboard", action: "security.alert.create", resource: `security-alerts/${alert.id}`, detail: `Created ${level} alert: ${title}`, ip });
+  return jsonResponse({ alert }, 201);
+}
+
+async function handleResolveSecurityAlert(req: Request, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("security.manage");
+  if (perm) return perm;
+
+  const id = decodeURIComponent(url.pathname.slice("/api/security/alerts/".length));
+  const alert = resolveSecurityAlert(id);
+  if (!alert) return jsonResponse({ error: "Alert not found" }, 404);
+  recordAuditEvent({ actor: "dashboard", action: "security.alert.resolve", resource: `security-alerts/${id}`, detail: `Resolved alert: ${alert.title}`, ip });
+  return jsonResponse({ alert });
+}
+
+async function handleDeleteSecurityAlert(req: Request, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("security.manage");
+  if (perm) return perm;
+
+  const id = decodeURIComponent(url.pathname.slice("/api/security/alerts/".length));
+  if (!deleteSecurityAlert(id)) return jsonResponse({ error: "Alert not found" }, 404);
+  recordAuditEvent({ actor: "dashboard", action: "security.alert.delete", resource: `security-alerts/${id}`, detail: "Deleted security alert", ip });
+  return jsonResponse({ ok: true });
+}
+
+async function handleClearSecurityAlerts(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("security.manage");
+  if (perm) return perm;
+
+  const count = clearSecurityAlerts();
+  recordAuditEvent({ actor: "dashboard", action: "security.alert.clear", resource: "security-alerts", detail: `Cleared ${count} security alerts`, ip });
+  return jsonResponse({ cleared: count });
+}
+
+async function handleUpdateSecurityPolicy(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("security.manage");
+  if (perm) return perm;
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const key = String(body.key ?? "").trim();
+  const existing = getSecurityPolicies().find((p) => p.key === key);
+  if (!existing) return jsonResponse({ error: `Unknown security policy: ${key}` }, 400);
+
+  const changes: { enabled?: boolean; value?: number | string | boolean } = {};
+  if (body.enabled !== undefined) changes.enabled = Boolean(body.enabled);
+  if (body.value !== undefined) changes.value = body.value as number | string | boolean;
+  const policy = updateSecurityPolicy(key, changes);
+  if (!policy) return jsonResponse({ error: "Failed to update policy" }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "security.policy.update", resource: `security-policies/${key}`, detail: `Updated policy ${key}`, ip });
+  recordSecurityEvent({
+    category: "integrity",
+    severity: "low",
+    actor: "dashboard",
+    action: "security.policy.update",
+    resource: `security-policies/${key}`,
+    detail: `Security policy ${key} changed (enabled=${policy.enabled}, value=${String(policy.value)})`,
+    ip,
+  });
+  return jsonResponse({ policy });
+}
+
+async function handleCreateRole(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const result = createRole({
+    name: String(body.name ?? ""),
+    description: body.description !== undefined ? String(body.description) : undefined,
+    permissions: Array.isArray(body.permissions) ? (body.permissions as unknown[]).map(String) : [],
+    deny: Array.isArray(body.deny) ? (body.deny as unknown[]).map(String) : [],
+    parentRoleId: body.parentRoleId !== undefined && body.parentRoleId !== null ? String(body.parentRoleId) : null,
+  });
+  if (!result.ok) return jsonResponse({ error: result.error }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.create", resource: `rbac-roles/${result.role.id}`, detail: `Created role ${result.role.name}`, ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.create",
+    resource: `rbac-roles/${result.role.id}`,
+    detail: `Created RBAC role "${result.role.name}" with ${result.role.permissions.length} permissions`,
+    ip,
+  });
+  return jsonResponse({ role: result.role }, 201);
+}
+
+async function handleUpdateRole(req: Request, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const id = decodeURIComponent(url.pathname.slice("/api/rbac/roles/".length));
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const result = updateRole(id, {
+    name: body.name !== undefined ? String(body.name) : undefined,
+    description: body.description !== undefined ? String(body.description) : undefined,
+    permissions: body.permissions !== undefined ? (body.permissions as unknown[]).map(String) : undefined,
+    deny: body.deny !== undefined ? (body.deny as unknown[]).map(String) : undefined,
+    parentRoleId: body.parentRoleId !== undefined ? (body.parentRoleId === null ? null : String(body.parentRoleId)) : undefined,
+  });
+  if (!result.ok) return jsonResponse({ error: result.error }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.update", resource: `rbac-roles/${id}`, detail: `Updated role ${result.role.name}`, ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.update",
+    resource: `rbac-roles/${id}`,
+    detail: `Updated RBAC role "${result.role.name}"`,
+    ip,
+  });
+  return jsonResponse({ role: result.role });
+}
+
+async function handleDeleteRole(req: Request, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const id = decodeURIComponent(url.pathname.slice("/api/rbac/roles/".length));
+  const result = deleteRole(id);
+  if (!result.ok) return jsonResponse({ error: result.error }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.delete", resource: `rbac-roles/${id}`, detail: `Deleted role ${result.role.name}`, ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.delete",
+    resource: `rbac-roles/${id}`,
+    detail: `Deleted RBAC role "${result.role.name}"`,
+    ip,
+  });
+  return jsonResponse({ ok: true });
+}
+
+async function handleCloneRole(req: Request, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const match = url.pathname.match(/^\/api\/rbac\/roles\/([^/]+)\/clone$/);
+  if (!match) return jsonResponse({ error: "Invalid path" }, 400);
+  const id = decodeURIComponent(match[1]);
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const result = cloneRole(id, String(body.name ?? ""));
+  if (!result.ok) return jsonResponse({ error: result.error }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.clone", resource: `rbac-roles/${result.role.id}`, detail: `Cloned ${getRole(id)?.name ?? "role"} to ${result.role.name}`, ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.clone",
+    resource: `rbac-roles/${result.role.id}`,
+    detail: `Cloned RBAC role to "${result.role.name}"`,
+    ip,
+  });
+  return jsonResponse({ role: result.role }, 201);
+}
+
+async function handleAssignRole(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const userId = String(body.userId ?? "").trim();
+  const roleId = String(body.roleId ?? "").trim();
+  const result = assignRoleToUser(userId, roleId);
+  if (!result.ok) return jsonResponse({ error: result.error }, 400);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.assign", resource: `users/${userId}`, detail: `Assigned role ${result.role.name} to user`, ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.assign",
+    resource: `users/${userId}`,
+    detail: `Assigned role "${result.role.name}" to user`,
+    ip,
+  });
+  return jsonResponse({ ok: true });
+}
+
+async function handleRemoveRole(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const limit = checkMgmtRateLimit(ip);
+  if (!limit.allowed) return mgmtRateResponse();
+  const perm = requirePermission("rbac.manage");
+  if (perm) return perm;
+
+  const body = await readJson(req);
+  if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400);
+  const userId = String(body.userId ?? "").trim();
+  const roleId = String(body.roleId ?? "").trim();
+  const removed = removeRoleFromUser(userId, roleId);
+  if (!removed) return jsonResponse({ error: "Assignment not found" }, 404);
+  recordAuditEvent({ actor: "dashboard", action: "rbac.role.unassign", resource: `users/${userId}`, detail: "Removed role assignment from user", ip });
+  recordSecurityEvent({
+    category: "access",
+    severity: "low",
+    actor: "dashboard",
+    action: "rbac.role.unassign",
+    resource: `users/${userId}`,
+    detail: "Removed role assignment from user",
+    ip,
+  });
+  return jsonResponse({ ok: true });
+}
+
+function handlePermissionCheck(req: Request): Response {
+  const url = new URL(req.url);
+  const userId = decodeURIComponent(url.searchParams.get("userId") ?? "");
+  const permission = String(url.searchParams.get("permission") ?? "").trim();
+  if (!userId) return jsonResponse({ error: "userId is required" }, 400);
+  const roles = getUserRoles(userId);
+  const effective = resolveEffectivePermissionsForUser(userId);
+  const allPermissions = PERMISSION_CATALOG.flatMap((g) => g.permissions.map((p) => p.key));
+  if (permission) {
+    if (!allPermissions.includes(permission)) {
+      return jsonResponse({ error: `Unknown permission: ${permission}` }, 400);
+    }
+    return jsonResponse({ allowed: effective.has(permission), permission, effective: [...effective] });
+  }
+  return jsonResponse({
+    userId,
+    roles: roles.map((r) => ({ id: r.id, name: r.name, permissions: r.permissions, deny: r.deny })),
+    effectivePermissions: [...effective].sort(),
+    totalPermissions: allPermissions.length,
+    covered: effective.size,
+  });
+}
+
 function runScheduledExports(): void {
   const due = dueScheduledTemplates();
   if (due.length === 0) return;
@@ -1322,6 +1774,7 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
     return;
   }
   ensureSessionsTable();
+  ensureBuiltinRoles();
   console.error(`mtc enterprise dashboard: http://${host}:${port}`);
 
   Bun.serve({
@@ -1445,9 +1898,16 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
       }
 
       if (path === "/api/audit") {
-        const limit = parseInt(url.searchParams.get("limit") ?? "50", 10);
-        const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
-        const logs = queryAuditLogs({ limit, offset });
+        const limit = Math.min(Math.max(parseIntParam(url, "limit", 50), 1), 5000);
+        const offset = Math.max(parseIntParam(url, "offset", 0), 0);
+        const logs = queryAuditLogs({
+          limit,
+          offset,
+          actor: url.searchParams.get("actor") ?? undefined,
+          action: url.searchParams.get("action") ?? undefined,
+          since: url.searchParams.get("since") ?? undefined,
+          until: url.searchParams.get("until") ?? undefined,
+        });
         const stats = getAuditStats();
         return jsonResponse({ logs, stats });
       }
@@ -1593,6 +2053,85 @@ export function startDashboard(port: number, host: string = "127.0.0.1"): void {
       }
       if (path === "/api/docs/markdown") {
         return handleDocsMarkdown();
+      }
+
+      if (path === "/api/audit/integrity") {
+        return jsonResponse(verifyAuditIntegrity());
+      }
+      if (path === "/api/audit/compliance") {
+        return jsonResponse(computeComplianceStatus(getSecurityPolicies(), isTelemetryEnabled()));
+      }
+
+      if (path === "/api/security/events") {
+        return handleSecurityEvents(url);
+      }
+      if (path === "/api/security/stats") {
+        return jsonResponse(getSecurityEventStats());
+      }
+      if (path === "/api/security/threats") {
+        const events = querySecurityEvents({ limit: 5000 });
+        return jsonResponse({ threats: detectThreats(events), eventCount: events.length });
+      }
+      if (path === "/api/security/alerts" && req.method === "GET") {
+        return jsonResponse({ alerts: listSecurityAlerts() });
+      }
+      if (path === "/api/security/alerts" && req.method === "POST") {
+        return handleCreateSecurityAlert(req);
+      }
+      if (path === "/api/security/alerts/clear" && req.method === "POST") {
+        return handleClearSecurityAlerts(req);
+      }
+      if (path.startsWith("/api/security/alerts/") && req.method === "POST") {
+        return handleResolveSecurityAlert(req, url);
+      }
+      if (path.startsWith("/api/security/alerts/") && req.method === "DELETE") {
+        return handleDeleteSecurityAlert(req, url);
+      }
+      if (path === "/api/security/policies" && req.method === "GET") {
+        return jsonResponse({ policies: getSecurityPolicies() });
+      }
+      if (path === "/api/security/policies" && req.method === "PUT") {
+        return handleUpdateSecurityPolicy(req);
+      }
+      if (path === "/api/security/compliance") {
+        return jsonResponse(computeComplianceStatus(getSecurityPolicies(), isTelemetryEnabled()));
+      }
+      if (path === "/api/compliance/report" && req.method === "POST") {
+        return handleComplianceReport();
+      }
+
+      if (path === "/api/rbac/roles" && req.method === "GET") {
+        return jsonResponse({ roles: listRoles() });
+      }
+      if (path === "/api/rbac/roles" && req.method === "POST") {
+        return handleCreateRole(req);
+      }
+      if (path === "/api/rbac/permissions") {
+        return jsonResponse({ groups: PERMISSION_CATALOG });
+      }
+      if (path === "/api/rbac/analytics") {
+        return jsonResponse(getRbacAnalytics());
+      }
+      if (path === "/api/rbac/assignments") {
+        return jsonResponse({ assignments: listRoleAssignments() });
+      }
+      if (path === "/api/rbac/check") {
+        return handlePermissionCheck(req);
+      }
+      if (path === "/api/rbac/assign" && req.method === "POST") {
+        return handleAssignRole(req);
+      }
+      if (path === "/api/rbac/assign" && req.method === "DELETE") {
+        return handleRemoveRole(req);
+      }
+      if (path.startsWith("/api/rbac/roles/")) {
+        if (req.method === "PUT") return handleUpdateRole(req, url);
+        if (req.method === "DELETE") return handleDeleteRole(req, url);
+        if (req.method === "POST" && path.endsWith("/clone")) return handleCloneRole(req, url);
+      }
+      if (path.startsWith("/api/rbac/users/")) {
+        const userId = decodeURIComponent(path.slice("/api/rbac/users/".length));
+        if (req.method === "GET") return jsonResponse({ roles: getUserRoles(userId) });
       }
 
       if (path === "/api/health") {
@@ -2108,6 +2647,18 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13l-2 2 2 2M14 17h3"/></svg>
         <span>API Docs</span>
       </li>
+      <li data-view="security">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Security</span>
+      </li>
+      <li data-view="compliance">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v3h6M9 12l2 2 4-4"/></svg>
+        <span>Compliance</span>
+      </li>
+      <li data-view="rbac">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Access Control</span>
+      </li>
     </ul>
     <div class="sidebar-foot">
       <div class="nav-group-label">System</div>
@@ -2141,7 +2692,12 @@ const IC = {
   file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
 };
 
-let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null, users: null, config: null, sessions: null, notifications: null, exports: null, templates: null };
+let state = { status: null, license: null, audit: null, analytics: null, orgs: null, servers: null, agents: null, users: null, config: null, sessions: null, notifications: null, exports: null, templates: null, security: null, alerts: null, policies: null, compliance: null, rbacRoles: null, rbacPermissions: null, rbacAnalytics: null, rbacAssignments: null };
+
+let auditActorFilter = '';
+let auditActionFilter = '';
+let auditSinceFilter = '';
+let auditUntilFilter = '';
 
 /* ---- helpers ---- */
 function stat(label, value, chip, icon) {
@@ -2348,6 +2904,16 @@ function renderAudit() {
     html += section('Top Actions', statsData.topActions.length + ' actions',
       table(['Action', 'Count'], statsData.topActions.map(act => [esc(act.action), '<span class="mono">' + esc(act.count) + '</span>'])));
   }
+  html += section('Filters', null,
+    '<form data-form="audit-filter" class="toolbar" style="gap:8px;margin-bottom:4px">' +
+    '<input name="actor" placeholder="Actor" value="' + esc(auditActorFilter) + '" style="width:160px">' +
+    '<input name="action" placeholder="Action" value="' + esc(auditActionFilter) + '" style="width:180px">' +
+    '<input name="since" type="date" value="' + esc(auditSinceFilter) + '" title="Since">' +
+    '<input name="until" type="date" value="' + esc(auditUntilFilter) + '" title="Until">' +
+    '<button type="submit" class="btn primary">Apply</button>' +
+    '<button type="button" class="btn ghost" data-action="audit-filter-clear">Clear</button>' +
+    '<span class="dim" style="font-size:12px;margin-left:auto">' + logs.length + ' shown</span>' +
+    '</form>', false);
   html += section('Recent Events', logs.length + ' events',
     logs.length
       ? table(['Time', 'Actor', 'Action', 'Resource', 'Detail'], logs.map(log => [
@@ -3074,7 +3640,7 @@ async function fetchJSON(url) {
 
 async function loadAll() {
   try {
-    const [status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications, notifPrefs, exports, templates] = await Promise.all([
+    const [status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications, notifPrefs, exports, templates, securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments] = await Promise.all([
       fetchJSON(API + '/status'),
       fetchJSON(API + '/license'),
       fetchJSON(API + '/audit'),
@@ -3088,15 +3654,353 @@ async function loadAll() {
       fetchJSON(API + '/notifications'),
       fetchJSON(API + '/notifications/preferences'),
       fetchJSON(API + '/exports'),
-      fetchJSON(API + '/export-templates')
+      fetchJSON(API + '/export-templates'),
+      fetchJSON(API + '/security/events'),
+      fetchJSON(API + '/security/alerts'),
+      fetchJSON(API + '/security/policies'),
+      fetchJSON(API + '/security/compliance'),
+      fetchJSON(API + '/rbac/roles'),
+      fetchJSON(API + '/rbac/permissions'),
+      fetchJSON(API + '/rbac/analytics'),
+      fetchJSON(API + '/rbac/assignments')
     ]);
-    state = { status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications: { ...notifications, preferences: notifPrefs.preferences }, exports, templates };
+    state = { status, license, audit, analytics, orgs, servers, agents, users, config, sessions, notifications: { ...notifications, preferences: notifPrefs.preferences }, exports, templates, security: securityEvents, alerts, policies, compliance, rbacRoles, rbacPermissions, rbacAnalytics, rbacAssignments };
     loadAnalytics();
+    loadSecurityThreats();
     if (!apiSpec) loadApiSpec();
     renderView(getActiveView());
   } catch (err) {
     document.getElementById('content').innerHTML = '<div class="error">Failed to load dashboard: ' + err.message + '</div>';
   }
+}
+
+let securityThreats = null;
+async function loadSecurityThreats() {
+  try {
+    securityThreats = await fetchJSON(API + '/security/threats');
+  } catch (_) {
+    securityThreats = { threats: [], eventCount: 0 };
+  }
+  if (getActiveView() === 'security') renderView('security');
+}
+
+async function loadAudit() {
+  const q = [];
+  if (auditActorFilter) q.push('actor=' + encodeURIComponent(auditActorFilter));
+  if (auditActionFilter) q.push('action=' + encodeURIComponent(auditActionFilter));
+  if (auditSinceFilter) q.push('since=' + encodeURIComponent(auditSinceFilter));
+  if (auditUntilFilter) q.push('until=' + encodeURIComponent(auditUntilFilter));
+  q.push('limit=200');
+  try {
+    state.audit = await fetchJSON(API + '/audit?' + q.join('&'));
+  } catch (_) {
+    state.audit = null;
+  }
+  if (getActiveView() === 'audit') renderView('audit');
+}
+
+function applyAuditFilter(form) {
+  const fd = new FormData(form);
+  auditActorFilter = String(fd.get('actor') || '').trim();
+  auditActionFilter = String(fd.get('action') || '').trim();
+  auditSinceFilter = String(fd.get('since') || '').trim();
+  auditUntilFilter = String(fd.get('until') || '').trim();
+  loadAudit();
+}
+
+function severityPill(sev) {
+  const cls = sev === 'critical' ? 'chip-red' : (sev === 'high' ? 'chip-red' : (sev === 'medium' ? 'chip-yellow' : (sev === 'low' ? 'chip-blue' : '')));
+  return '<span class="pill ' + cls + '">' + esc(sev) + '</span>';
+}
+
+function policyRow(policy) {
+  return '<div class="panel pad" style="margin-bottom:8px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+    '<div><div style="font-weight:600">' + esc(policy.key) + '</div>' +
+    '<div class="dim" style="font-size:12px">' + esc(policy.description) + '</div></div>' +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+    (typeof policy.value === 'boolean' || policy.value === true || policy.value === false
+      ? '<label class="kv-row" style="gap:6px;font-size:12px"><input type="checkbox" data-policy-key="' + esc(policy.key) + '" data-policy-field="value"' + (policy.value === true ? ' checked' : '') + '> Enabled</label>'
+      : '<input data-policy-key="' + esc(policy.key) + '" data-policy-field="value" type="number" value="' + esc(String(policy.value)) + '" style="width:90px">') +
+    '<button class="btn" data-action="policy-save" data-key="' + esc(policy.key) + '">Save</button>' +
+    '</div></div></div>';
+}
+
+function renderSecurity() {
+  const s = state.security;
+  if (!s) return '<div class="loading">Loading&hellip;</div>';
+  const events = (s.events || []).slice(0, 40);
+  const statsData = s.stats || { total: 0, bySeverity: {}, byCategory: {} };
+  const alerts = (state.alerts && state.alerts.alerts) || [];
+  const openAlerts = alerts.filter(a => a.status === 'open').length;
+  const threats = (securityThreats && securityThreats.threats) || [];
+  const policies = (state.policies && state.policies.policies) || [];
+  const critical = (statsData.bySeverity && statsData.bySeverity.critical) || 0;
+
+  let html = pageHeader('Security', 'Threat detection, event timeline, and incident response');
+  html += stats([
+    stat('Security Events', statsData.total || 0, 'chip-blue', IC.shield),
+    stat('Open Alerts', openAlerts, openAlerts > 0 ? 'chip-red' : 'chip-green', IC.shield),
+    stat('High / Critical', critical + ((statsData.bySeverity && statsData.bySeverity.high) || 0), critical > 0 ? 'chip-red' : 'chip-green', IC.x),
+    stat('Active Threats', threats.length, threats.length > 0 ? 'chip-red' : 'chip-green', IC.shield)
+  ]);
+
+  if (threats.length) {
+    html += section('Threat Indicators', threats.length + ' threats',
+      table(['Severity', 'Category', 'Events', 'Detection', 'Recommendation'], threats.map(t => [
+        severityPill(t.severity),
+        esc(t.category),
+        '<span class="mono">' + esc(t.eventCount) + '</span>',
+        esc(t.title),
+        '<span class="dim">' + esc(t.recommendation) + '</span>'
+      ])));
+  }
+
+  html += section('Alerts', openAlerts + ' open',
+    alerts.length
+      ? table(['Level', 'Title', 'Detail', 'Status', ''], alerts.map(a => [
+          severityPill(a.level),
+          esc(a.title),
+          '<span class="dim">' + esc(a.detail) + '</span>',
+          a.status === 'open' ? '<span class="pill chip-red">open</span>' : '<span class="pill chip-green">resolved</span>',
+          '<div class="row-actions">' +
+            (a.status === 'open' ? '<button class="btn" data-action="alert-resolve" data-id="' + esc(a.id) + '">Resolve</button>' : '') +
+            '<button class="btn danger" data-action="alert-delete" data-id="' + esc(a.id) + '">Delete</button>' +
+          '</div>'
+        ]))
+      : '<div class="empty">No security alerts. All clear.</div>') +
+    '<div class="toolbar" style="margin-top:12px"><button class="btn danger" data-action="alerts-clear">Clear resolved alerts</button></div>';
+
+  html += section('Event Timeline', events.length + ' events',
+    events.length
+      ? table(['Time', 'Severity', 'Category', 'Actor', 'Action', 'Resource', 'Detail'], events.map(e => [
+          '<span class="mono">' + esc(new Date(e.timestamp).toLocaleString()) + '</span>',
+          severityPill(e.severity),
+          esc(e.category),
+          esc(e.actor),
+          '<span class="pill">' + esc(e.action) + '</span>',
+          esc(e.resource),
+          '<span class="dim">' + esc(e.detail) + '</span>'
+        ]))
+      : '<div class="empty">No security events recorded yet.</div>');
+
+  html += section('Security Policies', policies.length + ' policies',
+    policies.map(policyRow).join(''));
+  return html;
+}
+
+function renderCompliance() {
+  const c = state.compliance;
+  if (!c) return '<div class="loading">Loading&hellip;</div>';
+  const reqs = c.requirements || [];
+  const frameworks = c.frameworks || [];
+  const policies = (state.policies && state.policies.policies) || [];
+  const auditPolicies = policies.filter(function (p) {
+    return ['auditRetentionDays', 'requireAuditIntegrity', 'ipAnonymization', 'enforceRbac'].indexOf(p.key) >= 0;
+  });
+  let html = pageHeader('Compliance', 'SOC 2 and GDPR readiness, audit integrity, and reporting');
+  html += stats([
+    stat('Overall Score', c.score + '%', c.score >= 80 ? 'chip-green' : (c.score >= 50 ? 'chip-yellow' : 'chip-red'), IC.check),
+    stat('Requirements Met', reqs.filter(r => r.satisfied).length + ' / ' + reqs.length, 'chip-blue', IC.file),
+    stat('Audit Events', (state.audit && state.audit.stats && state.audit.stats.total) || 0, 'chip-accent', IC.file),
+    stat('Telemetry', (state.status && state.status.telemetry) ? 'enabled' : 'opt-in', 'chip-purple', IC.monitor)
+  ]);
+
+  html += section('Framework Scores', frameworks.length + ' frameworks',
+    table(['Framework', 'Met / Total', 'Score'], frameworks.map(f => [
+      esc(f.framework),
+      f.met + ' / ' + f.total,
+      '<span class="mono">' + esc(f.score) + '%</span>'
+    ])));
+
+  html += section('Requirements', reqs.length + ' requirements',
+    table(['Framework', 'Requirement', 'Status', 'Detail'], reqs.map(r => [
+      esc(r.framework),
+      esc(r.requirement),
+      r.satisfied ? '<span class="pill chip-green">met</span>' : '<span class="pill chip-red">open</span>',
+      '<span class="dim">' + esc(r.detail) + '</span>'
+    ])));
+
+  if (auditPolicies.length) {
+    html += section('Audit & Security Policies', auditPolicies.length + ' policies',
+      auditPolicies.map(policyRow).join(''));
+  }
+
+  html += section('Audit Log Integrity', null,
+    '<div id="integrityBox">' + integrityHtml() + '</div>' +
+    '<div class="toolbar" style="margin-top:12px">' +
+    '<button class="btn" data-action="integrity-check">Re-verify integrity</button>' +
+    '</div>');
+
+  html += section('Compliance Report', null,
+    '<div class="toolbar" style="gap:8px;margin-bottom:8px">' +
+    '<button class="btn primary" data-action="compliance-report">Generate report</button>' +
+    '<button class="btn" data-action="compliance-report-copy" style="display:none">Copy to clipboard</button>' +
+    '</div>' +
+    '<pre id="complianceReport" class="report-output" style="display:none"></pre>');
+  return html;
+}
+
+function integrityHtml() {
+  const i = state.auditIntegrity;
+  if (!i) return '<div class="loading">Loading&hellip;</div>';
+  if (i.total === 0) return '<div class="empty">No audit events to verify.</div>';
+  if (i.valid) {
+    return '<div class="kv-row"><span class="pill chip-green">verified</span> <span class="dim">' + i.verified + ' events form an unbroken hash chain.</span></div>';
+  }
+  if (i.legacy > 0) {
+    return '<div class="kv-row"><span class="pill chip-yellow">legacy</span> <span class="dim">' + i.legacy + ' events predate integrity tracking and ' + i.verified + ' are chained.</span></div>';
+  }
+  return '<div class="kv-row"><span class="pill chip-red">tampered</span> <span class="dim">Chain broken at index ' + i.brokenIndex + ' of ' + i.total + ' events.</span></div>';
+}
+
+async function loadAuditIntegrity() {
+  try {
+    state.auditIntegrity = await fetchJSON(API + '/audit/integrity');
+  } catch (_) {
+    state.auditIntegrity = null;
+  }
+  if (getActiveView() === 'compliance') renderView('compliance');
+}
+
+function permLabel(key) {
+  for (const g of (state.rbacPermissions && state.rbacPermissions.groups) || []) {
+    const p = g.permissions.find(x => x.key === key);
+    if (p) return p.label;
+  }
+  return key;
+}
+
+function renderRbac() {
+  const roles = (state.rbacRoles && state.rbacRoles.roles) || [];
+  const groups = (state.rbacPermissions && state.rbacPermissions.groups) || [];
+  const analytics = state.rbacAnalytics || { roleCount: 0, customRoleCount: 0, assignmentCount: 0, permissionsCovered: 0, totalPermissions: 0 };
+  const assignments = (state.rbacAssignments && state.rbacAssignments.assignments) || [];
+  const users = (state.users && state.users.users) || [];
+  const byRole = {};
+  assignments.forEach(a => {
+    if (!byRole[a.roleId]) byRole[a.roleId] = [];
+    byRole[a.roleId].push(a.userId);
+  });
+  const userById = {};
+  users.forEach(u => { userById[u.userId] = u.email; });
+
+  let html = pageHeader('Access Control', 'Roles, permissions, inheritance, and assignments');
+  html += stats([
+    stat('Roles', analytics.roleCount || roles.length, 'chip-blue', IC.users),
+    stat('Custom Roles', analytics.customRoleCount || 0, 'chip-accent', IC.users),
+    stat('Assignments', analytics.assignmentCount || 0, 'chip-purple', IC.users),
+    stat('Permission Coverage', analytics.permissionsCovered + ' / ' + analytics.totalPermissions, 'chip-green', IC.check)
+  ]);
+
+  html += section('Roles', roles.length + ' roles',
+    table(['Role', 'Built-in', 'Permissions', 'Users', 'Parent', ''], roles.map(r => [
+      esc(r.name),
+      r.builtin ? '<span class="pill chip-blue">built-in</span>' : '<span class="pill">custom</span>',
+      '<span class="mono">' + r.permissions.length + '</span>',
+      '<span class="mono">' + ((byRole[r.id] || []).length) + '</span>',
+      r.parentRoleId ? esc((roles.find(x => x.id === r.parentRoleId) || {}).name || '') : '<span class="dim">—</span>',
+      '<div class="row-actions">' +
+        '<button class="btn" data-action="role-clone" data-id="' + esc(r.id) + '" data-name="' + esc(r.name) + '">Clone</button>' +
+        (r.builtin ? '' : '<button class="btn" data-action="role-edit" data-id="' + esc(r.id) + '">Edit</button>' +
+        '<button class="btn danger" data-action="role-delete" data-id="' + esc(r.id) + '">Delete</button>') +
+      '</div>'
+    ])) +
+    '<div class="toolbar" style="margin-top:12px"><button class="btn primary" data-action="role-new">New role</button></div>');
+
+  html += section('Permission Matrix', groups.length + ' groups',
+    table(['Permission', 'Key', 'Description'], groups.flatMap(g => g.permissions.map(p => [
+      esc(p.label),
+      '<span class="mono">' + esc(p.key) + '</span>',
+      '<span class="dim">' + esc(p.description) + '</span>'
+    ]))));
+
+  html += section('Assignments', assignments.length + ' assignments',
+    '<form data-form="rbac-assign" class="toolbar" style="gap:8px;margin-bottom:12px">' +
+    '<select name="userId" style="min-width:200px">' + users.map(u => '<option value="' + esc(u.userId) + '">' + esc(u.email) + '</option>').join('') + '</select>' +
+    '<select name="roleId" style="min-width:160px">' + roles.map(r => '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>').join('') + '</select>' +
+    '<button type="submit" class="btn primary">Assign role</button>' +
+    '<span class="error" data-form-error style="display:none;margin:0"></span>' +
+    '</form>' +
+    table(['User', 'Roles'], users.map(u => [
+      esc(u.email),
+      assignments.filter(a => a.userId === u.userId).map(a => {
+        const role = roles.find(r => r.id === a.roleId);
+        return '<span class="pill">' + esc(role ? role.name : a.roleId) + ' <button class="btn ghost" data-action="role-unassign" data-user="' + esc(u.userId) + '" data-role="' + esc(a.roleId) + '" style="padding:0 4px;font-size:11px">x</button></span>';
+      }).join(' ') || '<span class="dim">No roles assigned</span>'
+    ])));
+
+  const allPermKeys = groups.flatMap(g => g.permissions.map(p => p.key));
+  html += section('Permission Testing', null,
+    '<form data-form="rbac-check" class="toolbar" style="gap:8px;margin-bottom:8px">' +
+    '<select name="userId" style="min-width:200px">' + users.map(u => '<option value="' + esc(u.userId) + '">' + esc(u.email) + '</option>').join('') + '</select>' +
+    '<select name="permission" style="min-width:220px">' + allPermKeys.map(k => '<option value="' + esc(k) + '">' + esc(k) + '</option>').join('') + '</select>' +
+    '<button type="submit" class="btn primary">Check permission</button>' +
+    '<button type="button" class="btn ghost" data-action="rbac-check-summary">User summary</button>' +
+    '<span class="error" data-form-error style="display:none;margin:0"></span>' +
+    '</form>' +
+    '<div id="rbacCheckResult"></div>');
+  return html;
+}
+
+function roleForm(mode, role) {
+  const roles = (state.rbacRoles && state.rbacRoles.roles) || [];
+  const groups = (state.rbacPermissions && state.rbacPermissions.groups) || [];
+  const perms = role ? role.permissions : [];
+  const deny = role ? role.deny : [];
+  const checkboxGroup = function (g) {
+    return '<div style="margin-bottom:8px"><div style="font-weight:600;font-size:12px;margin-bottom:4px">' + esc(g.label) + '</div>' +
+      g.permissions.map(function (p) {
+        return '<label class="kv-row" style="gap:6px;font-size:12px;margin-right:10px"><input type="checkbox" name="perm" value="' + esc(p.key) + '"' + (perms.indexOf(p.key) >= 0 ? ' checked' : '') + '> ' + esc(p.label) + '</label>';
+      }).join('') + '</div>';
+  };
+  return '<div class="section"><div class="section-head"><h3>' + (mode === 'edit' ? 'Edit role' : 'New role') + '</h3>' +
+    '<span class="count">' + esc(role ? role.name : 'custom') + '</span></div>' +
+    '<div class="panel pad">' +
+    '<form data-form="rbac-role">' +
+    '<input type="hidden" name="roleId" value="' + esc(role ? role.id : '') + '">' +
+    '<div class="form-grid">' +
+    '<div><label class="label">Role name</label><input name="name" value="' + esc(role ? role.name : '') + '" placeholder="e.g. platform-engineer" required></div>' +
+    '<div><label class="label">Parent role</label><select name="parentRoleId">' +
+    '<option value="">None</option>' +
+    roles.filter(function (r) { return !role || r.id !== role.id; }).map(function (r) {
+      return '<option value="' + esc(r.id) + '"' + (role && role.parentRoleId === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>';
+    }).join('') + '</select></div>' +
+    '</div>' +
+    '<label class="label" style="display:block;margin:12px 0 4px">Description</label>' +
+    '<textarea name="description" rows="2" style="width:100%">' + esc(role ? role.description : '') + '</textarea>' +
+    '<label class="label" style="display:block;margin:12px 0 4px">Granted permissions</label>' +
+    groups.map(checkboxGroup).join('') +
+    '<div class="form-actions"><button type="submit" class="btn primary">' + (mode === 'edit' ? 'Save role' : 'Create role') + '</button>' +
+    '<button type="button" class="btn" data-action="role-form-cancel">Cancel</button></div>' +
+    '<div class="error" data-form-error style="display:none"></div>' +
+    '</form></div></div>';
+}
+
+async function submitRoleForm(form) {
+  const fd = new FormData(form);
+  const errBox = form.querySelector('[data-form-error]');
+  errBox.style.display = 'none';
+  const roleId = fd.get('roleId');
+  const name = String(fd.get('name') || '').trim();
+  if (!name) { errBox.textContent = 'Role name is required.'; errBox.style.display = 'block'; return; }
+  const perms = form.querySelectorAll('input[name="perm"]:checked');
+  const permissions = [];
+  perms.forEach(function (p) { permissions.push(p.value); });
+  const parentRoleId = fd.get('parentRoleId') || null;
+  const payload = { name: name, description: String(fd.get('description') || ''), permissions: permissions, parentRoleId: parentRoleId };
+  const r = roleId
+    ? await apiJSON('PUT', '/api/rbac/roles/' + encodeURIComponent(roleId), payload)
+    : await apiJSON('POST', '/api/rbac/roles', payload);
+  if (!r.ok) {
+    errBox.textContent = (r.data && r.data.error) || 'Request failed.';
+    errBox.style.display = 'block';
+    return;
+  }
+  toast(roleId ? 'Role updated.' : 'Role created.');
+  const formPanel = form.closest('.section');
+  if (formPanel) formPanel.remove();
+  loadAll();
 }
 
 function getActiveView() {
@@ -3119,6 +4023,9 @@ function renderView(view) {
     case 'notifications': content.innerHTML = renderNotifications(); break;
     case 'exports': content.innerHTML = renderExports(); break;
     case 'apidocs': content.innerHTML = renderApiDocs(); break;
+    case 'security': content.innerHTML = renderSecurity(); break;
+    case 'compliance': content.innerHTML = renderCompliance(); break;
+    case 'rbac': content.innerHTML = renderRbac(); break;
   }
 }
 
@@ -3535,6 +4442,139 @@ document.addEventListener('click', function (e) {
     });
     return;
   }
+  if (action === 'alert-resolve') {
+    apiJSON('POST', '/api/security/alerts/' + encodeURIComponent(id) + '/resolve').then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to resolve alert.', true); return; }
+      toast('Alert resolved.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'alert-delete') {
+    apiJSON('DELETE', '/api/security/alerts/' + encodeURIComponent(id)).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to delete alert.', true); return; }
+      toast('Alert deleted.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'alerts-clear') {
+    if (!confirm('Clear all security alerts?')) return;
+    apiJSON('POST', '/api/security/alerts/clear').then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to clear alerts.', true); return; }
+      toast('Security alerts cleared.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'policy-save') {
+    const key = actionEl.dataset.key;
+    const input = document.querySelector('[data-policy-key="' + key + '"]');
+    if (!input) return;
+    let value = input.value;
+    if (input.type === 'checkbox') value = input.checked;
+    else if (!isNaN(Number(value))) value = Number(value);
+    apiJSON('PUT', '/api/security/policies', { key: key, value: value }).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to save policy.', true); return; }
+      toast('Policy updated.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'integrity-check') {
+    loadAuditIntegrity();
+    return;
+  }
+  if (action === 'compliance-report') {
+    apiJSON('POST', '/api/compliance/report').then(function (r) {
+      const pre = document.getElementById('complianceReport');
+      const copy = document.querySelector('[data-action="compliance-report-copy"]');
+      if (!pre) return;
+      if (!r.ok) { pre.style.display = 'block'; pre.textContent = 'Report generation failed: ' + ((r.data && r.data.error) || r.status); return; }
+      pre.style.display = 'block';
+      pre.textContent = JSON.stringify(r.data, null, 2);
+      if (copy) copy.style.display = '';
+      toast('Compliance report generated.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'compliance-report-copy') {
+    const pre = document.getElementById('complianceReport');
+    if (!pre || !pre.textContent) return;
+    navigator.clipboard.writeText(pre.textContent).then(function () {
+      toast('Report copied to clipboard.');
+    }).catch(function () {
+      toast('Failed to copy report.', true);
+    });
+    return;
+  }
+  if (action === 'audit-filter-clear') {
+    auditActorFilter = '';
+    auditActionFilter = '';
+    auditSinceFilter = '';
+    auditUntilFilter = '';
+    loadAudit();
+    return;
+  }
+  if (action === 'role-new') {
+    document.getElementById('content').insertAdjacentHTML('afterbegin', roleForm('create', null));
+    return;
+  }
+  if (action === 'role-edit') {
+    const role = (state.rbacRoles && state.rbacRoles.roles || []).find(r => r.id === id);
+    if (!role) return;
+    document.getElementById('content').insertAdjacentHTML('afterbegin', roleForm('edit', role));
+    return;
+  }
+  if (action === 'role-form-cancel') {
+    const form = document.querySelector('[data-form="rbac-role"]');
+    if (form) form.closest('.section').remove();
+    return;
+  }
+  if (action === 'role-clone') {
+    const name = prompt('Clone role "' + actionEl.dataset.name + '" as:', actionEl.dataset.name + '-copy');
+    if (!name) return;
+    apiJSON('POST', '/api/rbac/roles/' + encodeURIComponent(id) + '/clone', { name: name }).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to clone role.', true); return; }
+      toast('Role cloned.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'rbac-check-summary') {
+    const form = document.querySelector('[data-form="rbac-check"]');
+    if (!form) return;
+    const userId = String(new FormData(form).get('userId') || '');
+    const box = document.getElementById('rbacCheckResult');
+    fetchJSON(API + '/rbac/check?userId=' + encodeURIComponent(userId)).then(function (r) {
+      if (!box) return;
+      const roles = (r.roles || []).map(function (x) { return x.name; });
+      box.innerHTML = '<div class="kv-row"><span class="dim">Roles:</span> <span>' + (roles.length ? roles.map(esc).join(', ') : 'none') + '</span></div>' +
+        '<div class="kv-row"><span class="dim">Effective permissions:</span> <span class="mono">' + esc((r.effectivePermissions || []).join(', ')) + '</span></div>';
+    }).catch(function (err) {
+      if (!box) return;
+      box.innerHTML = '<div class="kv-row"><span class="pill chip-red">error</span> <span class="dim">' + esc(err.message) + '</span></div>';
+    });
+    return;
+  }
+  if (action === 'role-delete') {
+    if (!confirm('Delete this role? Assignments will be removed.')) return;
+    apiJSON('DELETE', '/api/rbac/roles/' + encodeURIComponent(id)).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to delete role.', true); return; }
+      toast('Role deleted.');
+      loadAll();
+    });
+    return;
+  }
+  if (action === 'role-unassign') {
+    apiJSON('DELETE', '/api/rbac/assign', { userId: actionEl.dataset.user, roleId: actionEl.dataset.role }).then(function (r) {
+      if (!r.ok) { toast((r.data && r.data.error) || 'Failed to unassign role.', true); return; }
+      toast('Role unassigned.');
+      loadAll();
+    });
+    return;
+  }
 });
 
 document.addEventListener('input', function (e) {
@@ -3781,6 +4821,48 @@ document.addEventListener('submit', function (e) {
   if (notifPrefs) {
     e.preventDefault();
     submitNotifPrefs(notifPrefs);
+  }
+  const rbacRoleForm = e.target.closest('[data-form="rbac-role"]');
+  if (rbacRoleForm) {
+    e.preventDefault();
+    submitRoleForm(rbacRoleForm);
+    return;
+  }
+  const rbacAssign = e.target.closest('[data-form="rbac-assign"]');
+  if (rbacAssign) {
+    e.preventDefault();
+    const fd = new FormData(rbacAssign);
+    const errBox = rbacAssign.querySelector('[data-form-error]');
+    errBox.style.display = 'none';
+    apiJSON('POST', '/api/rbac/assign', { userId: fd.get('userId'), roleId: fd.get('roleId') }).then(function (r) {
+      if (!r.ok) { errBox.textContent = (r.data && r.data.error) || 'Assignment failed.'; errBox.style.display = 'block'; return; }
+      toast('Role assigned.');
+      loadAll();
+    });
+  }
+  const auditFilter = e.target.closest('[data-form="audit-filter"]');
+  if (auditFilter) {
+    e.preventDefault();
+    applyAuditFilter(auditFilter);
+  }
+  const rbacCheck = e.target.closest('[data-form="rbac-check"]');
+  if (rbacCheck) {
+    e.preventDefault();
+    const fd = new FormData(rbacCheck);
+    const errBox = rbacCheck.querySelector('[data-form-error]');
+    errBox.style.display = 'none';
+    const box = document.getElementById('rbacCheckResult');
+    fetchJSON(API + '/rbac/check?userId=' + encodeURIComponent(String(fd.get('userId') || '')) + '&permission=' + encodeURIComponent(String(fd.get('permission') || ''))).then(function (r) {
+      if (!box) return;
+      if (!r.allowed) {
+        box.innerHTML = '<div class="kv-row"><span class="pill chip-red">denied</span> <span class="dim">' + esc(String(fd.get('permission'))) + ' is not granted to this user.</span></div>';
+        return;
+      }
+      box.innerHTML = '<div class="kv-row"><span class="pill chip-green">allowed</span> <span class="dim">' + esc(String(fd.get('permission'))) + ' is granted.</span></div>';
+    }).catch(function (err) {
+      if (!box) return;
+      box.innerHTML = '<div class="kv-row"><span class="pill chip-red">error</span> <span class="dim">' + esc(err.message) + '</span></div>';
+    });
   }
 });
 
