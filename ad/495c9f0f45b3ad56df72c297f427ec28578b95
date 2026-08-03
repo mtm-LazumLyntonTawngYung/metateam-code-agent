@@ -1,0 +1,93 @@
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_59d82cd7325c1c::t_073e936f0e2d33 642
+  s_59d82cd7325c1c::t_ccc7bc39669028 587-588,596,608-609,617,625-626,634
+src/enterprise/dashboard.ts
+  s_59d82cd7325c1c::t_5456dce5f89dd7 3016-3073
+  s_59d82cd7325c1c::t_6ac9b977bfd0d3 1972-2642
+  s_59d82cd7325c1c::t_73c18b5dcc6a52 2650-2652
+  s_59d82cd7325c1c::t_22140ac169ca31 1562-1578
+  s_59d82cd7325c1c::t_83ea1ebc482cb9 3595-3606
+  s_59d82cd7325c1c::t_467086ed391a79 3640
+  s_59d82cd7325c1c::t_4a42b08cca5beb 4588,4610-4618,4620
+  s_59d82cd7325c1c::t_eaef3eadeec87b 5196-5198
+  s_59d82cd7325c1c::t_465150af7b7e34 4964-5177
+  s_59d82cd7325c1c::t_afb3d41b9c860b 5748-5832
+  s_59d82cd7325c1c::t_2ea1f61cd134b0 5842-5851
+  s_59d82cd7325c1c::t_e6b24e80d07e07 6132-6183
+  s_59d82cd7325c1c::t_83a817daecd16a 119-302
+src/shared-sessions/security.ts
+  s_17d8e048342fb1::t_bbb9f9a9c1224d 1-196
+src/shared-sessions/offline-service.ts
+  s_17d8e048342fb1::t_e2931a995af741 1-258
+src/shared-sessions/types.ts
+  s_17d8e048342fb1::t_bd156bc1f62e59 1-9,11-146,148-197
+  s_17d8e048342fb1::t_9fbffb2c62d109 10
+  s_17d8e048342fb1::t_e68e4000b802a9 147
+src/shared-sessions/session-service.ts
+  s_17d8e048342fb1::t_ac472fb8ed71d4 1-194
+src/shared-sessions/performance.ts
+  s_17d8e048342fb1::t_81efe0f22458f8 1-299
+src/shared-sessions/permission-engine.ts
+  s_17d8e048342fb1::t_d326c2be765106 1-178
+src/shared-sessions/api-gateway.ts
+  s_17d8e048342fb1::t_10e27be214a923 1-334
+src/shared-sessions/conflict-resolver.ts
+  s_17d8e048342fb1::t_0729bad18dd8ab 1-151,153-175
+  s_17d8e048342fb1::t_af9b6a05171d5a 152
+src/shared-sessions/context-sharing-service.ts
+  s_17d8e048342fb1::t_368be4937a0c50 1-65,67-194
+  s_17d8e048342fb1::t_e5f02d03ae433d 66
+src/shared-sessions/ws-collaboration.ts
+  s_17d8e048342fb1::t_3810be4472492e 18
+  s_17d8e048342fb1::t_b91c332e300fdc 1-17,19-212
+src/shared-sessions/index.ts
+  s_17d8e048342fb1::t_f45a85006f5911 109-206
+  s_17d8e048342fb1::t_a1afad53010fd3 1-108,207
+src/shared-sessions/db.ts
+  s_17d8e048342fb1::t_15e4c553a9a1de 1-137,146-196
+  s_17d8e048342fb1::t_b7263f7a562e88 138-145
+src/shared-sessions/participant-service.ts
+  s_17d8e048342fb1::t_4626e1abe9363e 1-213
+src/shared-sessions/session-link-service.ts
+  s_17d8e048342fb1::t_6e432b69dd3947 1-125
+tests/unit/shared-sessions.test.ts
+  s_17d8e048342fb1::t_bae203108f8ea5 91-93,95-99
+  s_17d8e048342fb1::t_9a6c662820c717 1-90,94,100-768
+src/shared-sessions/sso-service.ts
+  s_17d8e048342fb1::t_747761fc0c81ea 1-214
+src/shared-sessions/event-bus.ts
+  s_17d8e048342fb1::t_9756254fafc635 1-60
+src/shared-sessions/token-service.ts
+  s_17d8e048342fb1::t_f0e80537bc876b 1-306
+src/shared-sessions/ui-components.tsx
+  s_17d8e048342fb1::t_32bdbe4066a9cb 1-112
+src/shared-sessions/collaboration-service.ts
+  s_17d8e048342fb1::t_0d9572d4d34174 100,104
+  s_17d8e048342fb1::t_958d07b3e124a2 24-27
+  s_17d8e048342fb1::t_4723dac519cc38 1-23,28-99,101-103,105-174,177,179-232
+  s_17d8e048342fb1::t_f110b56f6839f5 175-176,178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "ad495c9f0f45b3ad56df72c297f427ec28578b95",
+  "prompts": {},
+  "sessions": {
+    "s_17d8e048342fb1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03a57b54cffeZF2T0EeFJbdIpL",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_59d82cd7325c1c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03a6f1a75ffe6BwLempHVyfvHu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
