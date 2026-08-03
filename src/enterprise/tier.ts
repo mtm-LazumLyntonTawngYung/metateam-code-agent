@@ -11,6 +11,7 @@ import type { Tier, EnterpriseFeature } from "./types";
 import { FEATURE_TIER_MAP } from "./types";
 import { getLicense, isEnterprise, hasFeature } from "./license";
 import { getConnectedCount } from "../mcp/index";
+import { isTelemetryEnabled } from "../telemetry/store";
 
 export type FeatureCheck = {
   feature: EnterpriseFeature;
@@ -39,6 +40,7 @@ export function getSystemStatus(): {
   connectedMcpServers: number;
   activeAgents: number;
   features: FeatureCheck[];
+  telemetry: boolean;
 } {
   const license = getLicense();
   return {
@@ -48,6 +50,7 @@ export function getSystemStatus(): {
     connectedMcpServers: getConnectedCount(),
     activeAgents: 0,
     features: getAvailableFeatures(),
+    telemetry: isTelemetryEnabled(),
   };
 }
 

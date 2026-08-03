@@ -1,6 +1,6 @@
 import type { JsonSchema } from "../tools/schema";
 
-export type ProviderId = "openai" | "anthropic" | "deepseek" | "openrouter";
+export type ProviderId = "openai" | "anthropic" | "deepseek" | "openrouter" | "llamacpp";
 
 export type ModelTier = "fast" | "default" | "reasoning";
 
@@ -178,6 +178,16 @@ export const KNOWN_MODELS: ModelConfig[] = [
     contextWindow: 128000,
   },
   {
+    id: "deepseek/deepseek-chat",
+    displayName: "DeepSeek V4 (OpenRouter)",
+    provider: "openrouter",
+    tier: "default",
+    costPer1kInput: 0.00027,
+    costPer1kOutput: 0.0011,
+    maxTokens: 8192,
+    contextWindow: 128000,
+  },
+  {
     id: "poolside/laguna-s-2.1:free",
     displayName: "Laguna S 2.1 (OpenRouter)",
     provider: "openrouter",
@@ -197,10 +207,50 @@ export const KNOWN_MODELS: ModelConfig[] = [
     maxTokens: 8192,
     contextWindow: 1000000,
   },
+  {
+    id: "qwen2.5-1.5b-instruct",
+    displayName: "Qwen 2.5 1.5B Instruct (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
+  {
+    id: "qwen2.5-1.5b-instruct-q4_0",
+    displayName: "Qwen 2.5 1.5B Instruct Q4_0 (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
+  {
+    id: "qwen2.5-7b-instruct",
+    displayName: "Qwen 2.5 7B Instruct (Local)",
+    provider: "llamacpp",
+    tier: "default",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
+  {
+    id: "qwen2.5-1.5b-instruct-q8_0",
+    displayName: "Qwen 2.5 1.5B Instruct Q8_0 (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
 ];
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
   fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
-  default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o"],
+  default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o", "qwen2.5-7b-instruct"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };

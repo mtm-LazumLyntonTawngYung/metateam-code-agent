@@ -1,0 +1,135 @@
+export * from "./types";
+
+export {
+  createEnhancedAgent,
+  getAgent,
+  getAllAgents,
+  getAvailableAgents,
+  getAgentsWithCapability,
+  updateAgentStatus,
+  updateAgentLoad,
+  calculateResourceUtilization,
+  canScheduleTask,
+  findBestAgent,
+  calculateProficiencyScore,
+  estimateExecutionTime,
+  getResourceRequirements,
+  checkResourceAvailability,
+  resetOrchestrator,
+  getOrchestratorState,
+  updateMetrics,
+} from "./orchestrator";
+
+export {
+  createTask,
+  getTask,
+  getScheduledTask,
+  getPendingTasks,
+  getRunningTasks,
+  getCompletedTasks,
+  routeTask,
+  routeNextTask,
+  completeTask,
+  failTask,
+  cancelTask,
+  rerouteTask,
+  getTaskQueueLength,
+  getRunningTaskCount,
+  getCompletedTaskCount,
+  findTasksByAgent,
+  findTasksByCapability,
+  findCriticalTasks,
+  getTaskStats,
+  resetTaskRouter,
+} from "./task-router";
+
+export {
+  registerAgent,
+  unregisterAgent,
+  updateHeartbeat,
+  checkAgentHealth,
+  detectFault,
+  handleFault,
+  executeRecovery,
+  checkTimeouts,
+  getFaultLog,
+  getAgentState,
+  getFaultStats,
+  clearFaultLog,
+  resetFaultDetection,
+} from "./fault-detection";
+
+export type { FaultEvent, FaultType, RecoveryStrategy } from "./fault-detection";
+
+export {
+  readEntry,
+  writeEntry,
+  deleteEntry,
+  getVersionHistory,
+  getLatestVersion,
+  setAccessControl,
+  isAuthorized,
+  calculateChecksum,
+  verifyChecksum,
+  getWorkspaceKeys,
+  getWorkspaceSize,
+  getWorkspaceSnapshot,
+  loadSnapshot,
+  getOperationLog,
+  clearWorkspace,
+  getWorkspaceConfig,
+  updateWorkspaceConfig,
+} from "./workspace";
+
+export {
+  acquireLock,
+  releaseLock,
+  isLocked,
+  getLockOwner,
+  checkVersion,
+  atomicWrite,
+  compareAndSwap,
+  detectConflict,
+  resolveConflict,
+  cleanupExpiredLocks,
+  getLockStats,
+  resetConcurrencyControl,
+} from "./concurrency";
+
+export {
+  sendMessage,
+  receiveMessages,
+  peekMessages,
+  sendMessageToWorkspace,
+  readFromWorkspace,
+  shareTaskOutput,
+  getSharedTaskOutput,
+  startExecution,
+  updateExecutionMetrics,
+  completeExecution,
+  getExecutionHistory,
+  getTaskExecutionHistory,
+  checkDependencies,
+  resolveDependencies,
+  getCoordinatorConfig,
+  updateCoordinatorConfig,
+  getMessageQueueSize,
+  getTotalMessageQueueSize,
+  clearMessageQueues,
+  resetCoordinator,
+} from "./coordinator";
+
+export {
+  collectMetrics,
+  getMetricHistory,
+  getLatestMetrics,
+  getAverageMetrics,
+  identifyBottlenecks,
+  generateRecommendations,
+  analyzeConflictPatterns,
+  getResourceUtilizationTrend,
+  clearMetricHistory,
+  resetMetrics,
+} from "./metrics";
+
+export type { Bottleneck, OptimizationRecommendation, ConflictPatternAnalysis } from "./metrics";

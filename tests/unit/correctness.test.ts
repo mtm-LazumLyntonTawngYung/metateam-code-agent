@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { KNOWN_MODELS, DEFAULT_ROUTING } from "../../src/llm/types";
-import { filterKnownModels } from "../../src/llm/config";
+import { filterKnownModels, DEFAULT_PROVIDERS } from "../../src/llm/config";
 import { MAX_FILE_SIZE } from "../../src/tools/read_file";
 import { registerTool, getTool, getAllTools } from "../../src/tools/index";
 import { parseFrontmatter } from "../../src/agents/frontmatter";
@@ -71,6 +71,31 @@ describe("Property 6: Configuration Consistency", () => {
     const ids = ["gpt-4o", "not-a-real-model", "gpt-4o"];
     const result = filterKnownModels(ids);
     expect(result.map((m) => m.id)).toEqual(["gpt-4o"]);
+  });
+
+  test("every provider model id resolves to a known model config", () => {
+    const known = new Set(KNOWN_MODELS.map((m) => m.id));
+    for (const p of DEFAULT_PROVIDERS) {
+      for (const id of p.models) {
+        expect(known.has(id)).toBe(true);
+      }
+    }
+  });
+
+  test("every known model is listed by at least one provider", () => {
+    const provided = new Set(DEFAULT_PROVIDERS.flatMap((p) => p.models));
+    for (const m of KNOWN_MODELS) {
+      expect(provided.has(m.id)).toBe(true);
+    }
+  });
+
+  test("every default routing candidate is available via a provider", () => {
+    const provided = new Set(DEFAULT_PROVIDERS.flatMap((p) => p.models));
+    for (const tier of Object.values(DEFAULT_ROUTING)) {
+      for (const id of tier) {
+        expect(provided.has(id)).toBe(true);
+      }
+    }
   });
 });
 

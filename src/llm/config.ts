@@ -9,8 +9,7 @@ export type LlmConfig = {
     reasoningModel: string;
   };
 };
-
-const DEFAULT_PROVIDERS: ProviderConfig[] = [
+export const DEFAULT_PROVIDERS: ProviderConfig[] = [
   {
     id: "deepseek",
     label: "DeepSeek",
@@ -37,7 +36,14 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
     label: "OpenRouter",
     apiKey: "",
     baseUrl: "https://openrouter.ai/api/v1",
-    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"],
+    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat", "poolside/laguna-s-2.1:free"],
+  },
+  {
+    id: "llamacpp",
+    label: "Local Llama",
+    apiKey: "",
+    baseUrl: "http://localhost:8080/v1",
+    models: ["qwen2.5-7b-instruct", "qwen2.5-1.5b-instruct", "qwen2.5-1.5b-instruct-q4_0", "qwen2.5-1.5b-instruct-q8_0"],
   },
 ];
 
@@ -47,8 +53,23 @@ export function loadLlmConfig(): LlmConfig {
   const cfg = loadConfig();
   const raw = (cfg as Record<string, unknown>)[CONFIG_KEY] as Partial<LlmConfig> | undefined;
 
+  const defaults = DEFAULT_PROVIDERS.map((p) => ({ ...p, models: [...p.models] }));
+  if (raw?.providers?.length) {
+    for (const saved of raw.providers) {
+      const existing = defaults.find((p) => p.id === saved.id);
+      if (existing) {
+        existing.models = [...new Set([...(existing.models ?? []), ...(saved.models ?? [])])];
+        if (saved.apiKey) existing.apiKey = saved.apiKey;
+        if (saved.baseUrl) existing.baseUrl = saved.baseUrl;
+        if (saved.label) existing.label = saved.label;
+      } else {
+        defaults.push({ ...saved });
+      }
+    }
+  }
+
   return {
-    providers: raw?.providers?.length ? raw.providers : DEFAULT_PROVIDERS,
+    providers: defaults,
     routing: raw?.routing ?? {
       simpleModel: "deepseek-chat",
       defaultModel: "deepseek-chat",

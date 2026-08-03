@@ -215,9 +215,13 @@ const abortControllerRef = useRef<AbortController | null>(null);
       setShowCommands(true);
       return;
     }
-    if (key.ctrl && _input === "c" && agentBusy && abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setNotification("Aborting agent...");
+    if (key.ctrl && _input === "c") {
+      if (agentBusy && abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        setNotification("Aborting agent...");
+      } else {
+        cleanExit();
+      }
       return;
     }
   });

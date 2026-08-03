@@ -28,6 +28,8 @@ export async function complete(
       return completeDeepSeek(provider, req);
     case "openrouter":
       return completeOpenRouter(provider, req);
+    case "llamacpp":
+      return completeOpenAI(provider, req, "llamacpp");
     default:
       return completeOpenAI(provider, req);
   }
@@ -52,6 +54,7 @@ export async function completeStream(
     case "openai":
     case "deepseek":
     case "openrouter":
+    case "llamacpp":
       return streamOpenAICompatible(provider, req, onDelta, provider.id);
     default:
       return streamOpenAICompatible(provider, req, onDelta, "openai");

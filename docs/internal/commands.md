@@ -88,7 +88,7 @@ Usage: `/read path [offset] [limit] | /write path content | /edit path target re
 | `Tab` | Open the agent selector |
 | `Ctrl+P` / `/` | Open the command palette |
 | `Esc` | Close the topmost overlay; otherwise back to home |
-| `↑` / `↓` | Scroll the chat log / navigate lists |
+| `↑` / `↓` | Navigate command history / partial history search |
 | `PageUp` / `PageDown` | Scroll by one viewport |
 | `Home` / `End` | Jump to top / bottom of the log |
 | `Enter` | Submit input / select a list entry |

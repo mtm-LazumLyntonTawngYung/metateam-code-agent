@@ -127,8 +127,6 @@ export default function GitDiffView({ onBack }: { onBack: () => void }) {
 
   useInput((_input, key) => {
     if (key.escape) { onBack(); return; }
-    if (key.upArrow) setScroll((s) => Math.max(0, s - 1));
-    if (key.downArrow) setScroll((s) => s + 1);
     if (key.leftArrow) setFileIndex((i) => Math.max(0, i - 1));
     if (key.rightArrow) setFileIndex((i) => Math.min(files.length - 1, i + 1));
   });
@@ -238,7 +236,7 @@ export default function GitDiffView({ onBack }: { onBack: () => void }) {
 
       <Box marginTop={1}>
         <Text color={theme.colors.muted}>
-          {"\u2190\u2192"} file  {"\u2191\u2193"} scroll  <Text bold>esc</Text> back
+          {"\u2190\u2192"} file  mouse wheel to scroll  <Text bold>esc</Text> back
         </Text>
       </Box>
     </Box>
