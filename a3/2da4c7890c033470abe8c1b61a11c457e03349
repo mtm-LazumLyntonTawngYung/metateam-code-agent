@@ -1,0 +1,22 @@
+src/agents/index.ts
+  h_10671eecd6b5d0 8
+src/config/index.ts
+  h_10671eecd6b5d0 24
+src/config/schema.ts
+  h_10671eecd6b5d0 112-126
+src/tools/index.ts
+  h_10671eecd6b5d0 6,17,79
+src/tools/websearch.ts
+  h_10671eecd6b5d0 1-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "a32da4c7890c033470abe8c1b61a11c457e03349",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
