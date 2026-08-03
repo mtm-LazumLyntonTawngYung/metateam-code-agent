@@ -1,0 +1,19 @@
+README.md
+  h_10671eecd6b5d0 14,74-87
+  h_10671eecd6b5d0 88
+src/llm/config.ts
+  h_10671eecd6b5d0 46
+src/llm/types.ts
+  h_10671eecd6b5d0 220-249,253-254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "c4fddc6ef1c772fc1ae8b86c1ec02f72ac05a3ab",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
