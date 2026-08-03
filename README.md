@@ -11,8 +11,10 @@ AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to a
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
 - **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter providers with automatic task classification and fallback.
+- **Agent-driven Eval & Benchmarking** — Run the real agent loop against sandboxed tasks with `mtc eval run` and benchmark all tasks with `mtc eval bench`.
+- **Webhook Security Gateway** — Constant-time signature validation for GitHub webhooks and token validation for GitLab; unauthenticated requests return 401.
 - **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but rejected).
-- **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard.
+- **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard with real-time updates, analytics, and export capabilities.
 
 ## Installation
 
@@ -31,6 +33,12 @@ bun run build
 
 # Type check
 bun run typecheck
+
+# Run agent-driven eval against a sandboxed task
+mtc eval run <task> --model <id>
+
+# Benchmark all eval tasks
+mtc eval bench
 ```
 
 The CLI binary is `mtc`.
@@ -71,7 +79,7 @@ MCP servers are loaded from:
 
 ### Custom Agents
 
-Custom agents can be defined in `.mtc/agents/*.md` or `~/.config/mtc/agents/*.md`. Each agent has a system prompt, permissions (`read`, `bash`, `edit`, `execute`), and can operate as a primary or subagent.
+Custom agents can be defined in `.mtc/agents/*.md` or `~/.config/mtc/agents/*.md`. Each agent has a system prompt and permissions (`read`, `bash`, `edit`, `execute`). New custom agents default to `read: allow`, `edit/bash/execute: deny`. Frontmatter `permissions` are honored explicitly (`allow`/`deny`).
 
 ### Rules
 
@@ -106,46 +114,18 @@ Usage analytics are **opt-in** and disabled by default. Enable them with
 with `mtc analytics disable`. Data is stored locally and never includes file
 contents, prompts, or responses. See [docs/internal/privacy-policy.md](docs/internal/privacy-policy.md).
 
+## Security
+
+- **Webhook validation** — GitHub signatures are verified with `crypto.timingSafeEqual` (constant-time comparison); GitLab tokens are validated similarly. Unauthenticated webhook requests return 401.
+- **Clone URL validation** — Strict regex validation on repository clone URLs.
+- **Path traversal prevention** — Resolved-path containment checks for LLM-written files in the autofix pipeline.
+- **License verification** — HMAC-SHA256 license key verification with fail-closed behavior when `MTC_LICENSE_SECRET` is not set.
+- **Auth token storage** — SSO tokens written with 0600 file permissions.
+- **Cross-platform hardening** — CRLF normalization in file reads and MCP plugins; OS temp paths for daemon; `join()`-based path handling.
+
 ## Documentation
 
 - **[Internal Documentation Portal](docs/internal/README.md)** — Onboarding, governance, architecture, workflows
 - **[Internal Playbook](docs/playbook.md)** — Prompt engineering, agent usage, troubleshooting
+- **[Migration Guide](docs/migration-guide.md)** — License format, SSO, agent permissions, and telemetry changes
 - **[Hackathon Guide](docs/hackathon.md)** — Building subagents and MCP plugins
-
-## Development
-
-This project uses:
-- [Bun](https://bun.sh) as the runtime
-- [Ink](https://github.com/vadimdemedes/ink) for the TUI
-- [TypeScript](https://www.typescriptlang.org/) for type safety
-
-### Eval & Benchmarking
-
-The eval suite in `tests/evals/` runs the agent against real coding tasks
-(sandboxed) and checks the result with an assertion script:
-
-```bash
-# List available tasks
-mtc eval list
-
-# Run one task with the agent (requires a configured LLM provider)
-mtc eval run add-unit-tests --model deepseek-chat
-
-# Benchmark all tasks and print a pass/fail score table
-mtc eval bench
-
-# Replay a scripted solution against the task tools (no LLM)
-mtc eval run add-unit-tests --solution tests/evals/add-unit-tests/solution.mtc
-```
-
-Requires an LLM provider key configured via `mtc llm set-provider`. The
-benchmark output (`Score: N/M passed`) is what you'd use to compare model
-and prompt changes against OpenCode/Kilo on the same tasks.
-
-## License
-
-Dual-licensed:
-
-- **MIT** — all code except `src/enterprise/`. See [LICENSE](LICENSE).
-- **Proprietary (Enterprise Edition)** — `src/enterprise/` is commercial
-  and requires a license key. See [LICENSE.ENTERPRISE](LICENSE.ENTERPRISE).
