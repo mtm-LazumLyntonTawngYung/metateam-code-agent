@@ -1,0 +1,224 @@
+src/cli.tsx
+  s_2ec77a14fc4f3a::t_b458c227da5f14 8,160-161
+  s_2ec77a14fc4f3a::t_6a80bbf3e4fdd5 85,87-89,91-93,101,121-159
+tests/unit/eval.test.ts
+  s_2ec77a14fc4f3a::t_8488af51da5f34 1-30
+src/enterprise/types.ts
+  s_3b0d4ac429b85c::t_1022f28718b2bf 64
+tests/unit/analytics.test.ts
+  s_26e656bd37dac4::t_9e6bf5fc559eb0 152
+  s_26e656bd37dac4::t_563b03dbd50078 1-151,153-183
+tests/unit/config.test.ts
+  s_df707af582f0db::t_cbaec8727474ee 1-48,50-131
+  s_df707af582f0db::t_473227d24c63f7 49
+src/session/history.ts
+  s_df707af582f0db::t_630ab74b964a5f 36
+  s_df707af582f0db::t_e53ec462005197 4
+src/telemetry/store.ts
+  s_26e656bd37dac4::t_e2fb394468daac 219-425
+LICENSE.ENTERPRISE
+  s_2ec77a14fc4f3a::t_83706e2ed53105 1-57
+src/eval/types.ts
+  s_2ec77a14fc4f3a::t_d5c5615ae0cb52 28
+src/enterprise/org.ts
+  s_3b0d4ac429b85c::t_46e149f334dbf0 35,45-47
+  s_3b0d4ac429b85c::t_4c7692b2fdc628 198-253
+  s_3b0d4ac429b85c::t_b0ba3dc708835b 148-184
+  s_3b0d4ac429b85c::t_4bc518019a1f97 86-87,99
+src/enterprise/user.ts
+  s_3b0d4ac429b85c::t_bc9a55f8d49aea 15,209
+  s_3b0d4ac429b85c::t_4e7dbe3ecaa9c3 11-12
+  s_3b0d4ac429b85c::t_d8969fbf40cc0c 80,93,103-208
+  s_3b0d4ac429b85c::t_b99a39bd703cb9 210-217
+README.md
+  s_2ec77a14fc4f3a::t_66e9031c3b381e 122-144
+  s_2ec77a14fc4f3a::t_a41c0cd13e2f5d 147-151
+src/eval/index.ts
+  s_2ec77a14fc4f3a::t_568a5c0a675f41 1-2
+src/config/schema.ts
+  s_df707af582f0db::t_86acf09ef727bd 1-305
+src/enterprise/exports.ts
+  s_26e656bd37dac4::t_52e67caf8843f8 125-128,130-132,134-142
+  s_26e656bd37dac4::t_8d4f0f186fe4db 1-124,129,133,143-256
+.kiro/specs/multi-user-shared-sessions/.config.kiro
+  s_2ec77a14fc4f3a::t_2b01d6fefd7dae 1
+CHANGELOG.md
+  s_3b0d4ac429b85c::t_1232c96d12994f 14,16-18
+  s_26e656bd37dac4::t_221d3af8188394 23-26
+  s_2ec77a14fc4f3a::t_9cd18c9fc7fcc1 3,6
+  s_df707af582f0db::t_3378488327bf56 19-22
+src/enterprise/notifications.ts
+  s_df707af582f0db::t_04fa1e4e8152c7 1-93,95,122-257
+  s_df707af582f0db::t_26185792444054 94,96-121
+docs/internal/commercialization.md
+  s_df707af582f0db::t_89811794b50228 45-46,48-52,61-64,68-84,88
+tests/unit/users.test.ts
+  s_3b0d4ac429b85c::t_362d744c6b2826 1-69,71-83,85-99,102-113,115-148
+  s_3b0d4ac429b85c::t_39470fbf1748fa 84
+  s_3b0d4ac429b85c::t_6f9af30004a1da 100-101
+  s_3b0d4ac429b85c::t_452e18ba47c441 70
+  s_3b0d4ac429b85c::t_b1c5fcf61d7004 114
+src/enterprise/realtime.ts
+  s_df707af582f0db::t_a6fec604ef4dbd 1-56,61-92
+  s_df707af582f0db::t_2c8fb6bfa8287f 57-60
+src/enterprise/audit.ts
+  s_df707af582f0db::t_899a5ec447af09 14
+  s_df707af582f0db::t_97fa5fe9ef7719 61-71
+src/eval/runner.ts
+  s_2ec77a14fc4f3a::t_ca432f89818de4 187-286
+  s_2ec77a14fc4f3a::t_8024778ca6e5ba 8-11
+src/enterprise/dashboard.ts
+  s_3b0d4ac429b85c::t_dfd631d76d577d 1470,1473-1482
+  s_3b0d4ac429b85c::t_2ab70a1fa3deab 1945-1952,1960-1987
+  s_df707af582f0db::t_c91540da5fb974 637-638
+  s_26e656bd37dac4::t_17b27f4987a251 3061
+  s_df707af582f0db::t_d2dbdd15c68683 512-517
+  s_3b0d4ac429b85c::t_1ef3cb92ed83c8 108-125
+  s_df707af582f0db::t_42d5ac2e920472 660-690,692-819
+  s_26e656bd37dac4::t_2ecd30522ca036 3120-3121
+  s_df707af582f0db::t_f2bfac8f381e9e 643
+  s_df707af582f0db::t_64de272426fecc 1390
+  s_df707af582f0db::t_0afda876ac0d2b 558-559
+  s_26e656bd37dac4::t_728b4996b7730d 2873-3030,3033-3060,3062-3065
+  s_df707af582f0db::t_7c671e12f882ac 3087-3088
+  s_3b0d4ac429b85c::t_2c557499afc64a 244-247
+  s_3b0d4ac429b85c::t_31f69b7d7fe5ee 11
+  s_26e656bd37dac4::t_e65c255b4d6412 820-847,850-1318,1320
+  s_3b0d4ac429b85c::t_d3cb0def3a90df 1427,1429-1444
+  s_df707af582f0db::t_d559d912db3e08 3119
+  s_26e656bd37dac4::t_5f9d4a31596d0a 34-50
+  s_df707af582f0db::t_db22bcf0486e2f 482
+  s_26e656bd37dac4::t_b35d6ea1b665ba 3077,3089-3091,3093-3095
+  s_df707af582f0db::t_a008e87ad6e985 642,645-649,652,654,656
+  s_3b0d4ac429b85c::t_9cc753ac1072e5 2298-2300,2304,2306-2332,2334
+  s_df707af582f0db::t_8e81cf9b5453ee 2804-2872
+  s_3b0d4ac429b85c::t_f1d842ee97bafa 3450-3466
+  s_df707af582f0db::t_ca99c2f75c52a7 3789-3841
+  s_df707af582f0db::t_fc3a6f84dff1df 476-481
+  s_26e656bd37dac4::t_1227ced6e3f08b 2144
+  s_df707af582f0db::t_3e027b02effbd4 3085-3086
+  s_df707af582f0db::t_3900867d0ba82b 3475
+  s_26e656bd37dac4::t_cd80e7ad2e6aaf 3236-3265
+  s_df707af582f0db::t_523f78dd82f3e6 3495-3537
+  s_df707af582f0db::t_cea5bf666bf61a 3693-3724
+  s_3b0d4ac429b85c::t_0264856012f457 3125-3183,3294-3299,3416-3449,3467-3474,3476-3482,3538-3550,3563-3565,3725
+  s_3b0d4ac429b85c::t_e47e04ee095f1e 1319,1321-1329,1385-1386,1393-1426,1428,1445-1454,1456-1457,1468-1469,1471-1472,1483-1488,1533-1541,1598-1604,1618-1702,2501,2624-2626,2663-2689,3122-3124
+  s_26e656bd37dac4::t_cb51e6aef5b716 3388
+  s_3b0d4ac429b85c::t_a4a9289266b03c 3184-3230,3232-3235
+  s_26e656bd37dac4::t_830d280a1e7ff1 848-849
+  s_df707af582f0db::t_45a7540b78a177 331-335
+  s_3b0d4ac429b85c::t_141e3bd1761946 18
+  s_df707af582f0db::t_641f6c55f15c9b 3551-3562
+  s_df707af582f0db::t_79ca84b99fefbc 1493-1516
+  s_3b0d4ac429b85c::t_65d2ce36d23940 535-536
+  s_26e656bd37dac4::t_36f7b38239538e 2103-2110
+  s_df707af582f0db::t_9dc975266590a1 2690-2803
+  s_df707af582f0db::t_6b85dc859d0797 52-60
+  s_3b0d4ac429b85c::t_275d6cf97efe45 17,30
+  s_df707af582f0db::t_4a020f6f1b8ac5 3117-3118
+  s_df707af582f0db::t_4df48f7ca1b789 2078-2081
+  s_26e656bd37dac4::t_b70e1da82ae6bb 3304-3313,3316-3320
+  s_df707af582f0db::t_dbf21b3649d871 1489-1492,1517-1532
+  s_df707af582f0db::t_8097ac086db818 1330-1384,1387-1389,1391-1392
+  s_3b0d4ac429b85c::t_03961f3fa41a38 1953-1959
+  s_df707af582f0db::t_26a8af6a0810a8 61-64,68
+  s_26e656bd37dac4::t_e8338131bae4f5 2213-2275
+  s_3b0d4ac429b85c::t_fedaad67ed79c5 12-15
+  s_3b0d4ac429b85c::t_c12f7276bd7b32 2579-2581,2597-2623,2627-2662
+  s_26e656bd37dac4::t_8c10f9ab613b9b 3300-3303,3314-3315,3321-3387
+  s_3b0d4ac429b85c::t_607051bc13623f 3738-3753,3784
+  s_3b0d4ac429b85c::t_082767be48ad84 249-257,260-262,264,267,269-270,272-276,278,280-288,290-293,295-296,298-302,304,306-314,316-319,321-330,338
+  s_3b0d4ac429b85c::t_ac11629837d938 443-464,466-475,483-511,518-533,538-555
+  s_26e656bd37dac4::t_241f8eec47495d 2364-2382,2384-2401,2403-2407,2409-2468,2471-2479,2482-2500,2502-2512
+  s_df707af582f0db::t_572f13784da94a 3778-3783
+  s_3b0d4ac429b85c::t_110b1b1f429faf 341-377,379,382-420,422-442
+  s_3b0d4ac429b85c::t_bfe60de413a403 3389-3415
+  s_df707af582f0db::t_b2a701d8c23806 3754-3777
+  s_3b0d4ac429b85c::t_6449e03a1b8b20 3588-3621,3726-3737
+  s_df707af582f0db::t_d4ad9eda3cd89f 3483-3494
+  s_df707af582f0db::t_c911af46705057 337
+  s_26e656bd37dac4::t_20fb9eda1e860e 3266-3289
+  s_3b0d4ac429b85c::t_e1422846eaa488 240-242,258,265-266
+  s_df707af582f0db::t_5d3e94283145ed 2090-2098
+  s_df707af582f0db::t_471609fad44fd5 1605-1613
+  s_df707af582f0db::t_034db8f197dd46 19-29
+  s_26e656bd37dac4::t_c98856338a4b72 84
+  s_3b0d4ac429b85c::t_9b198287bb796d 2516-2553,2558-2576
+  s_df707af582f0db::t_ce16b9f2ec0009 639
+  s_df707af582f0db::t_4b681f154e629f 566-626,628-636,640-641,644,650-651,653,655,657-659
+  s_df707af582f0db::t_df8245e3c93080 3622-3692
+  s_3b0d4ac429b85c::t_c8a460f51da309 1455,1458-1467
+  s_df707af582f0db::t_33d290aaa4e0d9 1832-1836
+  s_26e656bd37dac4::t_46a842bb24599f 1998-2039,2046
+  s_df707af582f0db::t_3d3eb0f10a86b1 65-67
+  s_26e656bd37dac4::t_fe37940221f59d 69-83
+  s_26e656bd37dac4::t_4b2d965a2dcad9 1614-1617
+  s_26e656bd37dac4::t_afa1bd6a94e52f 3566-3587
+  s_26e656bd37dac4::t_5188ef8a2aaa47 1542-1597
+  s_df707af582f0db::t_0f8c5b7b34ea85 556-557,561-565
+tests/unit/exports.test.ts
+  s_26e656bd37dac4::t_6f20c8c1dbcc35 72
+  s_26e656bd37dac4::t_c7f68b6606ef15 1-71,73-88
+package.json
+  s_2ec77a14fc4f3a::t_31c039a35d6285 3
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_26e656bd37dac4::t_8a1faacc3ea6a9 516-524
+  s_26e656bd37dac4::t_1a155ac16d6652 499-508
+  s_df707af582f0db::t_6856eebd7890b0 411-458
+  s_3b0d4ac429b85c::t_70fdb92c7abc2b 351-368
+  s_26e656bd37dac4::t_557db04b6869fb 468-469
+  s_26e656bd37dac4::t_87ba44a9b06eeb 477
+  s_2ec77a14fc4f3a::t_f0f6bba6e70ba7 485-491
+  s_3b0d4ac429b85c::t_9503d1e31c4aae 372-398
+  s_3b0d4ac429b85c::t_0dc7f8f56a5fad 406
+  s_2ec77a14fc4f3a::t_e5cd010636baa7 340-350,369-371,399-405,407-410,459-467,470-476,478-484,492-498,509-515,525-711
+src/telemetry/reporter.ts
+  s_26e656bd37dac4::t_1df6b75168c95d 9-152,157-165,167-177
+  s_26e656bd37dac4::t_93f34fcccb7ff9 153-156,166
+src/enterprise/index.ts
+  s_df707af582f0db::t_5a4d127447f6e0 21-33
+LICENSE
+  s_2ec77a14fc4f3a::t_7ffdc707001dcc 1-11,14
+.kiro/specs/multi-user-shared-sessions/requirements.md
+  s_2ec77a14fc4f3a::t_f6014e7282ddd6 1-138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "d1c56be7f7ec82ed6fba3b3b487f7de26714702d",
+  "prompts": {},
+  "sessions": {
+    "s_26e656bd37dac4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03ac2ad0dffesyDE0XmNRjR3Kj",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_2ec77a14fc4f3a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03ab03acfffe2jUfc6YmCj4ufy",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_df707af582f0db": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03f25c4d8ffe3adwbmh8ykMOeo",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
