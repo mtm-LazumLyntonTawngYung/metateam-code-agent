@@ -1,0 +1,118 @@
+src/enterprise/audit.ts
+  s_26e656bd37dac4::t_c6caaf95af25c0 39
+  s_26e656bd37dac4::t_850d670374c2be 19-20
+  s_26e656bd37dac4::t_ab2cf0169157ff 218-253
+  s_26e656bd37dac4::t_50397afedba411 10,21-23,40-43
+  s_26e656bd37dac4::t_6ae7ca9476a724 59-117,126-127,130-131
+src/enterprise/security.ts
+  s_26e656bd37dac4::t_824e9854d700bf 1-396,402-421
+  s_26e656bd37dac4::t_5d4f9fca86e777 397-401
+src/enterprise/tier.ts
+  s_26e656bd37dac4::t_f13a3e89ba21ca 14
+  s_26e656bd37dac4::t_2f57998f1a0f20 43,53
+src/enterprise/dashboard.ts
+  s_4af6d351ca3c35::t_da9cd9e448b8bc 116
+  s_4af6d351ca3c35::t_a21352bb3d8df5 362-370
+  s_4af6d351ca3c35::t_549d19c91adc67 4843-4847
+  s_4af6d351ca3c35::t_5dabaf0d2cd9a2 1901-1910
+  s_26e656bd37dac4::t_52092296428503 4825-4842
+  s_4af6d351ca3c35::t_e0f6db6da00f1e 1497-1498
+  s_26e656bd37dac4::t_66327f12992474 2058-2098,2102-2114,2121-2136
+  s_26e656bd37dac4::t_2f22cc71173781 1353-1354,1356-1375
+  s_4af6d351ca3c35::t_2dfed065c1ea83 1355
+  s_4af6d351ca3c35::t_c63108dfa4653f 397-405
+  s_4af6d351ca3c35::t_9074cfea6bb05c 2907-2916
+  s_26e656bd37dac4::t_56705278c3e8e6 3643,3664-3665,3667,3669
+  s_4af6d351ca3c35::t_65798b7207953b 1533
+  s_4af6d351ca3c35::t_13eeaecd5e214a 4512-4519
+  s_4af6d351ca3c35::t_0c6fcb98e6dfc2 1678-1679
+  s_4af6d351ca3c35::t_7f96b2054209b6 1477-1478
+  s_4af6d351ca3c35::t_0dd725e441b4f9 4545-4560
+  s_4af6d351ca3c35::t_614f71f24e2dd1 97
+  s_4af6d351ca3c35::t_40825422a2b252 1536-1537
+  s_26e656bd37dac4::t_91fd2f41ff794b 3946-4005
+  s_4af6d351ca3c35::t_3a2a1ce15f2ade 1377
+  s_4af6d351ca3c35::t_5f36120d36c390 1662-1670
+  s_26e656bd37dac4::t_5546c1ca7468ef 3657-3663
+  s_26e656bd37dac4::t_39c379579b27f2 113
+  s_26e656bd37dac4::t_3848c0feae574f 16
+  s_4af6d351ca3c35::t_e1e567a367e402 1635-1643
+  s_4af6d351ca3c35::t_6e6d7c5e3a1a0f 1524-1525
+  s_4af6d351ca3c35::t_a658c1f2c2afb5 1726-1748
+  s_4af6d351ca3c35::t_d4301e07db7843 424-432
+  s_4af6d351ca3c35::t_686d13c4c255c1 2099-2101
+  s_4af6d351ca3c35::t_16aa21a2165556 265-273
+  s_26e656bd37dac4::t_e782a69aebf1d2 3772
+  s_26e656bd37dac4::t_32bed75b9574ab 2650-2661
+  s_4af6d351ca3c35::t_7c479edeb025ef 1704-1705
+  s_4af6d351ca3c35::t_94ec90a49171f5 1581-1589
+  s_4af6d351ca3c35::t_c3565b10e9d82d 1551-1559
+  s_4af6d351ca3c35::t_4496e19888ae28 1314
+  s_4af6d351ca3c35::t_7fc95a2fe53ea2 1597-1598
+  s_4af6d351ca3c35::t_56707a09d55e67 1651-1652
+  s_4af6d351ca3c35::t_c837c386056628 2697-2700
+  s_4af6d351ca3c35::t_c0af1d9078465e 3687-3710
+  s_4af6d351ca3c35::t_c73e987b972923 4488-4511
+  s_4af6d351ca3c35::t_e419e5460486cb 4848-4866
+  s_26e656bd37dac4::t_20132759d13b4b 1376
+  s_4af6d351ca3c35::t_d00091d8ccfc18 1612-1620
+  s_4af6d351ca3c35::t_c9fd11c870519d 1714-1722
+  s_26e656bd37dac4::t_82fb48a9cbf383 2695
+  s_4af6d351ca3c35::t_6615d3cca5d497 1511-1512
+  s_4af6d351ca3c35::t_bd19e9efd56fbd 3797-3800,3823-3827
+  s_4af6d351ca3c35::t_9fa6c241adbf29 1777
+  s_26e656bd37dac4::t_91cc66cf9d415a 4445-4487,4520-4544,4561-4577
+  s_26e656bd37dac4::t_6ab3e032ea1131 4026-4028
+  s_4af6d351ca3c35::t_4efdf56d5d2aa4 1439-1472
+  s_4af6d351ca3c35::t_1e6675030e8a61 2118-2120
+  s_26e656bd37dac4::t_8a7181350e419f 112
+  s_4af6d351ca3c35::t_9622efca603172 3840
+  s_26e656bd37dac4::t_eb27404a6bb41d 85-96,98-111,114-115,117,2696
+  s_4af6d351ca3c35::t_b01585d3779077 1628-1629
+  s_4af6d351ca3c35::t_3d6d288d51e1a8 1688-1696
+  s_26e656bd37dac4::t_4bda9305050b0b 3677-3686,3711-3771,3773-3796,3801-3822,3828-3833,3841-3931,3943-3945
+  s_26e656bd37dac4::t_d2cd1276ede992 2115-2117
+  s_26e656bd37dac4::t_40451453a0636a 247-255
+  s_26e656bd37dac4::t_48d6c5b587882d 1424-1438,1473-1476,1479-1496,1499-1510,1513-1523,1526-1532,1534-1535,1538-1550,1560-1566,1569-1580,1590-1596,1599-1611,1621-1627,1630-1634,1644-1650,1653-1661,1671-1677,1680-1687,1697-1703,1706-1713,1723-1725
+  s_4af6d351ca3c35::t_659d9a037592bf 1567-1568
+  s_4af6d351ca3c35::t_14117209cda5a1 315-338
+  s_4af6d351ca3c35::t_6e6e438012119e 3932-3942
+  s_4af6d351ca3c35::t_4989a39aaeb247 3834-3839
+tests/unit/rbac.test.ts
+  s_26e656bd37dac4::t_d1286e6ff89b9b 1-155
+src/enterprise/index.ts
+  s_4af6d351ca3c35::t_f7cd6a1b21c309 37-84
+  s_4af6d351ca3c35::t_f6b1d40af995f1 13
+src/enterprise/rbac.ts
+  s_26e656bd37dac4::t_1279e1354f6585 1-422,431-464,466-470
+  s_26e656bd37dac4::t_3676a834409f47 423-430
+  s_26e656bd37dac4::t_bae4e8dadee456 465
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_4af6d351ca3c35::t_57bf6ded698cca 529-530,538,545-546,549,551-552,560,568-569,577
+tests/unit/security-monitoring.test.ts
+  s_26e656bd37dac4::t_94aebac1ff807b 1-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "7863c1a7e16dc86cd1045d0287ed1e9deae51a5a",
+  "prompts": {},
+  "sessions": {
+    "s_26e656bd37dac4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03ac2ad0dffesyDE0XmNRjR3Kj",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_4af6d351ca3c35": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03a847b05ffezuGe4ApurHAsLr",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
