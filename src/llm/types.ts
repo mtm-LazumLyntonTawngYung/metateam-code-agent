@@ -217,10 +217,40 @@ export const KNOWN_MODELS: ModelConfig[] = [
     maxTokens: 4096,
     contextWindow: 4096,
   },
+  {
+    id: "qwen2.5-1.5b-instruct-q4_0",
+    displayName: "Qwen 2.5 1.5B Instruct Q4_0 (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
+  {
+    id: "qwen2.5-7b-instruct",
+    displayName: "Qwen 2.5 7B Instruct (Local)",
+    provider: "llamacpp",
+    tier: "default",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
+  {
+    id: "qwen2.5-1.5b-instruct-q8_0",
+    displayName: "Qwen 2.5 1.5B Instruct Q8_0 (Local)",
+    provider: "llamacpp",
+    tier: "fast",
+    costPer1kInput: 0,
+    costPer1kOutput: 0,
+    maxTokens: 4096,
+    contextWindow: 4096,
+  },
 ];
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
-  fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "qwen2.5-1.5b-instruct"],
-  default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o"],
+  fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
+  default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o", "qwen2.5-7b-instruct"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };

@@ -43,7 +43,7 @@ export const DEFAULT_PROVIDERS: ProviderConfig[] = [
     label: "Local Llama",
     apiKey: "",
     baseUrl: "http://localhost:8080/v1",
-    models: ["qwen2.5-1.5b-instruct"],
+    models: ["qwen2.5-7b-instruct", "qwen2.5-1.5b-instruct", "qwen2.5-1.5b-instruct-q4_0", "qwen2.5-1.5b-instruct-q8_0"],
   },
 ];
 

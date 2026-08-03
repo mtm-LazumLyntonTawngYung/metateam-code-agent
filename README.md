@@ -11,6 +11,7 @@ AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to a
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
 - **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter providers with automatic task classification and fallback.
+- **Local LLM Support** — Run local models via llama.cpp (`llama-server`) for offline/private use.
 - **Agent-driven Eval & Benchmarking** — Run the real agent loop against sandboxed tasks with `mtc eval run` and benchmark all tasks with `mtc eval bench`.
 - **Webhook Security Gateway** — Constant-time signature validation for GitHub webhooks and token validation for GitLab; unauthenticated requests return 401.
 - **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but rejected).
@@ -69,6 +70,21 @@ mtc llm status
 mtc llm set-provider --id deepseek --key sk-...
 mtc llm set-routing --simple deepseek-chat --default deepseek-chat --reasoning claude-sonnet-4-20250514
 ```
+
+### Local LLMs (llama.cpp)
+
+You can run local models using [llama.cpp](https://github.com/ggerganov/llama.cpp):
+
+```bash
+# Start llama-server on port 8080
+llama-server -hf Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M --port 8080
+
+# Configure metateam to use it
+mtc llm set-provider -i llamacpp -k dummy -u http://localhost:8080/v1 -m qwen2.5-7b-instruct
+mtc llm set-routing --default qwen2.5-7b-instruct
+```
+
+**Note:** Models with <7B parameters may not reliably support tool calling. For full agent functionality (file editing, bash execution), use models with 7B+ parameters.
 
 ### MCP Servers
 
