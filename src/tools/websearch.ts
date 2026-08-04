@@ -1,5 +1,11 @@
+import { z } from "zod";
 import { loadConfig } from "../config";
 import type { ToolDefinition } from "./schema";
+
+const WebSearchSchema = z.object({
+  query: z.string().describe("Search query string"),
+  max_results: z.number().int().positive().max(10).optional().describe("Maximum number of results to return (default: 5, max: 10)"),
+});
 
 const websearchTool: ToolDefinition = {
   name: "websearch",
@@ -21,7 +27,9 @@ const websearchTool: ToolDefinition = {
     },
     required: ["query"],
   },
+  schema: WebSearchSchema,
   execute(args) {
+    const parsed = WebSearchSchema.parse(args);
     const cfg = loadConfig();
     if (!cfg.webSearch?.enabled) {
       return {
@@ -30,8 +38,8 @@ const websearchTool: ToolDefinition = {
       };
     }
 
-    const query = args.query as string;
-    const maxResults = Math.min((args.max_results as number | undefined) ?? 5, 10);
+    const query = parsed.query;
+    const maxResults = Math.min(parsed.max_results ?? 5, 10);
 
     return fetchSearchResults(query, maxResults);
   },

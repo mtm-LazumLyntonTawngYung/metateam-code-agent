@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type JsonSchema = {
   type: "object";
   properties: Record<
@@ -22,5 +24,6 @@ export type ToolDefinition = {
   name: string;
   description: string;
   parameters: JsonSchema;
+  schema?: z.ZodObject<any>;
   execute: (args: Record<string, unknown>) => ToolResult | Promise<ToolResult>;
 };

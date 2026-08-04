@@ -1,4 +1,8 @@
 import type { NotificationMessage, PipelineStatus } from "./types";
+import { logger } from "../utils/logger";
+
+const NOTIFICATION_RETRIES = 3;
+const NOTIFICATION_BASE_DELAY_MS = 500;
 
 export async function sendNotification(
   channel: "slack" | "teams",
@@ -7,18 +11,28 @@ export async function sendNotification(
 ): Promise<void> {
   const body = channel === "slack" ? buildSlackPayload(msg) : buildTeamsPayload(msg);
 
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      console.warn(`Notification to ${channel} failed: ${res.status} ${await res.text().catch(() => "")}`);
+  for (let attempt = 0; attempt < NOTIFICATION_RETRIES; attempt++) {
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        logger.info("Notification sent", { channel, status: res.status });
+        return;
+      }
+      const text = await res.text().catch(() => "");
+      logger.warn("Notification attempt failed", { channel, status: res.status, body: text, attempt });
+    } catch (err) {
+      logger.warn("Notification attempt error", { channel, error: err instanceof Error ? err.message : String(err), attempt });
     }
-  } catch (err) {
-    console.warn(`Notification to ${channel} failed: ${err instanceof Error ? err.message : String(err)}`);
+    if (attempt < NOTIFICATION_RETRIES - 1) {
+      const delay = NOTIFICATION_BASE_DELAY_MS * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
   }
+  logger.error("Notification failed after retries", { channel, webhookUrl, title: msg.title });
 }
 
 function statusColor(status: PipelineStatus): string {

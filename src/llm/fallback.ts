@@ -8,6 +8,7 @@ export type FallbackResult =
 
 export async function completeWithFallback(
   req: CompletionRequest,
+  candidateModels: string[] = [],
 ): Promise<FallbackResult> {
   const cfg = loadLlmConfig();
   const errors: ProviderError[] = [];
@@ -19,7 +20,9 @@ export async function completeWithFallback(
 
   for (const provider of orderedProviders) {
     if (!provider.apiKey) continue;
-    if (!provider.models.includes(req.model)) continue;
+
+    const model = pickModel(provider, req.model, candidateModels);
+    if (!model) continue;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
@@ -27,7 +30,7 @@ export async function completeWithFallback(
     try {
       const response = await complete({
         ...req,
-        model: req.model,
+        model,
         signal: controller.signal,
       });
 
@@ -65,6 +68,24 @@ export async function completeWithFallback(
   }
 
   return { ok: false, errors };
+}
+
+/**
+ * Picks the best model to use for a given provider when falling back:
+ * 1. The originally requested model, if the provider serves it.
+ * 2. A matching candidate model the caller offered (e.g. routing tiers).
+ * 3. The provider's first configured model, as a last resort.
+ */
+function pickModel(
+  provider: { models: string[] },
+  requested: string,
+  candidates: string[],
+): string | null {
+  if (provider.models.includes(requested)) return requested;
+  for (const c of candidates) {
+    if (provider.models.includes(c)) return c;
+  }
+  return provider.models[0] ?? null;
 }
 
 export function formatFallbackErrors(errors: ProviderError[]): string {

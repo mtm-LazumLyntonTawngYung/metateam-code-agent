@@ -1,6 +1,8 @@
-import { mkdirSync, writeFileSync } from "fs";
+import { z } from "zod";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, resolve, normalize } from "path";
 import type { ToolDefinition } from "./schema";
+import { recordPatch } from "../session/patches";
 
 const BLOCKED_PATHS = [
   /[/\\]etc[/\\]((shadow|passwd|sudoers|hosts|hostname|resolv\.conf)(\b|$))/i,
@@ -12,7 +14,7 @@ const BLOCKED_PATHS = [
   /[/\\]\.git[/\\]config/i,
 ];
 
-function isPathBlocked(absolutePath: string): string | null {
+export function isPathBlocked(absolutePath: string): string | null {
   for (const pattern of BLOCKED_PATHS) {
     if (pattern.test(absolutePath)) {
       return `Writing to this location is blocked for security: ${absolutePath}`;
@@ -20,6 +22,11 @@ function isPathBlocked(absolutePath: string): string | null {
   }
   return null;
 }
+
+const WriteFileSchema = z.object({
+  path: z.string().describe("Absolute or relative path of the file to write"),
+  content: z.string().describe("The full content to write to the file"),
+});
 
 const writeFileTool: ToolDefinition = {
   name: "write_file",
@@ -38,14 +45,28 @@ const writeFileTool: ToolDefinition = {
     },
     required: ["path", "content"],
   },
+  schema: WriteFileSchema,
   execute(args) {
-    const path = resolve(normalize(args.path as string));
-    const content = args.content as string;
+    const parsed = WriteFileSchema.parse(args);
+    const path = resolve(normalize(parsed.path));
+    const content = parsed.content;
 
     const blocked = isPathBlocked(path);
     if (blocked) {
       return { success: false, error: blocked };
     }
+
+    let originalContent = "";
+    try {
+      originalContent = readFileSync(path, "utf-8");
+    } catch {
+      // file is new; originalContent stays empty
+    }
+
+    recordPatch(path, originalContent, content, "write_file", {
+      path,
+      bytes: Buffer.byteLength(content, "utf-8"),
+    });
 
     try {
       mkdirSync(dirname(path), { recursive: true });

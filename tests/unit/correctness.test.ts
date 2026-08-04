@@ -4,7 +4,7 @@ import { filterKnownModels, DEFAULT_PROVIDERS } from "../../src/llm/config";
 import { MAX_FILE_SIZE } from "../../src/tools/read_file";
 import { registerTool, getTool, getAllTools } from "../../src/tools/index";
 import { parseFrontmatter } from "../../src/agents/frontmatter";
-import { OpenAIStreamAccumulator } from "../../src/llm/client";
+import { OpenAIStreamAccumulator } from "../../src/llm/providers/openai";
 import { prop, randInt, randStr } from "./prop";
 
 describe("Property 5: Resource Management Bounds", () => {

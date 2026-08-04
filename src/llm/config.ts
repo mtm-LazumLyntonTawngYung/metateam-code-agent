@@ -1,5 +1,11 @@
 import { loadConfig, saveConfig } from "../config";
 import { KNOWN_MODELS, type ModelConfig, type ProviderConfig, type ProviderId } from "./types";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+
+const MODELS_CACHE_PATH = join(homedir(), ".config", "mtc", "models.json");
+const MODELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type LlmConfig = {
   providers: ProviderConfig[];
@@ -112,14 +118,84 @@ export function getConfiguredModelIds(): string[] {
 
 export function filterKnownModels(configuredIds: string[]): ModelConfig[] {
   const ids = new Set(configuredIds);
-  return KNOWN_MODELS.filter((m) => ids.has(m.id));
+  return getAllKnownModels().filter((m) => ids.has(m.id));
 }
 
 export function findModel(id: string) {
-  return KNOWN_MODELS.find((m) => m.id === id);
+  return getAllKnownModels().find((m) => m.id === id);
 }
 
 export function findProvider(modelId: string): ProviderConfig | undefined {
   const cfg = loadLlmConfig();
   return cfg.providers.find((p) => p.models.includes(modelId));
 }
+
+export function getAllKnownModels(): ModelConfig[] {
+  const cached = readModelsCache();
+  if (cached.length > 0) return cached;
+  return KNOWN_MODELS;
+}
+
+export function readModelsCache(): ModelConfig[] {
+  try {
+    if (!existsSync(MODELS_CACHE_PATH)) return [];
+    const raw = readFileSync(MODELS_CACHE_PATH, "utf-8");
+    const data = JSON.parse(raw) as { models?: ModelConfig[]; updatedAt?: number };
+    if (!data.models || !Array.isArray(data.models)) return [];
+    if (data.updatedAt && Date.now() - data.updatedAt > MODELS_CACHE_TTL_MS) return [];
+    return data.models;
+  } catch {
+    return [];
+  }
+}
+
+export function writeModelsCache(models: ModelConfig[]): void {
+  try {
+    const dir = join(homedir(), ".config", "mtc");
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    writeFileSync(MODELS_CACHE_PATH, JSON.stringify({ models, updatedAt: Date.now() }, null, 2), "utf-8");
+  } catch {
+    // ignore cache write errors
+  }
+}
+
+export async function refreshModels(): Promise<{ added: number; total: number }> {
+  try {
+    const res = await fetch("https://models.dev/api/v1/models", {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`models.dev responded ${res.status}`);
+    const data = (await res.json()) as Record<string, unknown>;
+    const models: ModelConfig[] = [];
+    for (const [id, info] of Object.entries(data as Record<string, { provider?: string; pricing?: { prompt?: string; completion?: string }; context_length?: number }>)) {
+      const providerMap: Record<string, ProviderId> = {
+        openai: "openai", anthropic: "anthropic", google: "openrouter", meta: "openrouter",
+        mistral: "openrouter", deepseek: "deepseek", cohere: "openrouter", amazon: "openrouter",
+      };
+      const provider = providerMap[info.provider ?? ""] ?? "openrouter";
+      const promptPrice = parsePrice(info.pricing?.prompt);
+      const completionPrice = parsePrice(info.pricing?.completion);
+      models.push({
+        id,
+        displayName: id.split("/").pop() ?? id,
+        provider,
+        tier: "default",
+        costPer1kInput: promptPrice,
+        costPer1kOutput: completionPrice,
+        maxTokens: Math.min(info.context_length ?? 4096, 8192),
+        contextWindow: info.context_length ?? 4096,
+      });
+    }
+    writeModelsCache(models);
+    return { added: models.length, total: models.length };
+  } catch {
+    return { added: 0, total: 0 };
+  }
+}
+
+function parsePrice(value: unknown): number {
+  if (typeof value !== "string") return 0;
+  const num = parseFloat(value);
+  return Number.isFinite(num) ? num : 0;
+}
+

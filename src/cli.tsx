@@ -6,7 +6,7 @@ import App from "./ui/App";
 import { VERSION } from "./version";
 import { clearAuth, isAuthenticated, getAuth } from "./auth/index";
 import { listTasks, runTask, runAgentEval } from "./eval/index";
-import { ensureTelemetryConfig, saveConfig } from "./config";
+import { ensureTelemetryConfig, saveConfig, loadConfig } from "./config";
 import { isTelemetryEnabled } from "./telemetry/store";
 import { generateReport, printReport } from "./telemetry/reporter";
 import { startServer } from "./server/index";
@@ -38,6 +38,9 @@ import {
   type LicenseInfo,
   type Tier,
 } from "./enterprise/index";
+import { join } from "path";
+import { homedir } from "os";
+import { listSessions, getPatches, revertFileToVersion } from "./session/index";
 
 const program = new Command();
 
@@ -607,6 +610,100 @@ authCmd
     } else {
       console.log("\n  No active auth session found.\n");
     }
+  });
+
+const sessionCmd = program.command("session").description("Manage agent session history and checkpoints");
+
+sessionCmd
+  .command("list")
+  .description("List recorded sessions")
+  .option("-n, --limit <n>", "Max sessions to show", "20")
+  .action((options: { limit?: string }) => {
+    const limit = Math.max(1, Math.min(100, parseInt(options.limit ?? "20", 10) || 20));
+    const sessions = listSessions(limit);
+    if (sessions.length === 0) {
+      console.log("\n  No sessions recorded yet.\n");
+      return;
+    }
+    console.log(`\n  ${sessions.length} session(s):`);
+    console.log(`  ${"=".repeat(50)}`);
+    for (const s of sessions) {
+      const label = s.label ?? "(untitled)";
+      console.log(`  ${s.id.slice(0, 8)}  ${new Date(s.updated_at + "Z").toLocaleString()}  ${label}`);
+    }
+    console.log(`\n  Use the full id with 'mtc session patches <id>' or 'mtc session revert <id> <file>'.\n`);
+  });
+
+sessionCmd
+  .command("patches")
+  .description("List recorded file checkpoints for a session")
+  .argument("<session>", "Session id")
+  .argument("[file]", "Filter to a single file path")
+  .action((session: string, file?: string) => {
+    const patches = getPatches(session).filter((p) => !file || p.file_path === file);
+    if (patches.length === 0) {
+      console.log(`\n  No recorded patches${file ? ` for '${file}'` : ""} in session ${session}.\n`);
+      return;
+    }
+    console.log(`\n  ${patches.length} recorded change(s):`);
+    console.log(`  ${"=".repeat(50)}`);
+    for (const p of patches) {
+      const tool = p.tool_name ?? "unknown";
+      const line = `${p.id.toString().padStart(4)}  ${new Date(p.created_at + "Z").toLocaleString()}  [${tool}]  ${p.file_path}`;
+      console.log(`  ${line}`);
+    }
+    console.log(`\n  Restore with: mtc session revert ${session} <file> [version]\n`);
+  });
+
+sessionCmd
+  .command("revert")
+  .description("Restore a file to an earlier recorded state (checkpoint undo)")
+  .argument("<session>", "Session id")
+  .argument("<file>", "File path to restore")
+  .option("-v, --version <n>", "Version to restore: 0 = original before session edits, 1..N = Nth edit", "0")
+  .action((session: string, file: string, options: { version?: string }) => {
+    const version = parseInt(options.version ?? "0", 10);
+    if (Number.isNaN(version) || version < 0) {
+      console.error(`\n  Invalid version '${options.version}'. Use 0 for original or 1..N for edits.\n`);
+      process.exit(1);
+    }
+    const result = revertFileToVersion(session, file, version);
+    if (result.ok) {
+      console.log(
+        `\n  Restored '${file}' to version ${result.restoredVersion} (${result.content.length} bytes).\n`,
+      );
+    } else {
+      console.error(`\n  Revert failed: ${result.error}\n`);
+      process.exit(1);
+    }
+  });
+
+const debugCmd = program.command("debug").description("Debug info and diagnostics");
+debugCmd
+  .command("info")
+  .description("Show current config, model, and session state")
+  .action(() => {
+    const cfg = loadConfig();
+    const llm = loadLlmConfig();
+    console.log(`\n  MTC Debug Info`);
+    console.log(`  ${"=".repeat(50)}`);
+    console.log(`  Config path: ${join(homedir(), ".config", "mtc", "config.json")}`);
+    console.log(`  Theme: ${cfg.themeId ?? "default"}`);
+    console.log(`  Web search: ${cfg.webSearch?.enabled ? "enabled" : "disabled"}`);
+    console.log(`  Telemetry: ${isTelemetryEnabled() ? "enabled" : "disabled"}`);
+    console.log(`\n  Providers:`);
+    for (const p of llm.providers) {
+      const key = p.apiKey ? `${p.apiKey.slice(0, 8)}...` : "not set";
+      console.log(`    ${p.id.padEnd(14)} ${p.label.padEnd(12)} key: ${key}`);
+      console.log(`    ${"".padEnd(14)} ${p.baseUrl}`);
+      console.log(`    ${"".padEnd(14)} models: ${p.models.join(", ")}`);
+    }
+    console.log(`\n  Routing:`);
+    console.log(`    Simple:    ${llm.routing.simpleModel}`);
+    console.log(`    Default:   ${llm.routing.defaultModel}`);
+    console.log(`    Reasoning: ${llm.routing.reasoningModel}`);
+    console.log(`    Reasoning enabled: ${llm.routing.reasoningEnabled}`);
+    console.log();
   });
 
 program.parse(process.argv);

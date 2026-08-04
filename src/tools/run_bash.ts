@@ -1,6 +1,13 @@
+import { z } from "zod";
 import { spawn } from "child_process";
 import { redactText } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
+
+const RunBashSchema = z.object({
+  command: z.string().describe("The shell command to execute"),
+  timeout: z.number().int().positive().max(120000).optional().describe("Optional timeout in milliseconds (default: 30000, max: 120000)"),
+  workdir: z.string().optional().describe("Optional working directory (defaults to current project root)"),
+});
 
 const runBashTool: ToolDefinition = {
   name: "run_bash",
@@ -26,13 +33,12 @@ const runBashTool: ToolDefinition = {
     },
     required: ["command"],
   },
+  schema: RunBashSchema,
   execute(args) {
-    const command = args.command as string;
-    const timeout = Math.min(
-      (args.timeout as number | undefined) ?? 30000,
-      120000,
-    );
-    const workdir = args.workdir as string | undefined;
+    const parsed = RunBashSchema.parse(args);
+    const command = parsed.command;
+    const timeout = Math.min(parsed.timeout ?? 30000, 120000);
+    const workdir = parsed.workdir;
 
     const isWin = process.platform === "win32";
     const shellCmd = isWin
@@ -40,9 +46,10 @@ const runBashTool: ToolDefinition = {
       : ["bash", "-c"];
 
     return new Promise((resolve) => {
+      const safeEnv = sanitizeEnv(process.env);
       const proc = spawn(shellCmd[0], [...shellCmd.slice(1), command], {
         cwd: workdir || process.cwd(),
-        env: { ...process.env },
+        env: safeEnv,
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       });
@@ -102,5 +109,19 @@ const runBashTool: ToolDefinition = {
     });
   },
 };
+
+function sanitizeEnv(env: Record<string, string | undefined>): Record<string, string> {
+  const allowed = new Set([
+    "PATH", "HOME", "USER", "SHELL", "LANG", "LC_ALL", "LC_CTYPE",
+    "NODE_ENV", "BUN_INSTALL", "BUN_INSTALL_CACHE",
+  ]);
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (allowed.has(k) || k.startsWith("MTC_") || k.startsWith("MT_")) {
+      if (typeof v === "string") out[k] = v;
+    }
+  }
+  return out;
+}
 
 export default runBashTool;
