@@ -1,0 +1,56 @@
+src/agents/agent-loop.ts
+  s_47297bcaddc2b7::t_51aeac10c9666a 164,182-200
+  s_47297bcaddc2b7::t_08604bce69dff8 2,6-7
+  s_47297bcaddc2b7::t_e0540669443152 242
+  s_47297bcaddc2b7::t_b175d2846ec19f 263-265
+  s_47297bcaddc2b7::t_29426539266c7d 210-211,218-225
+  s_47297bcaddc2b7::t_e4b61f658300f3 226-228
+src/llm/fallback.ts
+  s_47297bcaddc2b7::t_54d31d72ede33d 73-90
+  s_47297bcaddc2b7::t_5e2c393e5336df 11,23-25,33
+src/cli.tsx
+  s_47297bcaddc2b7::t_d41152ad577eee 43
+  s_47297bcaddc2b7::t_c1fe653058a541 615-680,689,700,707
+  s_47297bcaddc2b7::t_754b0d4098af09 41-42
+  s_47297bcaddc2b7::t_1d971c90f66b12 681-683,686-688
+  s_47297bcaddc2b7::t_0b2aa3836570b5 690-692,697-699
+  s_47297bcaddc2b7::t_1a5d245ee4c74e 701-706
+  s_47297bcaddc2b7::t_edd4800b63ae72 708
+src/session/index.ts
+  s_47297bcaddc2b7::t_77bd68b4595a35 15-17,19-25,42
+  s_47297bcaddc2b7::t_c99c69ade02a4f 18
+  s_47297bcaddc2b7::t_300c3e581ed641 41
+  s_47297bcaddc2b7::t_c6395ed9c3e201 43-45
+src/tools/edit_file.ts
+  s_47297bcaddc2b7::t_4ade2eeaa9b58b 3,5-12,17,27,36,38-46,54-68,70,73-75,79-100,106-111,122-129
+src/llm/providers/openai.ts
+  s_47297bcaddc2b7::t_c7e06b50ede433 6-186
+  s_47297bcaddc2b7::t_0ec02347e041cd 3-5
+  s_47297bcaddc2b7::t_d8c9b9032be202 187-189
+src/session/patches.ts
+  s_47297bcaddc2b7::t_4128ce4b5b4262 153
+  s_47297bcaddc2b7::t_a5c4cb82430219 89-98,100-152,154-185
+  s_47297bcaddc2b7::t_4b1332edc8aac7 2-4,88
+  s_47297bcaddc2b7::t_97a744f2a51d65 63,71-87
+  s_47297bcaddc2b7::t_f027d35a45532d 99
+src/tools/write_file.ts
+  s_47297bcaddc2b7::t_a5f922f376cc16 59-70
+  s_47297bcaddc2b7::t_3eef262be4cc1a 2,5,17
+  s_47297bcaddc2b7::t_f3fb2707f54169 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "84efdaaed6c989b78460bccd6fbcb6aafc10dd04",
+  "prompts": {},
+  "sessions": {
+    "s_47297bcaddc2b7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_034d8e120ffeL1uvvQEOhdDvw9",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
