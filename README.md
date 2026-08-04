@@ -17,19 +17,93 @@ AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to a
 - **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but rejected).
 - **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard with real-time updates, analytics, and export capabilities.
 
+## Prerequisites
+
+- [Bun](https://bun.sh) v1.2+ (runtime)
+- Git
+
 ## Installation
 
+### From npm
+
 ```bash
+npm install -g @metateam/cli
+mtc --version
+```
+
+Requires **Bun** v1.2+ (https://bun.sh) to be installed.
+
+### Quick Install (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mtm-LazumLyntonTawngYung/metateam-code-agent/develop/install.sh | bash
+```
+
+Installs the latest pre-built binary to `/usr/local/bin`. Override the install directory:
+
+```bash
+MTC_INSTALL_DIR=~/.local/bin curl -fsSL ... | bash
+```
+
+### Cross-Platform (Build + Install)
+
+```bash
+git clone git@github.com:mtm-LazumLyntonTawngYung/metateam-code-agent.git
+cd metateam-code-agent
 bun install
+bun run build
+```
+
+Then add the binary to your `PATH`:
+
+```powershell
+# Windows (PowerShell, current session)
+$env:PATH += ";D:\path\to\metateam-code-agent\bin"
+
+# Windows (permanent, user-level)
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";D:\path\to\metateam-code-agent\bin", "User")
+```
+
+```bash
+# macOS / Linux
+export PATH="$PATH:/path/to/metateam-code-agent/bin"
+# Or move it somewhere already on PATH
+sudo cp bin/mtc /usr/local/bin/
+```
+
+### From Source (All Platforms)
+
+```bash
+git clone git@github.com:mtm-LazumLyntonTawngYung/metateam-code-agent.git
+cd metateam-code-agent
+bun install
+bun run build    # compiles to bin/mtc.exe (or bin/mtc on Unix)
+```
+
+Add `bin/` to your `PATH`, or run directly:
+
+```powershell
+.\bin\mtc.exe --version     # Windows
+./bin/mtc --version          # macOS / Linux
+```
+
+### Docker
+
+```bash
+docker build -t mtc .
+docker run -it mtc
 ```
 
 ## Usage
 
 ```bash
-# Development
+# Start the TUI
+mtc
+
+# Development (run from source without building)
 bun run dev
 
-# Build binary
+# Build standalone binary
 bun run build
 
 # Type check
@@ -40,6 +114,9 @@ mtc eval run <task> --model <id>
 
 # Benchmark all eval tasks
 mtc eval bench
+
+# Start the enterprise dashboard (requires license)
+mtc enterprise dashboard -p 3000
 ```
 
 The CLI binary is `mtc`.

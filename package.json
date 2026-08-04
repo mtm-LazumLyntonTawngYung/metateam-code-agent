@@ -1,5 +1,5 @@
 {
-  "name": "metateam-code-agent",
+  "name": "@metateam/cli",
   "version": "0.6.0",
   "description": "AI-powered, terminal-first coding assistant for MetaTeam engineers",
   "license": "MIT",
@@ -14,6 +14,25 @@
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "test:eval": "bun run src/cli.tsx eval"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mtm-LazumLyntonTawngYung/metateam-code-agent.git"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "peerDependencies": {
+    "bun": ">=1.2.0"
+  },
+  "peerDependenciesMeta": {
+    "bun": {
+      "optional": false
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",

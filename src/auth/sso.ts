@@ -7,11 +7,14 @@ import { ensureUserProvisioned } from "../enterprise/user";
 const AUTH_FILE = path.join(os.homedir(), ".config", "mtc", "auth.json");
 const ALLOWED_DOMAIN = "metateammyanmar.com";
 
+const DEFAULT_AZURE_CLIENT_ID = "159fbf0f-82f2-4b4e-a1b5-e4734cf9ffc6";
+const DEFAULT_AZURE_TENANT_ID = "30102b23-c817-43f8-b2de-e77962e3a3e0";
+
 function getAzureConfig(): { clientId: string; tenantId: string; clientSecret: string } {
   const auth = loadConfig().auth ?? {};
   return {
-    clientId: process.env.MTC_AZURE_CLIENT_ID ?? auth.clientId ?? "",
-    tenantId: process.env.MTC_AZURE_TENANT_ID ?? auth.tenantId ?? "",
+    clientId: process.env.MTC_AZURE_CLIENT_ID ?? auth.clientId ?? DEFAULT_AZURE_CLIENT_ID,
+    tenantId: process.env.MTC_AZURE_TENANT_ID ?? auth.tenantId ?? DEFAULT_AZURE_TENANT_ID,
     clientSecret: process.env.MTC_AZURE_CLIENT_SECRET ?? auth.clientSecret ?? "",
   };
 }
