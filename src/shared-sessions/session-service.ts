@@ -8,7 +8,7 @@ import type {
   ParticipantRole,
   AccessLevel,
 } from "./types";
-import { broadcastSessionEvent } from "./event-bus";
+import { broadcastSessionEvent, clearAllHandlers } from "./event-bus";
 
 export function createSession(input: CreateSessionInput): SharedSession {
   const id = randomUUID();
