@@ -1,0 +1,35 @@
+README.md
+  s_8d4def0149096f::t_d26b06a18a12cc 155-156
+  s_8d4def0149096f::t_ead9b144c2be50 28-30
+  s_8d4def0149096f::t_7f5842501388a9 13-14
+  s_8d4def0149096f::t_dfb51924a1cecb 203-205
+  s_8d4def0149096f::t_a0a61a569541dd 239-240
+  s_8d4def0149096f::t_0be5589d4d3a49 23-24
+  s_8d4def0149096f::t_3360ec5ea9a583 242-243
+  s_8d4def0149096f::t_3fabe47a17df6b 190-194
+  s_8d4def0149096f::t_6c0cf261d3a77c 25-27
+  s_8d4def0149096f::t_6ceb4d7d6f6a71 20-22
+  s_8d4def0149096f::t_bec4e7c0fc470b 198-199
+  s_8d4def0149096f::t_42ad5e808dc91a 3-4
+  s_8d4def0149096f::t_a8c2c1fe1dbe06 17-18
+  s_8d4def0149096f::t_bd81839d613f8f 177-179
+  s_8d4def0149096f::t_8c880e5b319154 234-236
+  s_8d4def0149096f::t_dd410dbd96c887 8-9
+  s_8d4def0149096f::t_ed343867284784 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "440b6a12acd8e235095a643e05a53caee13fe12c",
+  "prompts": {},
+  "sessions": {
+    "s_8d4def0149096f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0350a19a8ffeJRmHqlNilZaFpI",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
