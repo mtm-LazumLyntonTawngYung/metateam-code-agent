@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Box, Text, useInput, useWindowSize } from "ink";
+import { randomUUID } from "crypto";
 import HomeScreen from "./Home";
 import ChatView from "./ChatView";
 import AgentSelector from "./AgentSelector";
@@ -61,6 +62,24 @@ import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
 import type { UpdateInfo } from "../utils/updater";
+import { getDb } from "../shared-sessions/db";
+import type { Participant } from "../shared-sessions/types";
+import {
+  createSession as createSharedSession,
+  getSession as getSharedSession,
+  listSessions,
+} from "../shared-sessions/session-service";
+import {
+  joinSession,
+  leaveSession,
+  getSessionParticipants,
+  updateConnectionStatus,
+} from "../shared-sessions/participant-service";
+import { canPerformAction } from "../shared-sessions/permission-engine";
+import { createSessionLink, validateSessionLink } from "../shared-sessions/session-link-service";
+import { subscribe, broadcastSessionEvent } from "../shared-sessions/event-bus";
+import { getSessionOperations } from "../shared-sessions/collaboration-service";
+import CollabOverlay from "./CollabOverlay";
 import type { AgentUpdate } from "../agents/agent-loop";
 
 type LogEntry =
@@ -111,6 +130,17 @@ export default function App() {
   const [showMcps, setShowMcps] = useState(false);
   const [showVariants, setShowVariants] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [showCollab, setShowCollab] = useState(false);
+  const [sharedSessionId, setSharedSessionId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [collabToken, setCollabToken] = useState<string | null>(null);
+  const [sharedSessionName, setSharedSessionName] = useState<string>("");
+  const [sharedSessionStatus, setSharedSessionStatus] = useState<string>("active");
+  const localParticipantIdRef = useRef<string | null>(null);
+  const localUserIdRef = useRef<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const previousLocalSessionIdRef = useRef<string | null>(null);
+  const previousLocalLogsRef = useRef<LogEntry[]>([]);
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
   const [modelId, setModelId] = useState(() => {
     try { return loadLlmConfig().routing.defaultModel; }
@@ -144,6 +174,60 @@ const abortControllerRef = useRef<AbortController | null>(null);
     const t = setTimeout(() => setNotification(null), 3000);
     return () => clearTimeout(t);
   }, [notification]);
+
+  useEffect(() => {
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showCollab || !sharedSessionId) {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+      return;
+    }
+
+    const unsub = subscribe(sharedSessionId, (event) => {
+      switch (event.type) {
+        case "participant_joined":
+        case "participant_left":
+        case "session_updated":
+        case "cursor_update":
+        case "selection_update": {
+          const parts = getSessionParticipants(sharedSessionId);
+          setParticipants(parts);
+          break;
+        }
+        case "operation": {
+          setParticipants(getSessionParticipants(sharedSessionId));
+          break;
+        }
+        case "session_created":
+        case "session_deleted": {
+          setNotification(event.type === "session_created" ? "Session created" : "Session deleted");
+          break;
+        }
+        default:
+          break;
+      }
+    });
+
+    unsubscribeRef.current = unsub;
+
+    const parts = getSessionParticipants(sharedSessionId);
+    setParticipants(parts);
+
+    return () => {
+      unsub();
+      unsubscribeRef.current = null;
+    };
+  }, [showCollab, sharedSessionId]);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -205,18 +289,19 @@ const abortControllerRef = useRef<AbortController | null>(null);
       if (showVariants) { setShowVariants(false); return; }
       if (showThemePicker) { setShowThemePicker(false); return; }
       if (showSessions) { setShowSessions(false); return; }
+      if (showCollab) { setShowCollab(false); return; }
       if (view !== "home") { setView("home"); return; }
       return;
     }
-    if (key.tab && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
+    if (key.tab && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions && !showCollab) {
       setShowAgents(true);
       return;
     }
-    if (key.ctrl && _input === "p" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
+    if (key.ctrl && _input === "p" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions && !showCollab) {
       setShowCommands(true);
       return;
     }
-    if (_input === "/" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
+    if (_input === "/" && !showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions && !showCollab) {
       setShowCommands(true);
       return;
     }
@@ -233,10 +318,10 @@ const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
-    if (value.startsWith("/") && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions) {
+    if (value.startsWith("/") && !showCommands && !showModelPicker && !showHelp && !showSkills && !showMcps && !showVariants && !showThemePicker && !showSessions && !showCollab) {
       setShowCommands(true);
     }
-  }, [showCommands, showModelPicker, showHelp, showSkills, showMcps, showVariants, showThemePicker, showSessions]);
+  }, [showCommands, showModelPicker, showHelp, showSkills, showMcps, showVariants, showThemePicker, showSessions, showCollab]);
 
   const requestToolExecution = useCallback(
     async (
@@ -262,6 +347,16 @@ const abortControllerRef = useRef<AbortController | null>(null);
           setPendingPerm({ toolName: name, args, resolve });
         });
       }
+
+      if (showCollab && sharedSessionId && localUserIdRef.current) {
+        if (!canPerformAction(sharedSessionId, localUserIdRef.current, "edit")) {
+          return {
+            success: false,
+            error: "Permission denied: you do not have edit access in this shared session.",
+          };
+        }
+      }
+
       return executeTool(name, args, ctx);
     },
     [],
@@ -393,6 +488,11 @@ const abortControllerRef = useRef<AbortController | null>(null);
   }, [agentBusy, startAgentLoop]);
 
   const handleSubmit = (value: string) => {
+    if (value === "share") value = "/share";
+    else if (value.startsWith("join ")) value = "/join " + value.slice(5);
+    else if (value === "leave") value = "/leave";
+    else if (value === "participants") value = "/participants";
+
     if (value.startsWith("/")) {
       if (value === "/connect" || value.startsWith("/connect ")) {
         setView("connect");
@@ -419,6 +519,13 @@ const abortControllerRef = useRef<AbortController | null>(null);
         return;
       }
       if (value === "/help") { setShowHelp(true); return; }
+      if (value === "/clear") {
+        setAgentLogs([]);
+        setQuery("");
+        setView("home");
+        setNotification("Conversation cleared");
+        return;
+      }
       if (value === "/init") {
         setQuery(value);
         setView("chat");
@@ -511,6 +618,152 @@ const abortControllerRef = useRef<AbortController | null>(null);
       }
       if (value === "/themes") { setShowThemePicker(true); return; }
       if (value === "/variants") { setShowVariants(true); setQuery(""); return; }
+      if (value === "/share") {
+        const currentLocalId = currentSessionId ?? getSessionId();
+        if (!currentLocalId) {
+          setNotification("No active session to share");
+          return;
+        }
+        try {
+          getDb();
+          const auth = getAuth();
+          const userId = auth?.userEmail ?? randomUUID();
+          const displayName = auth?.userName ?? auth?.userEmail ?? `User-${userId.slice(0, 6)}`;
+          let shared = createSharedSession({
+            name: `Shared: ${query || "Session"}`,
+            description: `Shared from local session ${currentLocalId.slice(0, 8)}`,
+            ownerId: userId,
+            maxParticipants: 10,
+            isEncrypted: false,
+            isEphemeral: false,
+          });
+          const participant = joinSession({
+            sessionId: shared.id,
+            userId,
+            displayName,
+            role: "owner",
+            accessLevel: "edit",
+          });
+          if (!participant) {
+            setNotification("Failed to join shared session");
+            return;
+          }
+          localParticipantIdRef.current = participant.id;
+          localUserIdRef.current = userId;
+          const link = createSessionLink({
+            sessionId: shared.id,
+            accessLevel: "edit",
+            createdBy: userId,
+          });
+          if (!link) {
+            setNotification("Failed to create session link");
+            return;
+          }
+          previousLocalSessionIdRef.current = currentLocalId;
+          previousLocalLogsRef.current = agentLogs;
+          const ops = getSessionOperations(shared.id);
+          const logs: LogEntry[] = ops.length > 0
+            ? ops.map((op) => ({
+                kind: "message" as const,
+                text: `[${op.type}] ${op.fileId}:${op.position}${op.content ? ` ${op.content}` : ""}`,
+              }))
+            : [];
+          setSharedSessionId(shared.id);
+          setSharedSessionName(shared.name);
+          setSharedSessionStatus(shared.status);
+          setCollabToken(link.token);
+          setParticipants([participant]);
+          setAgentLogs(logs);
+          setShowCollab(true);
+          setShowCommands(false);
+          setQuery("");
+          setView("chat");
+          setNotification(`Shared session created. Token: ${link.token.slice(0, 16)}...`);
+        } catch (e) {
+          setNotification(`Share failed: ${(e as Error).message}`);
+        }
+        return;
+      }
+      if (value.startsWith("/join ")) {
+        const token = value.slice(6).trim();
+        if (!token) {
+          setNotification("Usage: /join <token>");
+          return;
+        }
+        try {
+          getDb();
+          const validated = validateSessionLink(token);
+          if (!validated) {
+            setNotification("Invalid or expired session token");
+            return;
+          }
+          const auth = getAuth();
+          const userId = auth?.userEmail ?? randomUUID();
+          const displayName = auth?.userName ?? auth?.userEmail ?? `User-${userId.slice(0, 6)}`;
+          const participant = joinSession({
+            sessionId: validated.sessionId,
+            userId,
+            displayName,
+            role: "viewer",
+            accessLevel: "edit",
+          });
+          if (!participant) {
+            setNotification("Failed to join session (full or inactive)");
+            return;
+          }
+          localParticipantIdRef.current = participant.id;
+          localUserIdRef.current = userId;
+          const shared = getSharedSession(validated.sessionId);
+          if (!shared) {
+            setNotification("Session not found");
+            return;
+          }
+          previousLocalSessionIdRef.current = currentSessionId ?? getSessionId();
+          previousLocalLogsRef.current = agentLogs;
+          const ops = getSessionOperations(validated.sessionId);
+          const logs: LogEntry[] = ops.length > 0
+            ? ops.map((op) => ({
+                kind: "message" as const,
+                text: `[${op.type}] ${op.fileId}:${op.position}${op.content ? ` ${op.content}` : ""}`,
+              }))
+            : [];
+          setSharedSessionId(shared.id);
+          setSharedSessionName(shared.name);
+          setSharedSessionStatus(shared.status);
+          setCollabToken(null);
+          setParticipants([participant]);
+          setAgentLogs(logs);
+          setShowCollab(true);
+          setShowCommands(false);
+          setQuery("");
+          setView("chat");
+          setNotification(`Joined session: ${shared.name}`);
+        } catch (e) {
+          setNotification(`Join failed: ${(e as Error).message}`);
+        }
+        return;
+      }
+      if (value === "/leave") {
+        leaveSharedSession();
+        return;
+      }
+      if (value === "/participants") {
+        if (!showCollab || !sharedSessionId) {
+          const sessions = listSessions(undefined, 20);
+          if (sessions.length === 0) {
+            setNotification("No active shared sessions");
+          } else {
+            const names = sessions.map(s => `${s.name} (${s.id.slice(0, 8)})`).join(", ");
+            setNotification(`Active sessions: ${names}`);
+          }
+          return;
+        }
+        setShowCollab(true);
+        setShowCommands(false);
+        setQuery("");
+        setNotification(`Participants: ${participants.length}`);
+        return;
+      }
       setShowCommands(true);
       return;
     }
@@ -608,6 +861,38 @@ const abortControllerRef = useRef<AbortController | null>(null);
     [currentSessionId, handleNewSession],
   );
 
+  const leaveSharedSession = useCallback(() => {
+    if (sharedSessionId && localParticipantIdRef.current) {
+      try {
+        const auth = getAuth();
+        const userId = auth?.userEmail ?? localParticipantIdRef.current;
+        leaveSession(sharedSessionId, userId);
+      } catch {
+        // ignore leave errors
+      }
+    }
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+    const restoredLogs = previousLocalLogsRef.current;
+    const restoredSessionId = previousLocalSessionIdRef.current;
+    setShowCollab(false);
+    setSharedSessionId(null);
+    setParticipants([]);
+    setCollabToken(null);
+    setSharedSessionName("");
+    setSharedSessionStatus("active");
+    localParticipantIdRef.current = null;
+    localUserIdRef.current = null;
+    if (restoredSessionId) {
+      setCurrentSessionId(restoredSessionId);
+      setSessionId(restoredSessionId);
+      setAgentLogs(restoredLogs);
+    }
+    setNotification("Left shared session");
+  }, [sharedSessionId]);
+
   const handleSelectCommand = (id: string) => {
     setShowCommands(false);
     setQuery("");
@@ -623,6 +908,12 @@ const abortControllerRef = useRef<AbortController | null>(null);
       setAuthName("");
     }
     if (id === "agents") setShowAgents(true);
+    if (id === "clear") {
+      setAgentLogs([]);
+      setQuery("");
+      setView("home");
+      setNotification("Conversation cleared");
+    }
     if (id === "diff") setView("diff");
     if (id === "editor") {
       const editor = process.env.EDITOR || "code";
@@ -654,6 +945,22 @@ const abortControllerRef = useRef<AbortController | null>(null);
     }
     if (id === "sessions" || id === "session") setShowSessions(true);
     if (id === "skills") setShowSkills(true);
+    if (id === "share") {
+      setShowCommands(false);
+      handleSubmit("/share");
+    }
+    if (id === "join") {
+      setShowCommands(false);
+      setQuery("join ");
+    }
+    if (id === "leave") {
+      setShowCommands(false);
+      handleSubmit("/leave");
+    }
+    if (id === "participants") {
+      setShowCommands(false);
+      handleSubmit("/participants");
+    }
     const skillCmd = getInstalledSkills().find((s) => s.id === id);
     if (skillCmd) { setNotification(`Running skill: ${skillCmd.name}`); }
     if (id === "status") {
@@ -819,6 +1126,28 @@ const abortControllerRef = useRef<AbortController | null>(null);
               onDelete={handleDeleteSession}
             />
           )}
+          {showCollab && sharedSessionId && (
+            <CollabOverlay
+              session={{
+                id: sharedSessionId,
+                name: sharedSessionName,
+                description: "",
+                status: sharedSessionStatus as "active" | "paused" | "ended" | "archived",
+                ownerId: "",
+                createdAt: "",
+                updatedAt: "",
+                maxParticipants: 10,
+                isEncrypted: false,
+                isEphemeral: false,
+                metadata: {},
+              }}
+              participants={participants}
+              currentUserId={getAuth()?.userEmail ?? localParticipantIdRef.current ?? ""}
+              sessionToken={collabToken ?? undefined}
+              onClose={() => setShowCollab(false)}
+              onLeave={leaveSharedSession}
+            />
+          )}
           {!showAgents && !showCommands && !showModelPicker && !showHelp && !showSkills && !showVariants && !showThemePicker && !showMcps && !showSessions && view === "chat" && (
             <ChatView
               query={query}
@@ -828,6 +1157,12 @@ const abortControllerRef = useRef<AbortController | null>(null);
               isAgentRunning={agentBusy}
               agentLogs={agentLogs}
               onFreeformInput={handleFreeformInput}
+              onSlashCommand={handleSubmit}
+              onClearConversation={() => {
+                setAgentLogs([]);
+                setQuery("");
+                setView("home");
+              }}
               queuedCount={promptQueueRef.current.length}
             />
           )}

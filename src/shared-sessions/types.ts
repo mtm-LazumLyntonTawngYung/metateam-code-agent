@@ -144,7 +144,7 @@ export type VariableWatch = {
 };
 
 export type SessionEvent = {
-  type: "participant_joined" | "participant_left" | "operation" | "conflict" | "snapshot" | "permission_changed" | "session_created" | "session_updated" | "session_deleted";
+  type: "participant_joined" | "participant_left" | "operation" | "cursor_update" | "selection_update" | "conflict" | "snapshot" | "permission_changed" | "session_created" | "session_updated" | "session_deleted";
   sessionId: string;
   participantId?: string;
   timestamp: string;
