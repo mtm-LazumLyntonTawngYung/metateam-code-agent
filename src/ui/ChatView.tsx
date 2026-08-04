@@ -14,6 +14,8 @@ type ChatViewProps = {
   isAgentRunning: boolean;
   agentLogs: LogEntry[];
   onFreeformInput: (text: string) => void;
+  onSlashCommand: (value: string) => void;
+  onClearConversation: () => void;
   queuedCount: number;
 };
 
@@ -189,6 +191,8 @@ export default function ChatView({
   isAgentRunning,
   agentLogs,
   onFreeformInput,
+  onSlashCommand,
+  onClearConversation,
   queuedCount,
 }: ChatViewProps) {
   const theme = useTheme();
@@ -373,6 +377,15 @@ export default function ChatView({
       const cmd = parts[0].toLowerCase();
       const rest = parts.slice(1);
 
+      if (cmd === "/clear") {
+        setBusy(false);
+        setLogs([{ kind: "message", text: "Conversation cleared", color: theme.colors.muted }]);
+        setScrollTop(0);
+        setStickToBottom(true);
+        onClearConversation();
+        return;
+      }
+
       let result: ToolResult;
 
       if (cmd === "/subagent" && rest[0]) {
@@ -422,6 +435,9 @@ export default function ChatView({
           setBusy(true);
           result = await requestTool(handler.toolName, handler.mapArgs(rest));
           setBusy(false);
+        } else if (trimmed.startsWith("/")) {
+          onSlashCommand(trimmed);
+          return;
         } else {
           result = { success: false, error: USAGE_TEXT };
         }
@@ -429,7 +445,7 @@ export default function ChatView({
 
       setLogs((prev) => [...prev, { kind: "tool_result", result }]);
     },
-    [busy, isAgentRunning, requestTool, onFreeformInput],
+    [busy, isAgentRunning, requestTool, onFreeformInput, onSlashCommand, onClearConversation],
   );
 
   return (
