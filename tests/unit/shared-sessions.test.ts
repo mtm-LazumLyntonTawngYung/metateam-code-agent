@@ -56,9 +56,11 @@ import {
   removeVariableWatch,
 } from "../../src/shared-sessions/context-sharing-service";
 import { getDb, closeDb } from "../../src/shared-sessions/db";
+import { clearAllHandlers } from "../../src/shared-sessions/event-bus";
 
 describe("Shared Sessions", () => {
   beforeAll(() => {
+    clearAllHandlers();
     getDb();
   });
 

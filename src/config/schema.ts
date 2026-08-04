@@ -110,6 +110,21 @@ export const CONFIG_SCHEMA: ConfigField[] = [
     ],
   },
   {
+    key: "webSearch",
+    label: "Web Search",
+    type: "object",
+    description: "Configuration for web search integration.",
+    fields: [
+      {
+        key: "enabled",
+        label: "Enabled",
+        type: "boolean",
+        description: "Enable web search tool. Requires agent bash permission.",
+        default: false,
+      },
+    ],
+  },
+  {
     key: "llm",
     label: "LLM Providers",
     type: "object",
@@ -249,7 +264,8 @@ function validateValue(field: ConfigField, value: unknown, errors: string[], lab
       errors.push(`${label} must be one of: ${field.enum.join(", ")}`);
       return false;
     }
-    if (field.max !== undefined && value.length > field.max) errors.push(`${label} must be at most ${field.max} characters`);
+    if (field.max !== undefined && value.length > field.max)
+      errors.push(`${label} must be at most ${field.max} characters`);
     return true;
   }
   if (field.type === "stringArray") {

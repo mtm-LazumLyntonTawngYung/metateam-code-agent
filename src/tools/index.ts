@@ -3,6 +3,7 @@ import writeFileTool from "./write_file";
 import editFileTool from "./edit_file";
 import runBashTool from "./run_bash";
 import globFilesTool from "./glob_files";
+import websearchTool from "./websearch";
 import type { ToolDefinition, ToolResult } from "./schema";
 import type { ToolDefinition as LlmToolDefinition } from "../llm/types";
 import { trackToolCall } from "../telemetry/tracker";
@@ -13,6 +14,7 @@ const toolRegistry: Record<string, ToolDefinition> = {
   edit_file: editFileTool,
   run_bash: runBashTool,
   glob_files: globFilesTool,
+  websearch: websearchTool,
 };
 
 export type { ToolDefinition, ToolResult, JsonSchema } from "./schema";
@@ -74,4 +76,5 @@ export {
   editFileTool,
   runBashTool,
   globFilesTool,
+  websearchTool,
 };
