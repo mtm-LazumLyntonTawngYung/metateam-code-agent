@@ -1,0 +1,14 @@
+src/shared-sessions/session-service.ts
+  h_10671eecd6b5d0 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "01095e07a02f5a8f57b97f1382424db03121499a",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
