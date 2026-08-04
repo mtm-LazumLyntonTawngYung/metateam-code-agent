@@ -1,0 +1,113 @@
+src/session/summary.ts
+  s_51ed67f737be20::t_7e672f74da57c8 5
+  s_51ed67f737be20::t_4b7926025a49a2 3
+  s_51ed67f737be20::t_b1841a2aef4d0b 66-67
+  s_51ed67f737be20::t_47bcae62f9191c 105
+  s_51ed67f737be20::t_a4db103186c4e5 131
+src/tools/apply_patch.ts
+  s_51ed67f737be20::t_7e9f1601c84eac 222-223,232,234,236-247,249-251,254,257-263,265,269-271
+  s_51ed67f737be20::t_5ea7d1df84b6f8 1-221,224-231,233,235,248,252-253,255-256,264,266-268,272-276
+src/tools/run_bash.ts
+  s_51ed67f737be20::t_ef33dd4dbebcb8 3,5,14-42
+  s_51ed67f737be20::t_774fa4cfe007f6 69,73-85,92,101,103,105,121-123,126-128,133-134,139,142,148
+  s_51ed67f737be20::t_90f7c5412a1cb4 43
+src/plugins/index.ts
+  s_51ed67f737be20::t_888a3a805a3174 1-8,10,17,20-27,32-43,45,47-70,78,83,87-89,91-95,99-101,104-112,115-122
+  s_51ed67f737be20::t_b98ebc515674d7 9
+  s_51ed67f737be20::t_88e1e313baeb50 11-16,18-19,28-31,44,46,71-77,79-82,84-86,90,96-98,102-103,113-114,123
+src/agents/subagent.ts
+  s_51ed67f737be20::t_3c553bffba8953 1-4,6,21-30,73,100-109,111-139,145-157,159-179,181,183,186,188-203,205-207
+  s_51ed67f737be20::t_432efc706e5e29 8
+  s_51ed67f737be20::t_00d376eda432c2 180,182,184-185,187,204
+  s_51ed67f737be20::t_a4d0ebb1394daf 110
+  s_51ed67f737be20::t_53bbac2db19ddf 140-144,158
+src/cli.tsx
+  s_51ed67f737be20::t_07f7c74a300f86 683-687,690-715
+  s_51ed67f737be20::t_2cf485b31babaf 53
+  s_51ed67f737be20::t_c018e53032d7a2 44
+  s_51ed67f737be20::t_881cb0f8c8b9c2 688-689
+src/config/index.ts
+  s_51ed67f737be20::t_fe0ae15234f87f 25-28
+src/session/tokens.ts
+  s_51ed67f737be20::t_e738458449b3ea 41-46
+  s_51ed67f737be20::t_8b4f72de7f6da8 1-2
+  s_51ed67f737be20::t_3ce68b03443aa8 16-17,20-21,25,31-40,47-48
+src/tools/task.ts
+  s_51ed67f737be20::t_536ea13c2d693a 61-69
+  s_51ed67f737be20::t_5ad5c7d60c3f15 1-60,70-186
+src/tools/edit_file.ts
+  s_51ed67f737be20::t_06a05833fdf5d7 71-98,102-104
+  s_51ed67f737be20::t_dfc30ce0378cb7 161-224
+src/tools/permissions.ts
+  s_51ed67f737be20::t_bb916aa3c4bb31 2-3,5-27,33-47,49-59,61-63,66-150,155,170,175-183
+src/ui/App.tsx
+  s_51ed67f737be20::t_6a7589ac273294 18-22
+  s_51ed67f737be20::t_e6ed3b0e711056 245,248-254,257,260-263,265,275-278
+src/tools/schema.ts
+  s_51ed67f737be20::t_f8dd8834813832 23-27,33-36
+src/config/schema.ts
+  s_51ed67f737be20::t_31512f8d98d8f9 127-134
+src/tools/index.ts
+  s_51ed67f737be20::t_830de2b22841bb 8-11,25-29
+  s_51ed67f737be20::t_3d8dd0d21d42ce 63,81
+src/llm/client.ts
+  s_51ed67f737be20::t_9d053decc71276 29-33
+  s_51ed67f737be20::t_045701ef0211a5 15,17-21,23-28,34-45,50-52
+src/plugins/types.ts
+  s_51ed67f737be20::t_c2aa36fae8b9bd 1-30
+src/plugins/loader.ts
+  s_51ed67f737be20::t_207d9000547c3c 1-46,48-64
+  s_51ed67f737be20::t_4388b2986dd3aa 47
+tests/unit/f11-tools.test.ts
+  s_51ed67f737be20::t_9847a231c908d4 14-17
+  s_51ed67f737be20::t_53d6ae82b51fbd 143
+  s_51ed67f737be20::t_ff7a794c0e55fd 172
+  s_51ed67f737be20::t_fa95807187df58 109-110
+  s_51ed67f737be20::t_834a56fb1705e4 195-223
+  s_51ed67f737be20::t_1776694d0927f9 1-13,18-43,46-108,111-142,144-171,173-194,224
+  s_51ed67f737be20::t_a6a5228f9c6efd 44-45
+examples/plugins/hello.ts
+  s_51ed67f737be20::t_b593daea3c6de5 1-33
+src/session/epoch.ts
+  s_51ed67f737be20::t_73061711ae052c 1-73
+src/agents/agent-loop.ts
+  s_51ed67f737be20::t_73ceb881e19a1d 9
+  s_51ed67f737be20::t_54bb4ce8e44ccd 48-49
+  s_51ed67f737be20::t_f4c5b1cfdbba3a 110
+  s_51ed67f737be20::t_afd6f1bfdaf541 40,50
+  s_51ed67f737be20::t_7419e24b6fc43c 144,153
+  s_51ed67f737be20::t_92a1e2547be499 269-278
+  s_51ed67f737be20::t_299c1326de9e99 304
+  s_51ed67f737be20::t_67bd36ebad184c 119
+src/tools/grep_files.ts
+  s_51ed67f737be20::t_24c507e60edff5 68-76,100
+  s_51ed67f737be20::t_090028ae53b99c 4
+  s_51ed67f737be20::t_386d95271a089a 153-200
+src/tools/git.ts
+  s_51ed67f737be20::t_709779dd364edd 1-102
+src/session/db.ts
+  s_51ed67f737be20::t_98b2377e4132e7 5
+  s_51ed67f737be20::t_4c8508358030b2 106-112
+src/tools/skill.ts
+  s_51ed67f737be20::t_2d53d4eff8ff3b 1-80
+src/llm/config.ts
+  s_51ed67f737be20::t_1d6d3b31877445 169-180,182,184-187,190,198-199,201
+src/agents/index.ts
+  s_51ed67f737be20::t_f1038fcae1f9c1 75,78-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "cab32c94671eb3b99d83c3f9b2a9d19a17f3e986",
+  "prompts": {},
+  "sessions": {
+    "s_51ed67f737be20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_034c195bdffevEuKdfZWJxarZT",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
