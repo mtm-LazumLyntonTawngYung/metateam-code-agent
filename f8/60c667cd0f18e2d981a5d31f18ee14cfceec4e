@@ -1,0 +1,21 @@
+README.md
+  s_b553ddfbe1413d::t_36a893dbfb6668 20-24,27-47,49-52,55-56,74-75,77-78,80-94,100-103,106,117-119
+  s_b553ddfbe1413d::t_4a5face40b402e 48,53-54,57-72
+  s_b553ddfbe1413d::t_d3bc7042bba106 73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "f860c667cd0f18e2d981a5d31f18ee14cfceec4e",
+  "prompts": {},
+  "sessions": {
+    "s_b553ddfbe1413d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0358fa80dffehV2hXB5sEJ7S7r",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
