@@ -125,6 +125,14 @@ export const CONFIG_SCHEMA: ConfigField[] = [
     ],
   },
   {
+    key: "permissions",
+    label: "Tool Permissions",
+    type: "object",
+    description:
+      "Tool permission rules (allow/ask/deny) and tools always allowed without prompting.",
+    default: {},
+  },
+  {
     key: "llm",
     label: "LLM Providers",
     type: "object",

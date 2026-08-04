@@ -1,3 +1,5 @@
+import { findModel } from "../llm/config";
+
 export type TokenBudget = {
   maxTokens: number;
   warnThreshold: number; // fraction 0-1, e.g. 0.8
@@ -11,17 +13,37 @@ export const DEFAULT_BUDGET: TokenBudget = {
 export function countTokens(text: string): number {
   if (!text) return 0;
   let tokens = 0;
-  for (let i = 0; i < text.length; i++) {
-    const cp = text.codePointAt(i)!;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0)!;
     if (cp <= 0x7f) {
       tokens += cp <= 0x20 || cp === 0x7f ? 0 : 0.25;
+    } else if (cp >= 0x4e00 && cp <= 0x9fff) {
+      tokens += 1;
     } else if (cp <= 0x7ff) {
       tokens += 0.5;
     } else {
-      tokens += 1;
+      tokens += 0.35;
     }
   }
   return Math.max(1, Math.ceil(tokens));
+}
+
+export function countTokensForModel(
+  text: string,
+  modelId?: string,
+): { tokens: number; budget: TokenBudget } {
+  const budget = budgetForModel(modelId);
+  return { tokens: countTokens(text), budget };
+}
+
+export function budgetForModel(modelId?: string): TokenBudget {
+  if (!modelId) return DEFAULT_BUDGET;
+  const model = findModel(modelId);
+  if (!model) return DEFAULT_BUDGET;
+  return {
+    maxTokens: model.contextWindow,
+    warnThreshold: 0.8,
+  };
 }
 
 export type TokenUsage = {

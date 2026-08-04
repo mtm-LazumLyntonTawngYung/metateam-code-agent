@@ -67,10 +67,15 @@ export type CompletionResponse = {
   usage: {
     inputTokens: number;
     outputTokens: number;
+    reasoningTokens?: number;
     totalTokens: number;
   };
   provider: ProviderId;
 };
+
+export type StreamDelta =
+  | { kind: "text"; text: string }
+  | { kind: "tool_call"; toolCall: ToolCallInfo };
 
 export type ProviderError = {
   type: "rate_limit" | "auth" | "timeout" | "server_error" | "unknown";

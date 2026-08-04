@@ -15,7 +15,11 @@ import Statusbar from "./components/Statusbar";
 import { AppLayout } from "./AppLayout";
 import { Sidebar } from "./components/Sidebar";
 import { executeTool } from "../tools/index";
-import { isSensitiveTool } from "../tools/permissions";
+import {
+  resolvePermissionAction,
+  loadPermissionRules,
+  saveAlwaysAllow,
+} from "../tools/permissions";
 import McpsView from "./McpsView";
 import VariantsView from "./VariantsView";
 import { startAll, stopAll, getConnectedCount, getConnectedServers } from "../mcp";
@@ -25,7 +29,6 @@ import {
   getActiveAgent,
   getAllAgents,
   getAgentById,
-  isToolDenied,
   runAgentLoop,
 } from "../agents/index";
 import { checkForUpdates } from "../utils/updater";
@@ -239,20 +242,27 @@ const abortControllerRef = useRef<AbortController | null>(null);
     async (
       name: string,
       args: Record<string, unknown>,
+      ctx?: { onOutput?: (chunk: string) => void; signal?: AbortSignal },
     ): Promise<ToolResult> => {
       const agent = activeAgentRef.current;
-      if (agent && isToolDenied(name, agent)) {
+      const action = resolvePermissionAction({
+        toolName: name,
+        permissions: agent?.permissions,
+        rules: loadPermissionRules(),
+        alwaysAllowed: [...alwaysAllow.current],
+      });
+      if (action === "deny") {
         return {
           success: false,
-          error: `Tool "${name}" is denied by the current agent (${agent.name})`,
+          error: `Tool "${name}" is denied by the current agent (${agent?.name ?? "unknown"}).`,
         };
       }
-      if (!isSensitiveTool(name) || alwaysAllow.current.has(name)) {
-        return executeTool(name, args);
+      if (action === "ask") {
+        return new Promise<ToolResult>((resolve) => {
+          setPendingPerm({ toolName: name, args, resolve });
+        });
       }
-      return new Promise<ToolResult>((resolve) => {
-        setPendingPerm({ toolName: name, args, resolve });
-      });
+      return executeTool(name, args, ctx);
     },
     [],
   );
@@ -262,7 +272,10 @@ const abortControllerRef = useRef<AbortController | null>(null);
       const p = pendingPerm;
       if (!p) return;
       setPendingPerm(null);
-      if (response === "always") alwaysAllow.current.add(p.toolName);
+      if (response === "always") {
+        alwaysAllow.current.add(p.toolName);
+        saveAlwaysAllow(p.toolName);
+      }
       if (response === "reject") {
         p.resolve({ success: false, error: "Permission rejected by user" });
         return;

@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { homedir } from "os";
 import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
+import { EPOCH_TABLE_SQL } from "./epoch";
 
 const dbDir = join(homedir(), ".config", "mtc");
 const dbPath = join(dbDir, "history.db");
@@ -73,12 +74,40 @@ function migrate(db: Database): void {
         )
       `);
       db.exec(`
+        CREATE TABLE IF NOT EXISTS turns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+          model_id TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          input_tokens INTEGER DEFAULT 0,
+          output_tokens INTEGER DEFAULT 0,
+          reasoning_tokens INTEGER DEFAULT 0,
+          cache_read_tokens INTEGER DEFAULT 0,
+          cache_write_tokens INTEGER DEFAULT 0,
+          cost_usd REAL DEFAULT 0,
+          duration_ms INTEGER DEFAULT 0,
+          tool_calls INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `);
+      db.exec(`
         CREATE INDEX IF NOT EXISTS idx_messages_session
         ON messages(session_id, created_at)
       `);
       db.exec(`
         CREATE INDEX IF NOT EXISTS idx_patches_session
         ON patches(session_id, created_at)
+      `);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_turns_session
+        ON turns(session_id, created_at)
+      `);
+    },
+    () => {
+      db.exec(EPOCH_TABLE_SQL);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_epochs_session
+        ON epochs(session_id, epoch_no)
       `);
     },
   ];

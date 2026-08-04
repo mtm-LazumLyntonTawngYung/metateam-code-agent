@@ -22,35 +22,89 @@ export type MtcConfig = {
   organization?: { name?: string };
   themeId?: string;
   webSearch?: { enabled?: boolean };
+  permissions?: {
+    rules?: Array<{ tool: string; action: "allow" | "ask" | "deny" }>;
+    alwaysAllow?: string[];
+  };
 };
 
-const configDir = join(homedir(), ".config", "mtc");
-const configPath = join(configDir, "config.json");
+const GLOBAL_CONFIG_DIR = join(homedir(), ".config", "mtc");
+const GLOBAL_CONFIG_PATH = join(GLOBAL_CONFIG_DIR, "config.json");
+const PROJECT_CONFIG_DIR = ".mtc";
+const PROJECT_CONFIG_PATH = join(PROJECT_CONFIG_DIR, "config.json");
 
-function ensureDir(): void {
-  if (!existsSync(configDir)) {
-    mkdirSync(configDir, { recursive: true });
+function ensureDir(path: string): void {
+  if (!existsSync(path)) {
+    mkdirSync(path, { recursive: true });
+  }
+}
+
+function readJsonSafe(path: string): MtcConfig | null {
+  try {
+    if (!existsSync(path)) return null;
+    const raw = readFileSync(path, "utf-8");
+    return JSON.parse(raw) as MtcConfig;
+  } catch {
+    return null;
   }
 }
 
 export function loadConfig(): MtcConfig {
-  try {
-    if (existsSync(configPath)) {
-      const raw = readFileSync(configPath, "utf-8");
-      return JSON.parse(raw) as MtcConfig;
-    }
-  } catch {
-    // corrupt file — return defaults
-  }
-  return {};
+  const globalCfg = readJsonSafe(GLOBAL_CONFIG_PATH) ?? {};
+  const projectCfg = readJsonSafe(PROJECT_CONFIG_PATH) ?? {};
+  return mergeConfigs(globalCfg, projectCfg);
 }
 
 export function saveConfig(partial: Partial<MtcConfig>): MtcConfig {
-  ensureDir();
+  ensureDir(GLOBAL_CONFIG_DIR);
   const current = loadConfig();
   const merged = { ...current, ...partial };
-  writeFileSync(configPath, JSON.stringify(merged, null, 2), "utf-8");
+  writeFileSync(GLOBAL_CONFIG_PATH, JSON.stringify(merged, null, 2), "utf-8");
   return merged;
+}
+
+export function saveProjectConfig(partial: Partial<MtcConfig>): MtcConfig {
+  ensureDir(PROJECT_CONFIG_DIR);
+  const current = readJsonSafe(PROJECT_CONFIG_PATH) ?? {};
+  const merged = { ...current, ...partial };
+  writeFileSync(PROJECT_CONFIG_PATH, JSON.stringify(merged, null, 2), "utf-8");
+  return merged;
+}
+
+export function loadGlobalConfig(): MtcConfig {
+  return readJsonSafe(GLOBAL_CONFIG_PATH) ?? {};
+}
+
+export function loadProjectConfig(): MtcConfig {
+  return readJsonSafe(PROJECT_CONFIG_PATH) ?? {};
+}
+
+function mergeConfigs(globalCfg: MtcConfig, projectCfg: MtcConfig): MtcConfig {
+  const merged = { ...globalCfg, ...projectCfg };
+  if (projectCfg.llm && globalCfg.llm) {
+    merged.llm = deepMerge(globalCfg.llm, projectCfg.llm);
+  } else if (projectCfg.llm) {
+    merged.llm = projectCfg.llm;
+  } else if (globalCfg.llm) {
+    merged.llm = globalCfg.llm;
+  }
+  return merged;
+}
+
+function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...target };
+  for (const [key, value] of Object.entries(source)) {
+    if (isRecord(value) && isRecord(result[key])) {
+      result[key] = deepMerge(result[key] as Record<string, unknown>, value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function generateDeviceId(): string {
