@@ -57,6 +57,7 @@ export type CompletionRequest = {
   tools?: ToolDefinition[];
   toolChoice?: ToolChoice;
   signal?: AbortSignal;
+  reasoning?: boolean;
 };
 
 export type CompletionResponse = {

@@ -53,6 +53,7 @@ import { disableMouseMode } from "./mouse";
 import ThemePicker from "./ThemePicker";
 import SessionsView from "./SessionsView";
 import { loadLlmConfig, findModel } from "../llm/config";
+import { shouldUseReasoning } from "../llm/router";
 import type { ToolResult } from "../tools/schema";
 import type { PendingPermission } from "../tools/permissions";
 import type { AgentDefinition } from "../agents/types";
@@ -64,7 +65,8 @@ type LogEntry =
   | { kind: "tool_call"; toolName: string; args: Record<string, unknown>; agent?: boolean }
   | { kind: "tool_result"; result: ToolResult }
   | { kind: "message"; text: string; color?: string }
-  | { kind: "status"; agentName: string; modelName: string; duration: number };
+  | { kind: "status"; agentName: string; modelName: string; duration: number }
+  | { kind: "reasoning"; text: string };
 
 type View = "home" | "chat" | "connect" | "diff";
 
@@ -282,6 +284,7 @@ const abortControllerRef = useRef<AbortController | null>(null);
       abortControllerRef.current = controller;
 
       const skill = activeSkillId ? (getAllSkills().find((s) => s.id === activeSkillId)?.body ?? undefined) : undefined;
+      const useReasoning = shouldUseReasoning(text, 1);
 
       const onUpdate = (update: AgentUpdate) => {
         switch (update.kind) {
@@ -302,6 +305,12 @@ const abortControllerRef = useRef<AbortController | null>(null);
               }
               return next;
             });
+            break;
+          case "reasoning":
+            setAgentLogs((prev) => [
+              ...prev,
+              { kind: "reasoning", text: update.text },
+            ]);
             break;
           case "tool_call":
             setAgentLogs((prev) => [
@@ -355,6 +364,7 @@ const abortControllerRef = useRef<AbortController | null>(null);
         skillBody: skill,
         signal: controller.signal,
         stream: true,
+        reasoning: useReasoning,
       });
     },
     [requestToolExecution, themeRef, modelId, currentSessionId, activeSkillId],

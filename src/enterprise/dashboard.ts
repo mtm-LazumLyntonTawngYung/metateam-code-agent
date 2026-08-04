@@ -907,6 +907,7 @@ async function handleUpdateConfig(req: Request): Promise<Response> {
           simpleModel: String(routing.simpleModel ?? currentLlm.routing.simpleModel),
           defaultModel: String(routing.defaultModel ?? currentLlm.routing.defaultModel),
           reasoningModel: String(routing.reasoningModel ?? currentLlm.routing.reasoningModel),
+          reasoningEnabled: routing.reasoningEnabled !== undefined ? Boolean(routing.reasoningEnabled) : currentLlm.routing.reasoningEnabled,
         },
       });
     }
