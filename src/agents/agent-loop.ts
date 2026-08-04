@@ -1,14 +1,19 @@
 import { complete, completeStream } from "../llm/client";
+import { completeWithFallback, formatFallbackErrors } from "../llm/fallback";
 import { executeTool, getToolSpecs } from "../tools/index";
 import { addMessage, getMessages } from "../session/history";
 import { buildContext, rotateIfNeeded } from "../session/summary";
+import { recordTurn } from "../session/turns";
+import { withPatchContext } from "../session/patches";
 import type { CompletionMessage, CompletionRequest, CompletionResponse, ToolCallInfo } from "../llm/types";
+import type { ToolDefinition as LlmToolDefinition } from "../llm/types";
 import type { AgentDefinition } from "./types";
 import type { MessageRow } from "../session/history";
 import type { ToolResult } from "../tools/schema";
 import { loadConfig } from "../config";
-import { findModel } from "../llm/config";
+import { findModel, findProvider } from "../llm/config";
 import { getEffectiveSystemPrompt } from "./index";
+import { IncompleteResponseError, LlmError } from "../utils/errors";
 
 export type ToolCall = {
   name: string;
@@ -32,6 +37,7 @@ export type RunAgentOptions = {
   executeToolFn?: (
     name: string,
     args: Record<string, unknown>,
+    ctx?: { onOutput?: (chunk: string) => void; signal?: AbortSignal },
   ) => Promise<ToolResult>;
   modelId?: string;
   sessionId?: string;
@@ -39,6 +45,9 @@ export type RunAgentOptions = {
   signal?: AbortSignal;
   stream?: boolean;
   reasoning?: boolean;
+  maxIterations?: number;
+  tools?: LlmToolDefinition[];
+  onToolOutput?: (toolName: string, chunk: string) => void;
 };
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
@@ -98,7 +107,7 @@ export async function runAgentLoop(
   onUpdate: (update: AgentUpdate) => void,
   options: RunAgentOptions = {},
 ): Promise<string> {
-  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true, reasoning } = options;
+  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true, reasoning, maxIterations = MAX_AGENT_ITERATIONS, tools, onToolOutput } = options;
   const startTime = performance.now();
   let toolCalls = 0;
   const exec = executeToolFn ?? executeTool;
@@ -107,12 +116,12 @@ export async function runAgentLoop(
     addMessage(sessionId, "user", query);
   }
 
-  const tools = getToolSpecs();
+  const toolSpecs = tools ?? getToolSpecs();
   const systemPrompt = systemPromptFor(agent, skillBody, reasoning);
 
   let messages: CompletionMessage[];
   if (sessionId) {
-    const ctx = buildContext(sessionId, systemPrompt);
+    const ctx = buildContext(sessionId, systemPrompt, modelId);
     const rows = getMessages(sessionId, true);
     messages = [
       ...ctx.systemMessages.map((content) => ({ role: "system" as const, content })),
@@ -132,29 +141,33 @@ export async function runAgentLoop(
     messages,
     temperature: 0.7,
     maxTokens: findModel(modelId)?.maxTokens ?? DEFAULT_MAX_TOKENS,
-    tools,
+    tools: toolSpecs,
     toolChoice: "auto",
     signal,
     reasoning,
   });
 
-  for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
+  let incompleteRetries = 0;
+  const MAX_INCOMPLETE_RETRIES = 2;
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
     if (signal?.aborted) {
       const msg = "Agent aborted by user.";
       onUpdate({ kind: "error", error: msg });
       return msg;
     }
 
-    if (sessionId) rotateIfNeeded(sessionId);
+    if (sessionId) rotateIfNeeded(sessionId, modelId);
 
     if (iteration === 0 && reasoning) {
       onUpdate({ kind: "reasoning", text: "Reasoning about the task..." });
     }
 
+    const turnStart = performance.now();
     let response: CompletionResponse;
     let streamedContent = "";
+    const req = buildRequest();
     try {
-      const req = buildRequest();
       if (stream) {
         response = await completeStream(req, (delta) => {
           if (delta.kind === "text") {
@@ -171,9 +184,25 @@ export async function runAgentLoop(
         onUpdate({ kind: "error", error: msg });
         return msg;
       }
-      const msg = err instanceof Error ? err.message : String(err);
-      onUpdate({ kind: "error", error: msg });
-      return `LLM call failed: ${msg}`;
+      if (err instanceof IncompleteResponseError && incompleteRetries < MAX_INCOMPLETE_RETRIES) {
+        incompleteRetries++;
+        onUpdate({ kind: "error", error: `Provider returned incomplete response. Retrying (${incompleteRetries}/${MAX_INCOMPLETE_RETRIES})...` });
+        continue;
+      }
+
+      const fallback = await completeWithFallback(req);
+      if (fallback.ok) {
+        response = fallback.response;
+        streamedContent = "";
+        onUpdate({
+          kind: "error",
+          error: `Primary provider failed; switched to fallback model '${fallback.response.model}'.`,
+        });
+      } else {
+        const msg = formatFallbackErrors(fallback.errors);
+        onUpdate({ kind: "error", error: msg });
+        return `LLM call failed: ${msg}`;
+      }
     }
 
     const content = response.content;
@@ -183,11 +212,26 @@ export async function runAgentLoop(
       args: parseToolCallArguments(tc.arguments),
     }));
 
+    const actualModel = response.model || modelId;
+
     const assistantMsg: CompletionMessage = { role: "assistant", content };
     if (callInfos.length > 0) {
       assistantMsg.toolCalls = callInfos;
     }
     messages.push(assistantMsg);
+
+    if (sessionId) {
+      recordTurn({
+        sessionId,
+        modelId: actualModel,
+        provider: response.provider,
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
+        costUsd: estimateCost(actualModel, response.usage),
+        durationMs: Math.round(performance.now() - turnStart),
+        toolCalls: calls.length,
+      });
+    }
 
     if (sessionId) {
       const persistedContent =
@@ -200,7 +244,7 @@ export async function runAgentLoop(
     }
 
     if (calls.length === 0) {
-      const modelDisplayName = findModel(modelId)?.displayName ?? modelId;
+      const modelDisplayName = findModel(actualModel)?.displayName ?? actualModel;
       onUpdate({
         kind: "done",
         content,
@@ -221,7 +265,17 @@ export async function runAgentLoop(
 
       let result: ToolResult;
       try {
-        result = await exec(tc.name, tc.args);
+        result = sessionId
+          ? await withPatchContext(sessionId, () =>
+              exec(tc.name, tc.args, {
+                onOutput: (chunk) => onToolOutput?.(tc.name, chunk),
+                signal,
+              }),
+            )
+          : await exec(tc.name, tc.args, {
+              onOutput: (chunk) => onToolOutput?.(tc.name, chunk),
+              signal,
+            });
       } catch (err) {
         result = {
           success: false,
@@ -247,7 +301,13 @@ export async function runAgentLoop(
     }
   }
 
-  const msg = `Agent reached maximum of ${MAX_AGENT_ITERATIONS} iterations.`;
+  const msg = `Agent reached maximum of ${maxIterations} iterations.`;
   onUpdate({ kind: "error", error: msg });
   return msg;
+}
+
+function estimateCost(modelId: string, usage: { inputTokens: number; outputTokens: number }): number {
+  const model = findModel(modelId);
+  if (!model) return 0;
+  return (usage.inputTokens * model.costPer1kInput + usage.outputTokens * model.costPer1kOutput) / 1000;
 }

@@ -1,8 +1,15 @@
+import { z } from "zod";
 import { accessSync, constants, readFileSync, statSync } from "fs";
 import { isPathIgnored } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ReadFileSchema = z.object({
+  path: z.string().describe("Absolute or relative path to the file"),
+  offset: z.number().int().positive().optional().describe("Starting line number (1-indexed). Omit to read from the beginning."),
+  limit: z.number().int().positive().optional().describe("Maximum number of lines to read. Omit to read all lines."),
+});
 
 const readFileTool: ToolDefinition = {
   name: "read_file",
@@ -26,10 +33,12 @@ const readFileTool: ToolDefinition = {
     },
     required: ["path"],
   },
+  schema: ReadFileSchema,
   execute(args) {
-    const path = args.path as string;
-    const offset = args.offset as number | undefined;
-    const limit = args.limit as number | undefined;
+    const parsed = ReadFileSchema.parse(args);
+    const path = parsed.path;
+    const offset = parsed.offset;
+    const limit = parsed.limit;
 
     if (isPathIgnored(path)) {
       return {

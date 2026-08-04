@@ -1,7 +1,8 @@
 import { run, all, get } from "./db";
 import { getMessages, addMessage, type MessageRow } from "./history";
-import { countTokens, estimateContextUsage, DEFAULT_BUDGET } from "./tokens";
+import { countTokens, estimateContextUsage, DEFAULT_BUDGET, budgetForModel } from "./tokens";
 import { redactText } from "../secrets/index";
+import { bumpEpoch, safeBoundarySystemMessage } from "./epoch";
 
 export type SummaryRow = {
   id: number;
@@ -22,7 +23,7 @@ export function getSummaries(sessionId: string): SummaryRow[] {
 export function storeSummary(
   sessionId: string,
   summaryText: string,
-  prunedUntil: number,
+  prunedUntil: number | null,
 ): number {
   const tokens = countTokens(summaryText);
   const result = run(
@@ -42,6 +43,7 @@ export function getLatestSummary(sessionId: string): SummaryRow | null {
 export function buildContext(
   sessionId: string,
   systemPrompt?: string,
+  modelId?: string,
 ): {
   systemMessages: string[];
   messages: MessageRow[];
@@ -50,7 +52,8 @@ export function buildContext(
   const summaries = getSummaries(sessionId);
   const messages = getMessages(sessionId, false);
   const allTokenCounts = messages.map((m) => m.token_count);
-  const usage = estimateContextUsage(allTokenCounts, DEFAULT_BUDGET);
+  const budget = contextBudgetFor(modelId);
+  const usage = estimateContextUsage(allTokenCounts, budget);
 
   const systemMessages: string[] = [];
   if (systemPrompt) systemMessages.push(redactText(systemPrompt));
@@ -60,6 +63,8 @@ export function buildContext(
       `[Previous conversation summary]: ${latest.summary_text}`,
     );
   }
+  const boundary = safeBoundarySystemMessage(sessionId);
+  if (boundary) systemMessages.push(boundary);
 
   return { systemMessages, messages, usage };
 }
@@ -67,10 +72,12 @@ export function buildContext(
 export function rotateContext(
   sessionId: string,
   messages: MessageRow[],
+  modelId?: string,
 ): { pruned: number; summary: string } {
+  const budget = contextBudgetFor(modelId);
   const usage = estimateContextUsage(
     messages.map((m) => m.token_count),
-    DEFAULT_BUDGET,
+    budget,
   );
 
   if (!usage.isNearLimit) return { pruned: 0, summary: "" };
@@ -81,13 +88,21 @@ export function rotateContext(
   if (prunedMessages.length === 0) return { pruned: 0, summary: "" };
 
   const rawSummary = prunedMessages
-    .map((m) => `[${m.role}]: ${truncate(m.content, 200)}`)
+    .map((m) => {
+      if (m.role === "tool") {
+        const toolName = m.tool_name ?? "tool";
+        const result = m.tool_result ?? m.content;
+        return `[${m.role}/${toolName}]: ${truncate(result, 200)}`;
+      }
+      return `[${m.role}]: ${truncate(m.content, 200)}`;
+    })
     .join("\n");
   const summaryText = redactText(rawSummary);
 
   const lastPrunedId = prunedMessages[prunedMessages.length - 1].id;
 
   storeSummary(sessionId, summaryText, lastPrunedId);
+  bumpEpoch(sessionId, lastPrunedId, "context-rotation", countTokens(summaryText));
 
   const ids = prunedMessages.map((m) => m.id);
   const placeholders = ids.map(() => "?").join(",");
@@ -102,14 +117,18 @@ export function rotateContext(
   return { pruned: prunedMessages.length, summary: summaryText };
 }
 
-export function rotateIfNeeded(sessionId: string): {
+export function rotateIfNeeded(sessionId: string, modelId?: string): {
   rotated: boolean;
   pruned: number;
 } {
   const messages = getMessages(sessionId, false);
   if (messages.length === 0) return { rotated: false, pruned: 0 };
-  const result = rotateContext(sessionId, messages);
+  const result = rotateContext(sessionId, messages, modelId);
   return { rotated: result.pruned > 0, pruned: result.pruned };
+}
+
+function contextBudgetFor(modelId?: string): typeof DEFAULT_BUDGET {
+  return budgetForModel(modelId);
 }
 
 function truncate(s: string, max: number): string {

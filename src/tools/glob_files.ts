@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Glob } from "bun";
 import { resolve, relative } from "path";
 import { isPathIgnored } from "../secrets/index";
@@ -26,6 +27,11 @@ function isDefaultExcluded(filePath: string): boolean {
   return DEFAULT_EXCLUDED_DIRS.some((dir) => segments.includes(dir));
 }
 
+const GlobFilesSchema = z.object({
+  pattern: z.string().describe("Glob pattern to match (e.g. **/*.ts, src/**/*.js)"),
+  path: z.string().optional().describe("Root directory to search in (defaults to cwd)"),
+});
+
 const globFilesTool: ToolDefinition = {
   name: "glob_files",
   description:
@@ -44,9 +50,11 @@ const globFilesTool: ToolDefinition = {
     },
     required: ["pattern"],
   },
+  schema: GlobFilesSchema,
   execute(args) {
-    const pattern = args.pattern as string;
-    const root = resolve((args.path as string | undefined) ?? process.cwd());
+    const parsed = GlobFilesSchema.parse(args);
+    const pattern = parsed.pattern;
+    const root = resolve(parsed.path ?? process.cwd());
 
     const glob = new Glob(pattern);
     const allFiles = Array.from(glob.scanSync({ cwd: root, absolute: true }));

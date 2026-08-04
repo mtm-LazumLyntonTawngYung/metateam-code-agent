@@ -12,8 +12,17 @@ export {
 
 export type { MessageRow, SessionRow, MessageRole } from "./history";
 
-export { savePatch, getPatches, getFileVersions } from "./patches";
-export type { PatchRow, FileVersion } from "./patches";
+export {
+  savePatch,
+  getPatches,
+  getPatchesForFile,
+  getFileVersions,
+  recordPatch,
+  getPatchSessionId,
+  withPatchContext,
+  revertFileToVersion,
+} from "./patches";
+export type { PatchRow, FileVersion, RevertResult } from "./patches";
 
 export {
   countTokens,
@@ -29,3 +38,10 @@ export {
   getLatestSummary,
 } from "./summary";
 export type { SummaryRow } from "./summary";
+
+export {
+  recordTurn,
+  getSessionTurns,
+  getSessionTurnStats,
+} from "./turns";
+export type { TurnRow } from "./turns";

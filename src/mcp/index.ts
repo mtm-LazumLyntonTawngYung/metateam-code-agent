@@ -1,6 +1,7 @@
 import { loadMcpConfig } from "./config";
 import { McpClient } from "./client";
 import { registerTool } from "../tools/index";
+import type { JsonSchema, ToolDefinition } from "../tools/schema";
 
 export type ServerState = {
   name: string;
@@ -86,6 +87,32 @@ function getToolCount(name: string): number {
   return toolCounts.get(name) ?? 0;
 }
 
+function normalizeMcpSchema(schema: unknown): JsonSchema {
+  if (!schema || typeof schema !== "object") {
+    return { type: "object", properties: {} };
+  }
+  const obj = schema as Record<string, unknown>;
+  if (obj.type !== "object") {
+    return { type: "object", properties: {} };
+  }
+  const properties = (obj.properties as Record<string, unknown> | undefined) ?? {};
+  const normalized: Record<string, { type: string; description?: string }> = {};
+  for (const [key, value] of Object.entries(properties)) {
+    if (!value || typeof value !== "object") continue;
+    const prop = value as Record<string, unknown>;
+    const propType = String(prop.type ?? "string");
+    normalized[key] = {
+      type: propType,
+      description: typeof prop.description === "string" ? prop.description : undefined,
+    };
+  }
+  return {
+    type: "object",
+    properties: normalized as Record<string, { type: "string" | "number" | "boolean" | "array" | "object"; description?: string; default?: unknown; items?: { type: "string" | "number" } }>,
+    required: Array.isArray(obj.required) ? obj.required.filter((r): r is string => typeof r === "string") : undefined,
+  };
+}
+
 export async function startAll(): Promise<void> {
   const config = loadMcpConfig();
   const entries = Object.entries(config.mcpServers);
@@ -109,10 +136,21 @@ export async function startAll(): Promise<void> {
       const cleanups: Array<() => void> = [];
       for (const tool of tools) {
         const fullName = `${serverName}/${tool.name}`;
+        const normalizedParameters = normalizeMcpSchema(tool.parameters);
         cleanups.push(registerTool(fullName, {
-          ...tool,
           name: fullName,
-          execute: async (args) => client.callTool(tool.name, args),
+          description: tool.description ?? `MCP tool from ${serverName}`,
+          parameters: normalizedParameters,
+          execute: async (args: Record<string, unknown>) => {
+            try {
+              return await client.callTool(tool.name, args);
+            } catch (err) {
+              return {
+                success: false,
+                error: `MCP tool '${fullName}' failed: ${err instanceof Error ? err.message : String(err)}`,
+              };
+            }
+          },
         }));
       }
       cleanupFns.set(serverName, cleanups);

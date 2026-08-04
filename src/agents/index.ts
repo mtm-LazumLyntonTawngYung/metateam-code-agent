@@ -72,10 +72,15 @@ export function isToolDenied(
 
 export { builtinAgents } from "./builtin";
 export { loadCustomAgents } from "./custom";
-export { runSubagent } from "./subagent";
+export { runSubagent, runTaskSubagent, runParallelSubagents } from "./subagent";
 export { runAgentLoop } from "./agent-loop";
 export { loadRules, getRules, reloadRules } from "./rules";
-export type { SubagentTask, SubagentResult } from "./subagent";
+export type {
+  SubagentTask,
+  SubagentResult,
+  SubagentTaskOptions,
+  ParallelSubagentOptions,
+} from "./subagent";
 export type { ToolCall, AgentUpdate } from "./agent-loop";
 export type {
   AgentDefinition,
