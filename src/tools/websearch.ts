@@ -4,7 +4,8 @@ import type { ToolDefinition } from "./schema";
 const websearchTool: ToolDefinition = {
   name: "websearch",
   description:
-    "Search the web for current information. Returns top results with titles, URLs, and snippets. Only available when web search is enabled in config.",
+    "Search the web for current information. Returns top results with titles, URLs, " +
+      "and snippets. Only available when web search is enabled in config.",
   parameters: {
     type: "object",
     properties: {
@@ -46,7 +47,8 @@ async function fetchSearchResults(query: string, maxResults: number): Promise<{
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
     });
 

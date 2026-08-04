@@ -264,7 +264,8 @@ function validateValue(field: ConfigField, value: unknown, errors: string[], lab
       errors.push(`${label} must be one of: ${field.enum.join(", ")}`);
       return false;
     }
-    if (field.max !== undefined && value.length > field.max) errors.push(`${label} must be at most ${field.max} characters`);
+    if (field.max !== undefined && value.length > field.max)
+      errors.push(`${label} must be at most ${field.max} characters`);
     return true;
   }
   if (field.type === "stringArray") {
