@@ -1,6 +1,6 @@
 {
   "name": "@metateam/cli",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "description": "AI-powered, terminal-first coding assistant for MetaTeam engineers",
   "license": "MIT",
   "type": "module",
