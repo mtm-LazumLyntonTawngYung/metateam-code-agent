@@ -1,0 +1,14 @@
+package.json
+  h_10671eecd6b5d0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "3d683b5bae46244686a24a780f64f4fd417714cc",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
