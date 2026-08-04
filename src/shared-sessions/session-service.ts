@@ -134,6 +134,7 @@ export function deleteSession(id: string): boolean {
   const session = getSession(id);
   if (!session) return false;
 
+  run("DELETE FROM participants WHERE session_id = ?", [id]);
   run("DELETE FROM shared_sessions WHERE id = ?", [id]);
 
   broadcastSessionEvent({
