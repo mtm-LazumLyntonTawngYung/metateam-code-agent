@@ -22,6 +22,10 @@ export type MtcConfig = {
   organization?: { name?: string };
   themeId?: string;
   webSearch?: { enabled?: boolean };
+  permissions?: {
+    rules?: Array<{ tool: string; action: "allow" | "ask" | "deny" }>;
+    alwaysAllow?: string[];
+  };
 };
 
 const GLOBAL_CONFIG_DIR = join(homedir(), ".config", "mtc");

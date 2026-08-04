@@ -6,6 +6,7 @@ import { buildContext, rotateIfNeeded } from "../session/summary";
 import { recordTurn } from "../session/turns";
 import { withPatchContext } from "../session/patches";
 import type { CompletionMessage, CompletionRequest, CompletionResponse, ToolCallInfo } from "../llm/types";
+import type { ToolDefinition as LlmToolDefinition } from "../llm/types";
 import type { AgentDefinition } from "./types";
 import type { MessageRow } from "../session/history";
 import type { ToolResult } from "../tools/schema";
@@ -36,6 +37,7 @@ export type RunAgentOptions = {
   executeToolFn?: (
     name: string,
     args: Record<string, unknown>,
+    ctx?: { onOutput?: (chunk: string) => void; signal?: AbortSignal },
   ) => Promise<ToolResult>;
   modelId?: string;
   sessionId?: string;
@@ -43,6 +45,9 @@ export type RunAgentOptions = {
   signal?: AbortSignal;
   stream?: boolean;
   reasoning?: boolean;
+  maxIterations?: number;
+  tools?: LlmToolDefinition[];
+  onToolOutput?: (toolName: string, chunk: string) => void;
 };
 
 function wrapToolResult(toolName: string, result: ToolResult): string {
@@ -102,7 +107,7 @@ export async function runAgentLoop(
   onUpdate: (update: AgentUpdate) => void,
   options: RunAgentOptions = {},
 ): Promise<string> {
-  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true, reasoning } = options;
+  const { executeToolFn, modelId = "unknown", sessionId, skillBody, signal, stream = true, reasoning, maxIterations = MAX_AGENT_ITERATIONS, tools, onToolOutput } = options;
   const startTime = performance.now();
   let toolCalls = 0;
   const exec = executeToolFn ?? executeTool;
@@ -111,7 +116,7 @@ export async function runAgentLoop(
     addMessage(sessionId, "user", query);
   }
 
-  const tools = getToolSpecs();
+  const toolSpecs = tools ?? getToolSpecs();
   const systemPrompt = systemPromptFor(agent, skillBody, reasoning);
 
   let messages: CompletionMessage[];
@@ -136,7 +141,7 @@ export async function runAgentLoop(
     messages,
     temperature: 0.7,
     maxTokens: findModel(modelId)?.maxTokens ?? DEFAULT_MAX_TOKENS,
-    tools,
+    tools: toolSpecs,
     toolChoice: "auto",
     signal,
     reasoning,
@@ -145,7 +150,7 @@ export async function runAgentLoop(
   let incompleteRetries = 0;
   const MAX_INCOMPLETE_RETRIES = 2;
 
-  for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
     if (signal?.aborted) {
       const msg = "Agent aborted by user.";
       onUpdate({ kind: "error", error: msg });
@@ -261,8 +266,16 @@ export async function runAgentLoop(
       let result: ToolResult;
       try {
         result = sessionId
-          ? await withPatchContext(sessionId, () => exec(tc.name, tc.args))
-          : await exec(tc.name, tc.args);
+          ? await withPatchContext(sessionId, () =>
+              exec(tc.name, tc.args, {
+                onOutput: (chunk) => onToolOutput?.(tc.name, chunk),
+                signal,
+              }),
+            )
+          : await exec(tc.name, tc.args, {
+              onOutput: (chunk) => onToolOutput?.(tc.name, chunk),
+              signal,
+            });
       } catch (err) {
         result = {
           success: false,
@@ -288,7 +301,7 @@ export async function runAgentLoop(
     }
   }
 
-  const msg = `Agent reached maximum of ${MAX_AGENT_ITERATIONS} iterations.`;
+  const msg = `Agent reached maximum of ${maxIterations} iterations.`;
   onUpdate({ kind: "error", error: msg });
   return msg;
 }

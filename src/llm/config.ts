@@ -166,15 +166,28 @@ export async function refreshModels(): Promise<{ added: number; total: number }>
     });
     if (!res.ok) throw new Error(`models.dev responded ${res.status}`);
     const data = (await res.json()) as Record<string, unknown>;
+    const providerMap: Record<string, ProviderId> = {
+      openai: "openai",
+      anthropic: "anthropic",
+      deepseek: "deepseek",
+      google: "openrouter",
+      meta: "openrouter",
+      mistral: "openrouter",
+      cohere: "openrouter",
+      amazon: "openrouter",
+      xai: "openrouter",
+    };
+    const supported = new Set(Object.keys(providerMap));
     const models: ModelConfig[] = [];
+    const seen = new Set<string>();
     for (const [id, info] of Object.entries(data as Record<string, { provider?: string; pricing?: { prompt?: string; completion?: string }; context_length?: number }>)) {
-      const providerMap: Record<string, ProviderId> = {
-        openai: "openai", anthropic: "anthropic", google: "openrouter", meta: "openrouter",
-        mistral: "openrouter", deepseek: "deepseek", cohere: "openrouter", amazon: "openrouter",
-      };
-      const provider = providerMap[info.provider ?? ""] ?? "openrouter";
+      if (seen.has(id)) continue;
+      const rawProvider = info.provider ?? "";
+      if (!supported.has(rawProvider)) continue;
+      const provider = providerMap[rawProvider] ?? "openrouter";
       const promptPrice = parsePrice(info.pricing?.prompt);
       const completionPrice = parsePrice(info.pricing?.completion);
+      const ctx = info.context_length ?? 4096;
       models.push({
         id,
         displayName: id.split("/").pop() ?? id,
@@ -182,9 +195,10 @@ export async function refreshModels(): Promise<{ added: number; total: number }>
         tier: "default",
         costPer1kInput: promptPrice,
         costPer1kOutput: completionPrice,
-        maxTokens: Math.min(info.context_length ?? 4096, 8192),
-        contextWindow: info.context_length ?? 4096,
+        maxTokens: Math.min(Math.max(ctx, 4096), 32768),
+        contextWindow: ctx,
       });
+      seen.add(id);
     }
     writeModelsCache(models);
     return { added: models.length, total: models.length };

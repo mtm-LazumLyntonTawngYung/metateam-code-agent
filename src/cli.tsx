@@ -41,6 +41,7 @@ import {
 import { join } from "path";
 import { homedir } from "os";
 import { listSessions, getPatches, revertFileToVersion } from "./session/index";
+import { applyPlugins, getLoadedPlugins, loadPlugins, reloadPlugins } from "./plugins";
 
 const program = new Command();
 
@@ -49,6 +50,7 @@ program
   .description("Metateam Code Agent — AI-powered terminal-first coding assistant")
   .version(VERSION)
   .action(async () => {
+    await applyPlugins();
     if (process.stdin.isTTY) {
       enableMouseMode();
       const mouseInput = new MouseInputStream(process.stdin);
@@ -676,6 +678,39 @@ sessionCmd
       console.error(`\n  Revert failed: ${result.error}\n`);
       process.exit(1);
     }
+  });
+
+const pluginCmd = program.command("plugin").description("Manage the plugin extension system");
+
+pluginCmd
+  .command("list")
+  .description("List loaded plugins")
+  .action(async () => {
+    const plugins = (await loadPlugins()).length ? getLoadedPlugins() : [];
+    if (plugins.length === 0) {
+      console.log("\n  No plugins loaded. Drop a .ts/.js plugin into `.mtc/plugins` or `~/.config/mtc/plugins`.\n");
+      return;
+    }
+    console.log(`\n  ${plugins.length} plugin(s):`);
+    console.log(`  ${"=".repeat(50)}`);
+    for (const { plugin, source } of plugins) {
+      const desc = plugin.description ? ` - ${plugin.description}` : "";
+      console.log(`    ${plugin.name}${plugin.version ? `@${plugin.version}` : ""}${desc}`);
+      console.log(`      from ${source}`);
+      if (plugin.tools?.length) {
+        console.log(`      tools: ${plugin.tools.map((t) => t.name).join(", ")}`);
+      }
+    }
+    console.log();
+  });
+
+pluginCmd
+  .command("reload")
+  .description("Reload all plugins from disk")
+  .action(async () => {
+    const manager = await reloadPlugins();
+    const count = manager.loaded.length;
+    console.log(`\n  Reloaded plugins. ${count} plugin(s) active.\n`);
   });
 
 const debugCmd = program.command("debug").description("Debug info and diagnostics");

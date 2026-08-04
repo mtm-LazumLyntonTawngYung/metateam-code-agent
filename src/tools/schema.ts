@@ -20,10 +20,18 @@ export type ToolResult = {
   error?: string;
 };
 
+export type ToolExecutionContext = {
+  onOutput?: (chunk: string) => void;
+  signal?: AbortSignal;
+};
+
 export type ToolDefinition = {
   name: string;
   description: string;
   parameters: JsonSchema;
   schema?: z.ZodObject<any>;
-  execute: (args: Record<string, unknown>) => ToolResult | Promise<ToolResult>;
+  execute: (
+    args: Record<string, unknown>,
+    ctx?: ToolExecutionContext,
+  ) => ToolResult | Promise<ToolResult>;
 };

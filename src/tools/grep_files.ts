@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { resolve, relative } from "path";
+import { spawnSync } from "child_process";
 import { isPathIgnored } from "../secrets/index";
 import type { ToolDefinition } from "./schema";
 
@@ -64,7 +65,15 @@ const grepFilesTool: ToolDefinition = {
       return { success: false, error: `Invalid regex pattern: ${pattern}` };
     }
 
-    const matches: Array<{ file: string; line: number; text: string }> = [];
+    const rg = ripgrepMatches(pattern, root, glob, caseSensitive, maxResults);
+    if (rg.used) {
+      return {
+        success: true,
+        data: { matches: rg.matches, count: rg.matches.length, pattern, root, engine: "ripgrep" },
+      };
+    }
+
+    const matches: Array<GrepMatch> = [];
     const files = collectFiles(root, glob);
 
     for (const file of files) {
@@ -88,7 +97,7 @@ const grepFilesTool: ToolDefinition = {
 
     return {
       success: true,
-      data: { matches, count: matches.length, pattern, root },
+      data: { matches, count: matches.length, pattern, root, engine: "builtin" },
     };
   },
 };
@@ -139,6 +148,54 @@ function matchesGlob(entry: string, fullPath: string, pattern: string): boolean 
   } catch {
     return false;
   }
+}
+
+type GrepMatch = { file: string; line: number; text: string };
+
+function ripgrepMatches(
+  pattern: string,
+  root: string,
+  glob: string | undefined,
+  caseSensitive: boolean,
+  maxResults: number,
+): { matches: GrepMatch[]; used: boolean } {
+  const args = [
+    "--line-number",
+    "--no-heading",
+    "--with-filename",
+    "--max-count", "1",
+    ...(caseSensitive ? ["--case-sensitive"] : ["--ignore-case"]),
+    ...(glob ? ["--glob", glob] : []),
+    "--max-count", String(maxResults),
+    "--",
+    pattern,
+    ".",
+  ];
+  const res = spawnSync("rg", args, {
+    cwd: root,
+    encoding: "utf-8",
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (res.error || res.status === 127 || res.status === 2 && /not found/i.test(res.stderr ?? "")) {
+    return { matches: [], used: false };
+  }
+  const matches: GrepMatch[] = [];
+  const out = res.stdout ?? "";
+  for (const line of out.split(/\r?\n/)) {
+    if (!line) continue;
+    const idx1 = line.indexOf(":");
+    if (idx1 === -1) continue;
+    const file = line.slice(0, idx1);
+    const rest = line.slice(idx1 + 1);
+    const idx2 = rest.indexOf(":");
+    if (idx2 === -1) continue;
+    const lineno = Number(rest.slice(0, idx2));
+    const text = rest.slice(idx2 + 1).trim();
+    matches.push({ file, line: Number.isFinite(lineno) ? lineno : 0, text });
+    if (matches.length >= maxResults) break;
+  }
+  return { matches, used: true };
 }
 
 export default grepFilesTool;

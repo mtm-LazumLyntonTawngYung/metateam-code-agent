@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { spawn } from "child_process";
+import { resolve } from "path";
 import { redactText } from "../secrets/index";
+import { loadConfig } from "../config";
 import type { ToolDefinition } from "./schema";
 
 const RunBashSchema = z.object({
@@ -8,6 +10,36 @@ const RunBashSchema = z.object({
   timeout: z.number().int().positive().max(120000).optional().describe("Optional timeout in milliseconds (default: 30000, max: 120000)"),
   workdir: z.string().optional().describe("Optional working directory (defaults to current project root)"),
 });
+
+function sandboxConfig(): { enabled: boolean } {
+  try {
+    const cfg = loadConfig();
+    const raw = cfg as unknown as Record<string, unknown>;
+    const sandbox = raw.sandbox as { enabled?: boolean } | undefined;
+    return { enabled: sandbox?.enabled ?? false };
+  } catch {
+    return { enabled: false };
+  }
+}
+
+function projectRoot(): string {
+  try {
+    return process.cwd();
+  } catch {
+    return ".";
+  }
+}
+
+function isInsideRoot(workdir: string, root: string): boolean {
+  const w = resolve(workdir);
+  const r = resolve(root);
+  if (w === r) return true;
+  return w.startsWith(r + (r.endsWith("/") || r.endsWith("\\") ? "" : requireSeparator()));
+}
+
+function requireSeparator(): string {
+  return process.platform === "win32" ? "\\" : "/";
+}
 
 const runBashTool: ToolDefinition = {
   name: "run_bash",
@@ -34,18 +66,30 @@ const runBashTool: ToolDefinition = {
     required: ["command"],
   },
   schema: RunBashSchema,
-  execute(args) {
+  execute(args, ctx) {
     const parsed = RunBashSchema.parse(args);
     const command = parsed.command;
     const timeout = Math.min(parsed.timeout ?? 30000, 120000);
-    const workdir = parsed.workdir;
+
+    const { enabled } = sandboxConfig();
+    let workdir = parsed.workdir;
+    if (enabled) {
+      const root = projectRoot();
+      if (workdir && !isInsideRoot(workdir, root)) {
+        return {
+          success: false,
+          error: `Sandbox mode is enabled: workdir '${workdir}' is outside the project root '${root}'.`,
+        };
+      }
+      workdir = workdir ?? root;
+    }
 
     const isWin = process.platform === "win32";
     const shellCmd = isWin
       ? [process.env.COMSPEC || "cmd.exe", "/c"]
       : ["bash", "-c"];
 
-    return new Promise((resolve) => {
+    return new Promise((resolveResult) => {
       const safeEnv = sanitizeEnv(process.env);
       const proc = spawn(shellCmd[0], [...shellCmd.slice(1), command], {
         cwd: workdir || process.cwd(),
@@ -54,9 +98,11 @@ const runBashTool: ToolDefinition = {
         windowsHide: true,
       });
 
+      let timedOut = false;
       const timer = setTimeout(() => {
+        timedOut = true;
         proc.kill("SIGTERM");
-        resolve({
+        resolveResult({
           success: false,
           error: `Command timed out after ${timeout}ms`,
           data: {
@@ -72,30 +118,34 @@ const runBashTool: ToolDefinition = {
       let stderrBuf = "";
 
       proc.stdout?.on("data", (chunk: Buffer) => {
-        stdoutBuf += chunk.toString();
+        const text = chunk.toString();
+        stdoutBuf += text;
+        if (ctx?.onOutput) ctx.onOutput(redactText(text));
       });
       proc.stderr?.on("data", (chunk: Buffer) => {
-        stderrBuf += chunk.toString();
+        const text = chunk.toString();
+        stderrBuf += text;
+        if (ctx?.onOutput) ctx.onOutput(redactText(text));
       });
 
       proc.on("close", (exitCode) => {
         clearTimeout(timer);
-        resolve({
-          success: exitCode === 0,
+        resolveResult({
+          success: exitCode === 0 && !timedOut,
           data: {
             stdout: redactText(stdoutBuf),
             stderr: redactText(stderrBuf),
             exitCode,
-            timedOut: false,
+            timedOut,
           },
           error:
-            exitCode !== 0 ? `Exit code ${exitCode}` : undefined,
+            exitCode !== 0 && !timedOut ? `Exit code ${exitCode}` : undefined,
         });
       });
 
       proc.on("error", (err) => {
         clearTimeout(timer);
-        resolve({
+        resolveResult({
           success: false,
           error: `Failed to spawn process: ${err.message}`,
           data: {

@@ -1,8 +1,8 @@
 import { run, all, get } from "./db";
 import { getMessages, addMessage, type MessageRow } from "./history";
-import { countTokens, estimateContextUsage, DEFAULT_BUDGET } from "./tokens";
+import { countTokens, estimateContextUsage, DEFAULT_BUDGET, budgetForModel } from "./tokens";
 import { redactText } from "../secrets/index";
-import { findModel } from "../llm/config";
+import { bumpEpoch, safeBoundarySystemMessage } from "./epoch";
 
 export type SummaryRow = {
   id: number;
@@ -63,6 +63,8 @@ export function buildContext(
       `[Previous conversation summary]: ${latest.summary_text}`,
     );
   }
+  const boundary = safeBoundarySystemMessage(sessionId);
+  if (boundary) systemMessages.push(boundary);
 
   return { systemMessages, messages, usage };
 }
@@ -100,6 +102,7 @@ export function rotateContext(
   const lastPrunedId = prunedMessages[prunedMessages.length - 1].id;
 
   storeSummary(sessionId, summaryText, lastPrunedId);
+  bumpEpoch(sessionId, lastPrunedId, "context-rotation", countTokens(summaryText));
 
   const ids = prunedMessages.map((m) => m.id);
   const placeholders = ids.map(() => "?").join(",");
@@ -125,14 +128,7 @@ export function rotateIfNeeded(sessionId: string, modelId?: string): {
 }
 
 function contextBudgetFor(modelId?: string): typeof DEFAULT_BUDGET {
-  if (!modelId) return DEFAULT_BUDGET;
-  const model = findModel(modelId);
-  if (!model) return DEFAULT_BUDGET;
-  const ctx = model.contextWindow;
-  return {
-    maxTokens: ctx,
-    warnThreshold: 0.8,
-  };
+  return budgetForModel(modelId);
 }
 
 function truncate(s: string, max: number): string {

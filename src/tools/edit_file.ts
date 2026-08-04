@@ -68,11 +68,40 @@ const editFileTool: ToolDefinition = {
     const first = original.indexOf(target);
 
     if (first === -1) {
+      const fuzzy = fuzzyUniqueReplace(original, target, replacement);
+      if (fuzzy.applied) {
+        const updated = fuzzy.updated;
+        recordPatch(path, original, updated, "edit_file", {
+          path,
+          targetString: target,
+          replacement,
+          fuzzy: true,
+        });
+        try {
+          writeFileSync(path, updated, "utf-8");
+          return {
+            success: true,
+            data: {
+              path,
+              replacedCount: 1,
+              before: target.slice(0, 80),
+              after: replacement.slice(0, 80),
+              fuzzy: true,
+            },
+          };
+        } catch (err) {
+          return {
+            success: false,
+            error: `Failed to write updated file: ${err instanceof Error ? err.message : String(err)}`,
+          };
+        }
+      }
       return {
         success: false,
         error:
-          `targetString was not found in ${path}. It may differ in whitespace/indentation or the file may have changed. ` +
-          `Read the file to confirm the exact text, then retry with the correct targetString.`,
+          `targetString was not found in ${path}. ${fuzzy.reason} ` +
+          `Read the file to confirm the exact text, then retry. ` +
+          `Hint: you can also use the apply_patch tool, which matches hunks with more tolerance.`,
       };
     }
 
@@ -127,6 +156,70 @@ function countOccurrences(text: string, needle: string): number {
     idx = text.indexOf(needle, idx + needle.length);
   }
   return count;
+}
+
+function normalizeWhitespace(text: string): { norm: string; spans: number[] } {
+  let norm = "";
+  const spans: number[] = [];
+  let i = 0;
+  let pendingWs = false;
+  while (i < text.length) {
+    const ch = text[i];
+    if (/\s/.test(ch)) {
+      pendingWs = true;
+      i++;
+      continue;
+    }
+    if (pendingWs) {
+      if (norm.length > 0) {
+        norm += " ";
+        spans.push(i);
+      }
+      pendingWs = false;
+    }
+    norm += ch;
+    spans.push(i);
+    i++;
+  }
+  return { norm, spans };
+}
+
+export type FuzzyMatchResult =
+  | { applied: true; updated: string; fuzzy: true }
+  | { applied: false; reason: string };
+
+export function fuzzyUniqueReplace(original: string, target: string, replacement: string): FuzzyMatchResult {
+  if (!target || !target.trim()) {
+    return { applied: false, reason: "targetString must contain non-whitespace text." };
+  }
+  const { norm: fileNorm, spans: fSpans } = normalizeWhitespace(original);
+  const { norm: targetNorm, spans: tSpans } = normalizeWhitespace(target);
+  if (!targetNorm) {
+    return { applied: false, reason: "targetString must contain non-whitespace text." };
+  }
+
+  const first = fileNorm.indexOf(targetNorm);
+  if (first === -1) {
+    return { applied: false, reason: "targetString was not found, even ignoring whitespace differences." };
+  }
+
+  let count = 0;
+  let idx = first;
+  while (idx !== -1) {
+    count++;
+    idx = fileNorm.indexOf(targetNorm, idx + targetNorm.length);
+  }
+  if (count > 1) {
+    return {
+      applied: false,
+      reason: `targetString appears ${count} times when ignoring whitespace, so the edit is ambiguous. Add more surrounding context.`,
+    };
+  }
+
+  const realStart = fSpans[first];
+  const realEnd = fSpans[first + tSpans.length - 1] + 1;
+  const updated = original.slice(0, realStart) + replacement + original.slice(realEnd);
+  return { applied: true, updated, fuzzy: true };
 }
 
 export default editFileTool;

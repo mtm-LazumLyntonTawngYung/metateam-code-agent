@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { homedir } from "os";
 import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
+import { EPOCH_TABLE_SQL } from "./epoch";
 
 const dbDir = join(homedir(), ".config", "mtc");
 const dbPath = join(dbDir, "history.db");
@@ -100,6 +101,13 @@ function migrate(db: Database): void {
       db.exec(`
         CREATE INDEX IF NOT EXISTS idx_turns_session
         ON turns(session_id, created_at)
+      `);
+    },
+    () => {
+      db.exec(EPOCH_TABLE_SQL);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_epochs_session
+        ON epochs(session_id, epoch_no)
       `);
     },
   ];

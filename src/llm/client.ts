@@ -12,24 +12,46 @@ import { findProvider, findModel } from "./config";
 import { trackModelUsage } from "../telemetry/tracker";
 import { LlmError, IncompleteResponseError } from "../utils/errors";
 import { createOpenAiCompatibleProvider, createAnthropicProvider } from "./providers";
+import type { ProviderAdapter } from "./providers/types";
 
-const providers = new Map<string, ReturnType<typeof createOpenAiCompatibleProvider> | ReturnType<typeof createAnthropicProvider>>();
+export type ProviderFactory = (opts: {
+  id: string;
+  baseUrl: string;
+  apiKey: string;
+}) => ProviderAdapter;
 
-function getOrCreateProvider(providerId: string): ReturnType<typeof createOpenAiCompatibleProvider> | ReturnType<typeof createAnthropicProvider> {
+const providerFactories = new Map<string, ProviderFactory>();
+
+function openAiCompatibleFactory(opts: { id: string; baseUrl: string; apiKey: string }): ProviderAdapter {
+  return createOpenAiCompatibleProvider(opts);
+}
+
+function anthropicFactory(opts: { id: string; baseUrl: string; apiKey: string }): ProviderAdapter {
+  return createAnthropicProvider({ baseUrl: opts.baseUrl, apiKey: opts.apiKey });
+}
+
+registerProviderFactory("anthropic", anthropicFactory);
+registerProviderFactory("openai", openAiCompatibleFactory);
+registerProviderFactory("deepseek", openAiCompatibleFactory);
+registerProviderFactory("openrouter", openAiCompatibleFactory);
+registerProviderFactory("llamacpp", openAiCompatibleFactory);
+
+export function registerProviderFactory(providerId: string, factory: ProviderFactory): void {
+  providerFactories.set(providerId, factory);
+}
+
+const providers = new Map<string, ProviderAdapter>();
+
+function getOrCreateProvider(providerId: string): ProviderAdapter {
   let p = providers.get(providerId);
   if (p) return p;
   const provider = findProvider(providerId);
   if (!provider) throw new Error(`No provider configured for model: ${providerId}`);
-  p = createProviderInstance(provider);
+  const factory =
+    providerFactories.get(provider.id) ?? providerFactories.get("openai") ?? openAiCompatibleFactory;
+  p = factory({ id: provider.id, baseUrl: provider.baseUrl, apiKey: provider.apiKey });
   providers.set(providerId, p);
   return p;
-}
-
-function createProviderInstance(provider: { id: string; apiKey: string; baseUrl: string }) {
-  if (provider.id === "anthropic") {
-    return createAnthropicProvider({ baseUrl: provider.baseUrl, apiKey: provider.apiKey });
-  }
-  return createOpenAiCompatibleProvider({ id: provider.id, baseUrl: provider.baseUrl, apiKey: provider.apiKey });
 }
 
 export async function complete(
