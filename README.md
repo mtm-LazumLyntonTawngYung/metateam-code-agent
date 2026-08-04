@@ -1,21 +1,33 @@
 # metateam-code-agent
 
-AI-powered, terminal-first coding assistant tailored for MetaTeam engineers to accelerate development, refactoring, and code reviews.
+AI-powered, terminal-first coding assistant tailored for MetaTeam engineers
+to accelerate development, refactoring, and code reviews.
 
 ## Features
 
-- **Terminal-native UI** — Built with Ink (React for CLIs), providing a responsive and interactive experience directly in your terminal.
-- **Multiple Agents** — Switch between built-in and custom agents, each with configurable system prompts and tool permissions.
+- **Terminal-native UI** — Built with Ink (React for CLIs), providing a
+  responsive and interactive experience directly in your terminal.
+- **Multiple Agents** — Switch between built-in and custom agents, each with
+  configurable system prompts and tool permissions.
 - **MCP Integration** — Connect to external tools and services via the Model Context Protocol (MCP).
-- **Smart Tool Permissions** — Granular control over which tools each agent can use, with user-facing permission prompts for sensitive operations.
+- **Smart Tool Permissions** — Granular control over which tools each agent
+  can use, with user-facing permission prompts for sensitive operations.
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
-- **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter providers with automatic task classification and fallback.
+- **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter
+  providers with automatic task classification and fallback.
 - **Local LLM Support** — Run local models via llama.cpp (`llama-server`) for offline/private use.
-- **Agent-driven Eval & Benchmarking** — Run the real agent loop against sandboxed tasks with `mtc eval run` and benchmark all tasks with `mtc eval bench`.
-- **Webhook Security Gateway** — Constant-time signature validation for GitHub webhooks and token validation for GitLab; unauthenticated requests return 401.
-- **Autonomous Daemon** — Headless webhook daemon that labels issues and opens draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but rejected).
-- **Enterprise Edition** — Tiered licensing, audit logs, org management, and a web control-plane dashboard with real-time updates, analytics, and export capabilities.
+- **Agent-driven Eval & Benchmarking** — Run the real agent loop against
+  sandboxed tasks with `mtc eval run` and benchmark all tasks with
+  `mtc eval bench`.
+- **Webhook Security Gateway** — Constant-time signature validation for GitHub
+  webhooks and token validation for GitLab; unauthenticated requests return 401.
+- **Autonomous Daemon** — Headless webhook daemon that labels issues and opens
+  draft PRs with fixes (GitHub only; GitLab webhooks are acknowledged but
+  rejected).
+- **Enterprise Edition** — Tiered licensing, audit logs, org management, and a
+  web control-plane dashboard with real-time updates, analytics, and export
+  capabilities.
 
 ## Prerequisites
 
@@ -140,7 +152,8 @@ The CLI binary is `mtc`.
 
 ### LLM Providers
 
-LLM provider keys and routing are managed through the CLI (stored in `~/.config/mtc/config.json`), not environment variables:
+LLM provider keys and routing are managed through the CLI
+(stored in `~/.config/mtc/config.json`), not environment variables:
 
 ```bash
 mtc llm status
@@ -161,7 +174,9 @@ mtc llm set-provider -i llamacpp -k dummy -u http://localhost:8080/v1 -m qwen2.5
 mtc llm set-routing --default qwen2.5-7b-instruct
 ```
 
-**Note:** Models with <7B parameters may not reliably support tool calling. For full agent functionality (file editing, bash execution), use models with 7B+ parameters.
+**Note:** Models with <7B parameters may not reliably support tool calling.
+For full agent functionality (file editing, bash execution), use models
+with 7B+ parameters.
 
 ### MCP Servers
 
@@ -172,15 +187,22 @@ MCP servers are loaded from:
 
 ### Custom Agents
 
-Custom agents can be defined in `.mtc/agents/*.md` or `~/.config/mtc/agents/*.md`. Each agent has a system prompt and permissions (`read`, `bash`, `edit`, `execute`). New custom agents default to `read: allow`, `edit/bash/execute: deny`. Frontmatter `permissions` are honored explicitly (`allow`/`deny`).
+Custom agents can be defined in `.mtc/agents/*.md` or
+`~/.config/mtc/agents/*.md`. Each agent has a system prompt and permissions
+(`read`, `bash`, `edit`, `execute`). New custom agents default to
+`read: allow`, `edit/bash/execute: deny`. Frontmatter `permissions` are
+honored explicitly (`allow`/`deny`).
 
 ### Rules
 
-Project-specific rules in `.mtc/rules/` (and `AGENTS.md` at the project root) are loaded and appended to the active agent's system prompt.
+Project-specific rules in `.mtc/rules/` (and `AGENTS.md` at the project root)
+are loaded and appended to the active agent's system prompt.
 
 ### Skills
 
-Skills can be installed from the built-in catalog or from `.mtc/skills/<id>/SKILL.md` (workspace) and `~/.mtc/skills/<id>/SKILL.md` (global). Open them with `/skills`.
+Skills can be installed from the built-in catalog or from
+`.mtc/skills/<id>/SKILL.md` (workspace) and `~/.mtc/skills/<id>/SKILL.md`
+(global). Open them with `/skills`.
 
 ### Enterprise Licenses
 
@@ -209,12 +231,16 @@ contents, prompts, or responses. See [docs/internal/privacy-policy.md](docs/inte
 
 ## Security
 
-- **Webhook validation** — GitHub signatures are verified with `crypto.timingSafeEqual` (constant-time comparison); GitLab tokens are validated similarly. Unauthenticated webhook requests return 401.
+- **Webhook validation** — GitHub signatures are verified with
+  `crypto.timingSafeEqual` (constant-time comparison); GitLab tokens are
+  validated similarly. Unauthenticated webhook requests return 401.
 - **Clone URL validation** — Strict regex validation on repository clone URLs.
 - **Path traversal prevention** — Resolved-path containment checks for LLM-written files in the autofix pipeline.
-- **License verification** — HMAC-SHA256 license key verification with fail-closed behavior when `MTC_LICENSE_SECRET` is not set.
+- **License verification** — HMAC-SHA256 license key verification with
+  fail-closed behavior when `MTC_LICENSE_SECRET` is not set.
 - **Auth token storage** — SSO tokens written with 0600 file permissions.
-- **Cross-platform hardening** — CRLF normalization in file reads and MCP plugins; OS temp paths for daemon; `join()`-based path handling.
+- **Cross-platform hardening** — CRLF normalization in file reads and MCP
+  plugins; OS temp paths for daemon; `join()`-based path handling.
 
 ## Documentation
 
