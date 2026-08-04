@@ -1,0 +1,16 @@
+package-lock.json
+  h_10671eecd6b5d0 3,9
+package.json
+  h_10671eecd6b5d0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "ecdb3538c43f45c6006d143334e6d52b0ac8edca",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
