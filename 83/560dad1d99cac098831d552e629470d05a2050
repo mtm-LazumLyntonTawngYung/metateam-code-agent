@@ -1,0 +1,16 @@
+src/config/schema.ts
+  h_10671eecd6b5d0 267-268
+src/tools/websearch.ts
+  h_10671eecd6b5d0 7-8,50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "83560dad1d99cac098831d552e629470d05a2050",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
