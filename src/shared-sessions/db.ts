@@ -7,11 +7,22 @@ const dbDir = join(homedir(), ".config", "mtc");
 const dbPath = join(dbDir, "shared-sessions.db");
 
 let db: Database | null = null;
+let inMemory = false;
+
+export function useInMemoryDb(): void {
+  inMemory = true;
+  if (db) {
+    db.close();
+    db = null;
+  }
+}
 
 export function getDb(): Database {
   if (db) return db;
 
-  if (!existsSync(dbDir)) {
+  const dbPath = inMemory ? ":memory:" : join(dbDir, "shared-sessions.db");
+
+  if (!inMemory && !existsSync(dbDir)) {
     mkdirSync(dbDir, { recursive: true });
   }
 

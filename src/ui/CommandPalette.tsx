@@ -23,6 +23,10 @@ const BUILTIN_COMMANDS = [
   { id: "variants", label: "/variants - Switch model variant", category: "chat" },
   { id: "exit", label: "/exit - Exit mtc", category: "system" },
   { id: "logout", label: "/logout - Log out of MetaTeam SSO", category: "system" },
+  { id: "share", label: "/share - Share current session", category: "collab" },
+  { id: "join", label: "/join <token> - Join a shared session", category: "collab" },
+  { id: "leave", label: "/leave - Leave shared session", category: "collab" },
+  { id: "participants", label: "/participants - View participants", category: "collab" },
 ];
 
 function fuzzyMatch(text: string, query: string): boolean {
