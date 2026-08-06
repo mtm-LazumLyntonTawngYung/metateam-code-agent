@@ -1,0 +1,247 @@
+docs/internal/privacy-policy.md
+  s_3b0d4ac429b85c::t_aaa4b3517144ff 1-60
+tests/unit/session.test.ts
+  s_3b0d4ac429b85c::t_66965c1fc22ac6 103,105
+  s_3b0d4ac429b85c::t_5a845a6b10e6b3 1-102,104,106-126
+src/enterprise/dashboard.ts
+  s_3b0d4ac429b85c::t_9312b9fc32d20c 804-806,812-814
+  s_3b0d4ac429b85c::t_bc676a5f1149f4 838,844,851,862-863,866
+  s_3b0d4ac429b85c::t_b8b8b460fc082d 669
+  s_3b0d4ac429b85c::t_70487d49f76c70 828-829,831
+  s_3b0d4ac429b85c::t_ea9ca9e79b4603 883,888-890
+  s_3b0d4ac429b85c::t_63f179ce247857 703,712-713
+  s_3b0d4ac429b85c::t_b1ed8b874ed53f 776,781-785
+  s_3b0d4ac429b85c::t_9b43618596c6ba 130
+  s_3b0d4ac429b85c::t_08d2680afa8dba 760
+  s_3b0d4ac429b85c::t_eec2e6a743ba0d 721,725-730
+  s_3b0d4ac429b85c::t_7fc79e6dec5024 96-99
+src/ui/ModelPicker.tsx
+  s_3b0d4ac429b85c::t_38596192bbbbac 3,16
+  s_3b0d4ac429b85c::t_544447765b71c2 19,37-44,46-66
+.github/workflows/test.yml
+  s_3b0d4ac429b85c::t_7b823029152e6f 14-18
+  s_3b0d4ac429b85c::t_64f8ff72b83589 1-13,19-43
+tests/unit/prop.ts
+  s_3b0d4ac429b85c::t_47d511dc2d6fce 1-20
+.kiro/specs/metateam-code-agent-improvements/tasks.md
+  s_3b0d4ac429b85c::t_58e5cb0b124a19 18
+  s_3b0d4ac429b85c::t_6efc132d94d338 30-34
+  s_3b0d4ac429b85c::t_46e80db326e6ff 227
+  s_3b0d4ac429b85c::t_cad98f8dffee14 35
+  s_3b0d4ac429b85c::t_8c66d766901cad 266
+  s_3b0d4ac429b85c::t_8566c3aa9f5321 13-17
+  s_3b0d4ac429b85c::t_26cdf13513a6bc 77-136
+  s_3b0d4ac429b85c::t_4e1eca80beb8eb 8-10
+  s_3b0d4ac429b85c::t_aa22a0bb91803d 36-38
+  s_3b0d4ac429b85c::t_cbe3967251431b 72-76
+  s_3b0d4ac429b85c::t_5f735420e415d0 269-295
+  s_3b0d4ac429b85c::t_9d9503b524b5ab 19-21
+  s_3b0d4ac429b85c::t_bab7ee27578daa 71
+  s_3b0d4ac429b85c::t_51f9d87dea9206 237-243
+  s_3b0d4ac429b85c::t_01a1d1e5835188 250-260
+  s_3b0d4ac429b85c::t_4bb5e1e920af76 221,231
+  s_3b0d4ac429b85c::t_b26e3a73bf15ef 144-212
+  s_3b0d4ac429b85c::t_338b97faa11657 11-12,22-29,39-66
+  s_3b0d4ac429b85c::t_99b378805a6931 67-70
+  s_3b0d4ac429b85c::t_4620a5805dbe64 326-328
+  s_3b0d4ac429b85c::t_7650474fc87c8b 137-139
+  s_3b0d4ac429b85c::t_20dffd4d685730 5-7
+  s_3b0d4ac429b85c::t_ca4f3f012f10c1 140-143
+  s_3b0d4ac429b85c::t_d6af974f23fa98 213-215,218-220
+  s_3b0d4ac429b85c::t_421d545618e8ef 222-226
+  s_3b0d4ac429b85c::t_7f081abc930eb6 228-230
+  s_3b0d4ac429b85c::t_78cac3f2dd08b6 232-236
+  s_3b0d4ac429b85c::t_5696e94eab9d2e 244-249
+  s_3b0d4ac429b85c::t_30d5df2669574e 261-265
+  s_3b0d4ac429b85c::t_2041549e7455db 267-268
+  s_3b0d4ac429b85c::t_f1d3abc50351cc 296-298,323-325
+  s_3b0d4ac429b85c::t_7631531d148ea0 329-331
+src/agents/index.ts
+  s_3b0d4ac429b85c::t_55f31071e66a10 34-41
+src/auth/sso.ts
+  s_3b0d4ac429b85c::t_68a9a6302d4bed 8-16,19-21,73-77,79-80,85,87,89,91,117-123,126,128,137,195,197,211,244
+package.json
+  s_3b0d4ac429b85c::t_e0378788f81d7c 14
+  s_3b0d4ac429b85c::t_4cf393eb1445b0 15
+src/cli.tsx
+  s_3b0d4ac429b85c::t_d6fd1aa556d293 140-146
+  s_3b0d4ac429b85c::t_80c419840f30b0 47
+  s_3b0d4ac429b85c::t_de4e01bdcd664c 6
+  s_3b0d4ac429b85c::t_799e5c01eb59f3 271-273
+src/llm/fallback.ts
+  s_3b0d4ac429b85c::t_4976225fbe2e66 16,24-25,27,31,37
+src/mcp/index.ts
+  s_3b0d4ac429b85c::t_933356243400d5 73-76
+  s_3b0d4ac429b85c::t_7eb1028e32944d 140-142
+  s_3b0d4ac429b85c::t_7f8f6ada78fa45 13
+  s_3b0d4ac429b85c::t_8d40aedf7ed7b6 93-95,102,104-120,126
+src/enterprise/license.ts
+  s_3b0d4ac429b85c::t_db3417291ff005 10,14,22-27,29-34,36-64,67-83,94-110,120-122,124-125
+  s_3b0d4ac429b85c::t_34864290f6d8f8 12
+README.md
+  s_3b0d4ac429b85c::t_9cfceccd1309a3 14
+  s_3b0d4ac429b85c::t_7d7cf633ef022c 84-108
+tests/unit/security.test.ts
+  s_3b0d4ac429b85c::t_ec216e34397759 1-9,11-93
+  s_3b0d4ac429b85c::t_c7167e98b2c877 94-176
+  s_3b0d4ac429b85c::t_b0ae2a4771af41 10
+docs/internal/daemon.md
+  s_3b0d4ac429b85c::t_a74c82ecf06fe5 74-75,77
+  s_3b0d4ac429b85c::t_a5bff7753a8c0d 58-60
+  s_3b0d4ac429b85c::t_c18791b73ed338 195,198-203
+  s_3b0d4ac429b85c::t_2a1dd553300f34 82-83,85-96
+src/utils/logger.ts
+  s_3b0d4ac429b85c::t_baea8488cc45ba 1-35
+src/session/db.ts
+  s_3b0d4ac429b85c::t_95d4b34014d7fe 26-89
+docs/internal/README.md
+  s_3b0d4ac429b85c::t_3c865854bcb1b1 52,55-60
+docs/migration-guide.md
+  s_3b0d4ac429b85c::t_e14ab5ab357517 1-96
+tests/unit/version.test.ts
+  s_3b0d4ac429b85c::t_750a6a1e8c0e82 1-57
+src/mcp-plugins/devops-bridge.ts
+  s_3b0d4ac429b85c::t_553a0b6750ad3e 461
+src/llm/types.ts
+  s_3b0d4ac429b85c::t_b3559f22665aae 59
+  s_3b0d4ac429b85c::t_62069ed50c3bf5 203
+tests/unit/paths.test.ts
+  s_3b0d4ac429b85c::t_e2fefca2738453 1,12-14,18,26-27,31-39
+  s_3b0d4ac429b85c::t_fce175a217f4ba 2-11,15-17,19-25,28-30,40-41
+src/tools/read_file.ts
+  s_3b0d4ac429b85c::t_c3cc18a36bfd66 54
+  s_3b0d4ac429b85c::t_7ad416a15d4ac0 5-6
+  s_3b0d4ac429b85c::t_16ca752faca862 59
+src/ui/components/Sidebar.tsx
+  s_3b0d4ac429b85c::t_51709914fd81f4 3
+  s_3b0d4ac429b85c::t_868894c8790e2c 83
+tests/unit/correctness.test.ts
+  s_3b0d4ac429b85c::t_0502b39ec906a0 1-6,8-123
+  s_3b0d4ac429b85c::t_af32b7afb16431 124-173
+  s_3b0d4ac429b85c::t_dc91e4e94c9de3 7
+src/utils/security.ts
+  s_3b0d4ac429b85c::t_a2dd650279957c 46
+  s_3b0d4ac429b85c::t_7adc833a349b28 1,13
+  s_3b0d4ac429b85c::t_17bc5d4e3879d7 2-12,14-45,47-63
+src/llm/config.ts
+  s_3b0d4ac429b85c::t_54447d53e41d90 2
+  s_3b0d4ac429b85c::t_5394fc50a4b577 90-94
+src/agents/custom.ts
+  s_3b0d4ac429b85c::t_c2ff76a0b1dc0a 38-41
+  s_3b0d4ac429b85c::t_06179f2b539485 12-14
+tests/unit/license.test.ts
+  s_3b0d4ac429b85c::t_79adfbc1132497 50-97
+  s_3b0d4ac429b85c::t_b8db378a302ce7 3-4
+  s_3b0d4ac429b85c::t_38a5adb0f90da6 1-2,5-49
+src/daemon/webhook.ts
+  s_3b0d4ac429b85c::t_72e2ddb68c3704 95
+  s_3b0d4ac429b85c::t_55c259c9a20c46 5
+  s_3b0d4ac429b85c::t_0adee81a3d1684 69,84-86
+  s_3b0d4ac429b85c::t_ec491e083d7c20 61
+  s_3b0d4ac429b85c::t_854a6ab455fb9e 32-46
+  s_3b0d4ac429b85c::t_1f7e964deb2058 4
+docs/internal/mcp-integrations.md
+  s_3b0d4ac429b85c::t_906d2892369665 31-37
+src/agents/agent-loop.ts
+  s_3b0d4ac429b85c::t_182788f97dbce4 113
+  s_3b0d4ac429b85c::t_fff0f1845fce28 77-81,83-88
+  s_3b0d4ac429b85c::t_16be03b8224ae9 49
+  s_3b0d4ac429b85c::t_80a52a50b716ac 145
+  s_3b0d4ac429b85c::t_a52228b8ef68b3 125
+  s_3b0d4ac429b85c::t_4f680e8c132d6d 5,7
+  s_3b0d4ac429b85c::t_e8163219ca3771 1,3-4,11,20,30-41,66-76,94,96,106,108-112,114-123,126-133,136-143,147-157,159-163
+  s_3b0d4ac429b85c::t_95fb5a7e6dbc6b 188
+  s_3b0d4ac429b85c::t_d80875ed03bf0f 82
+  s_5467dcca56a1c5::t_5e09aef3e5d293 10
+src/mcp-plugins/figma-bridge.ts
+  s_3b0d4ac429b85c::t_33bb006e8e7896 440
+src/agents/frontmatter.ts
+  s_3b0d4ac429b85c::t_1f754bae84a04d 46-47,50
+  s_3b0d4ac429b85c::t_6bd0de6d24b781 4-5
+CHANGELOG.md
+  s_3b0d4ac429b85c::t_50a2ab7dbb81be 5-8,15,19-20
+  s_3b0d4ac429b85c::t_463de286ad1683 9-14,17-18,21-22
+src/agents/rules.ts
+  s_3b0d4ac429b85c::t_72caa623873267 47
+src/config/index.ts
+  s_3b0d4ac429b85c::t_d61bcfdde36988 21
+  s_3b0d4ac429b85c::t_9a04c2f00653d5 65
+src/ui/App.tsx
+  s_3b0d4ac429b85c::t_6021f64867a7e6 218-222
+  s_5467dcca56a1c5::t_82161e57c9e3b4 609
+  s_3b0d4ac429b85c::t_db7cd9b14654ea 126,301
+  s_3b0d4ac429b85c::t_16e092147a2e84 277-281,290-300
+  s_3b0d4ac429b85c::t_7983b40ab2a836 330,342,347-354,356
+src/ui/LoginScreen.tsx
+  s_3b0d4ac429b85c::t_79744ea8c58845 6
+src/daemon/config.ts
+  s_3b0d4ac429b85c::t_9c9ad1d59070df 22
+  s_3b0d4ac429b85c::t_99f041f64f467c 1-3
+  s_3b0d4ac429b85c::t_32b64507f93b8f 26-27
+src/ui/components/Header.tsx
+  s_3b0d4ac429b85c::t_dfc44ed042bf36 3,17
+src/utils/updater.ts
+  s_3b0d4ac429b85c::t_37b42b6edb16f3 1-2,31,34,39
+src/daemon/index.ts
+  s_3b0d4ac429b85c::t_b4f795416badf1 3,7-13,16,20
+src/version.ts
+  s_3b0d4ac429b85c::t_e2f2a1abc348fc 1-27
+src/llm/client.ts
+  s_3b0d4ac429b85c::t_4949fef2cbedd4 192
+  s_3b0d4ac429b85c::t_db0a41dc307c35 275
+  s_3b0d4ac429b85c::t_db254fafa3b7f3 423-468,470,510-524,526-528,531-532,535-536,539,541-544,551-685
+  s_3b0d4ac429b85c::t_0a12326de5e66d 469,471-481,483-499,501-509,525,529-530,533-534,537-538,545-550
+  s_3b0d4ac429b85c::t_3865654cec7f34 103,175,258
+  s_3b0d4ac429b85c::t_286d2c3fae10ad 500
+  s_3b0d4ac429b85c::t_cf457d100c8e84 482
+  s_3b0d4ac429b85c::t_0ccd2a4c4201a6 11
+  s_3b0d4ac429b85c::t_f48d1e30bd986c 36-60
+  s_3b0d4ac429b85c::t_0f7e296f47db6e 540
+  s_3b0d4ac429b85c::t_4c63519ae0523e 118
+src/daemon/pipeline.ts
+  s_3b0d4ac429b85c::t_41f8532a9eda5b 138-140
+  s_3b0d4ac429b85c::t_0a03730720b669 182
+  s_3b0d4ac429b85c::t_19efb5173cb39e 75-81
+  s_3b0d4ac429b85c::t_824d2868f1fe8e 12
+  s_3b0d4ac429b85c::t_4d2f56638d8937 21-24,30-33
+  s_3b0d4ac429b85c::t_4ac5076603ec4c 19,25-26
+  s_3b0d4ac429b85c::t_9048cd941ad249 45,54,58
+  s_3b0d4ac429b85c::t_992243f0f63ca7 20
+  s_3b0d4ac429b85c::t_43b16231b14cb5 11
+  s_3b0d4ac429b85c::t_cf26f74709bc99 305
+  s_3b0d4ac429b85c::t_edae545ae8e2fa 173-175
+  s_3b0d4ac429b85c::t_bbbf7038ac57fc 69-72
+  s_3b0d4ac429b85c::t_8d93e4d0220210 73-74
+  s_3b0d4ac429b85c::t_b68b21a9077200 177
+  s_3b0d4ac429b85c::t_8c06c94955c2fa 142
+  s_3b0d4ac429b85c::t_d42f1bce10dee0 268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ffa6a7f8b0196749d6539bc55efae12dbb0cf406",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  },
+  "sessions": {
+    "s_3b0d4ac429b85c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03fe5e4c2ffe82aHV6jpWbXaOu",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_5467dcca56a1c5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04755776fffeu1hR2je6fUWxug",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
