@@ -1,0 +1,37 @@
+src/ui/CommandPalette.tsx
+  s_bb8268d312fa52::t_e5c9b9ba8db1ae 1-100
+src/ui/App.tsx
+  s_bb8268d312fa52::t_1538d01d1fc669 1-77
+src/cli.tsx
+  s_bb8268d312fa52::t_625aa5d31fb7fe 3,13,16
+src/ui/ConnectForm.tsx
+  s_bb8268d312fa52::t_042e1b815edb16 95
+  s_bb8268d312fa52::t_1ac7fd809cbb53 1-19,25-94,96-127
+  s_bb8268d312fa52::t_2455fe5da054db 20-24
+src/ui/AgentSelector.tsx
+  s_bb8268d312fa52::t_753e06d79d4b9d 1-66
+src/ui/ChatView.tsx
+  s_bb8268d312fa52::t_1076e271cde580 1-31
+src/ui/Home.tsx
+  s_bb8268d312fa52::t_9f4f8595344b25 1,6-10,12,14-23,26-29,32-36,39-45,48-54,58-63
+src/config/index.ts
+  s_bb8268d312fa52::t_7fe97257c771e3 1-38
+src/ui/components/InputBox.tsx
+  s_bb8268d312fa52::t_cd6a36fe696a38 7,10,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "8369a07de9d3e6611df574d6f0779630aead85ce",
+  "prompts": {},
+  "sessions": {
+    "s_bb8268d312fa52": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0543481a2ffeilgAAQ57qiWalA",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
