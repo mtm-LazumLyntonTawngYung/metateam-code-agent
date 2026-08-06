@@ -1,0 +1,20 @@
+docs/templates/subagent-template.md
+  h_10671eecd6b5d0 1-37
+docs/playbook.md
+  h_10671eecd6b5d0 1-380
+docs/hackathon.md
+  h_10671eecd6b5d0 1-279
+docs/templates/mcp-plugin-scaffold.ts
+  h_10671eecd6b5d0 1-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "5970350fd8f2d8a56fd4a48dfe040b128d151c15",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
