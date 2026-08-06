@@ -1,0 +1,32 @@
+src/cli.tsx
+  s_53f1b2a5811b1f::t_9b23b8d6568ddf 2
+  s_53f1b2a5811b1f::t_1069f2864fc9a4 48-49
+src/ui/LoginScreen.tsx
+  s_53f1b2a5811b1f::t_82c4a46b8cf220 63
+  s_53f1b2a5811b1f::t_4a4229052d56d3 14
+src/ui/App.tsx
+  s_53f1b2a5811b1f::t_db68c30b4532ae 318
+  s_53f1b2a5811b1f::t_4468a311d3a256 378
+  s_53f1b2a5811b1f::t_b2a735f5d891d9 90-93,95
+  s_53f1b2a5811b1f::t_2f6fdc2827be6c 38
+src/ui/clean-exit.ts
+  s_53f1b2a5811b1f::t_bee3b2da444dc5 8
+  s_53f1b2a5811b1f::t_6ab33a0948280e 1-7,10-11
+  s_53f1b2a5811b1f::t_5c86eaca1619f9 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "32e824cb5b25da82e646a57a30b730ba32a67e81",
+  "prompts": {},
+  "sessions": {
+    "s_53f1b2a5811b1f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04ed0d983ffeM69o2JvNR3Z0n2",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
