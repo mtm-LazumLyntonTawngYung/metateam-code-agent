@@ -1,0 +1,38 @@
+vscode-mtc/src/webSocketClient.ts
+  s_e9bd648b1bdd91::t_1399e6b8e1cc88 1-126
+vscode-mtc/src/sidebarProvider.ts
+  s_e9bd648b1bdd91::t_de6aed8e3587da 1-353
+src/server/ws.ts
+  s_e9bd648b1bdd91::t_5e2157d75e8beb 1-86
+vscode-mtc/package.json
+  s_e9bd648b1bdd91::t_c2f5a138b5c2a0 1-74
+src/server/handler.ts
+  s_e9bd648b1bdd91::t_5708e40e8283b5 1-201
+src/server/index.ts
+  s_e9bd648b1bdd91::t_b108013ff26e74 1-2
+vscode-mtc/src/extension.ts
+  s_e9bd648b1bdd91::t_a3c4a45fbf4cbb 1-90
+vscode-mtc/.vscodeignore
+  s_e9bd648b1bdd91::t_49103d0f1ae0e2 1-8
+src/cli.tsx
+  s_e9bd648b1bdd91::t_a837b734718f54 8
+  s_e9bd648b1bdd91::t_cc63f9ea18ca9b 120-134
+vscode-mtc/tsconfig.json
+  s_e9bd648b1bdd91::t_d1c4480e282dc7 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ca20e2781e54674ab7973e4e82e9900a1183dd57",
+  "prompts": {},
+  "sessions": {
+    "s_e9bd648b1bdd91": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053c58c13ffetGhUrRem8TjiOZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
