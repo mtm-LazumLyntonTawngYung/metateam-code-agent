@@ -1,0 +1,17 @@
+src/enterprise/dashboard.ts
+  h_10671eecd6b5d0 89-93,96-110,113-149,151-158,160-219,221-227,229-287,292-300,302-325,327-334,336,342-358,361-526,530-552,568,594-597,599-600
+  h_10671eecd6b5d0 527-529
+src/ui/CommandPalette.tsx
+  h_10671eecd6b5d0 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "cf30309cef6c268b62a4d821337a755ec0e6edde",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
