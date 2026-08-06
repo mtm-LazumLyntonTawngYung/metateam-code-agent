@@ -1,0 +1,28 @@
+src/ui/components/Statusbar.tsx
+  s_44b7650325e744::t_74c444261eca94 8,11,25-31
+src/ui/App.tsx
+  s_44b7650325e744::t_e260d8df338696 20,24,40,48,186,219
+src/ui/Home.tsx
+  s_44b7650325e744::t_f8eb7143dd0d69 39
+  s_44b7650325e744::t_b45066d145448a 5,11,14,26-38
+src/utils/updater.ts
+  s_44b7650325e744::t_1d2ad15621bcdc 1-46
+src/utils/index.ts
+  s_44b7650325e744::t_21f6b906ff0b1f 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "0c630825f847244b29ab12972e07593d2313881f",
+  "prompts": {},
+  "sessions": {
+    "s_44b7650325e744": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053fb1518ffeBpkA4lpcO7Uuw3",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
