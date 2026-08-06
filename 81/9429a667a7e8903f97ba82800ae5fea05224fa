@@ -1,0 +1,22 @@
+src/ui/App.tsx
+  s_143c13fffd1462::t_38bfdcc2c68acd 37-39
+  s_143c13fffd1462::t_a6ffdd3dd553eb 35
+  s_143c13fffd1462::t_1db8a75eb23941 36
+  s_143c13fffd1462::t_828fd76b83d3f1 40-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "819429a667a7e8903f97ba82800ae5fea05224fa",
+  "prompts": {},
+  "sessions": {
+    "s_143c13fffd1462": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05318ca5dffe0wgXpa8eHxqlGk",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
