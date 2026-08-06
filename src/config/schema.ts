@@ -153,7 +153,7 @@ export const CONFIG_SCHEMA: ConfigField[] = [
             key: "defaultModel",
             label: "Default Tasks",
             type: "string",
-            default: "deepseek-chat",
+            default: "deepseek-v4-flash",
           },
           {
             key: "reasoningModel",

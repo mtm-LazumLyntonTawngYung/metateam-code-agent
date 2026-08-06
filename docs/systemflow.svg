@@ -1,0 +1,323 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1300" viewBox="0 0 1500 1300" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="daemonGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dc2626"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1500" height="1300" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1500" height="70" fill="url(#titleGrad)"/>
+  <text x="50" y="45" fill="#ffffff" font-size="26" font-weight="700">metateam-code-agent (mtc) &#8212; System Flow</text>
+  <text x="1450" y="45" text-anchor="end" fill="#e2e8f0" font-size="13">v3.0.1 &#183; Bun runtime</text>
+
+  <!-- ========================================================= -->
+  <!-- ROW 1: ENTRY + UI + HEADLESS SUBSYSTEMS                  -->
+  <!-- ========================================================= -->
+
+  <!-- 1. Terminal entry -->
+  <g>
+    <rect x="60" y="100" width="400" height="170" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect x="60" y="100" width="400" height="34" rx="12" fill="#4f46e5"/>
+    <rect x="60" y="122" width="400" height="12" fill="#4f46e5"/>
+    <text x="260" y="123" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">TERMINAL ENTRY &#8212; src/cli.tsx</text>
+    <text x="85" y="160" fill="#334155" font-size="12">Commander CLI &#8212; .action() dispatch</text>
+    <text x="85" y="180" fill="#64748b" font-size="11">TTY &#8594; interactive Ink UI</text>
+    <text x="85" y="196" fill="#64748b" font-size="11">Non-TTY &#8594; headless subcommands</text>
+    <text x="85" y="218" fill="#94a3b8" font-size="10">serve &#183; daemon &#183; enterprise &#183; eval</text>
+    <text x="85" y="232" fill="#94a3b8" font-size="10">llm &#183; review &#183; session &#183; init &#183; plugin</text>
+    <text x="85" y="256" fill="#4f46e5" font-size="11" font-weight="600">&#9654; applyPlugins() runs before dispatch</text>
+  </g>
+
+  <!-- 2. UI layer -->
+  <g>
+    <rect x="540" y="100" width="420" height="170" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect x="540" y="100" width="420" height="34" rx="12" fill="#0ea5e9"/>
+    <rect x="540" y="122" width="420" height="12" fill="#0ea5e9"/>
+    <text x="750" y="123" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">UI LAYER (Ink / React) &#8212; src/ui/</text>
+    <text x="560" y="160" fill="#334155" font-size="12">App.tsx &#8212; main interactive shell</text>
+    <text x="560" y="180" fill="#64748b" font-size="11">ChatView &#183; SessionView &#183; Agent selector</text>
+    <text x="560" y="196" fill="#64748b" font-size="11">CommandPalette &#183; PermissionPrompt</text>
+    <text x="560" y="212" fill="#64748b" font-size="11">Mouse + keyboard input stream</text>
+    <text x="560" y="234" fill="#94a3b8" font-size="10">Tab = agent selector &#183; Ctrl+P = palette</text>
+    <text x="560" y="250" fill="#94a3b8" font-size="10">y / n / a = permission prompts</text>
+  </g>
+
+  <!-- 3. Headless subsystems -->
+  <g>
+    <rect x="1040" y="100" width="400" height="170" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect x="1040" y="100" width="400" height="30" rx="12" fill="#334155"/>
+    <rect x="1040" y="118" width="400" height="12" fill="#334155"/>
+    <text x="1240" y="121" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">HEADLESS SUBSYSTEMS</text>
+
+    <rect x="1055" y="140" width="118" height="100" rx="8" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="1114" y="160" text-anchor="middle" fill="#4338ca" font-size="12" font-weight="700">server</text>
+    <text x="1114" y="178" text-anchor="middle" fill="#64748b" font-size="10">WebSocket API</text>
+    <text x="1114" y="192" text-anchor="middle" fill="#64748b" font-size="10">src/server/</text>
+    <text x="1114" y="210" text-anchor="middle" fill="#94a3b8" font-size="9">mtc serve</text>
+    <text x="1114" y="226" text-anchor="middle" fill="#94a3b8" font-size="9">ws + handler</text>
+
+    <rect x="1182" y="140" width="118" height="100" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+    <text x="1241" y="160" text-anchor="middle" fill="#991b1b" font-size="12" font-weight="700">Daemon</text>
+    <text x="1241" y="178" text-anchor="middle" fill="#64748b" font-size="10">Autofix webhook</text>
+    <text x="1241" y="192" text-anchor="middle" fill="#64748b" font-size="10">src/daemon/</text>
+    <text x="1241" y="210" text-anchor="middle" fill="#94a3b8" font-size="9">mtc daemon</text>
+    <text x="1241" y="226" text-anchor="middle" fill="#94a3b8" font-size="9">notifier</text>
+
+    <rect x="1309" y="140" width="116" height="100" rx="8" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="1367" y="160" text-anchor="middle" fill="#047857" font-size="12" font-weight="700">Enterprise</text>
+    <text x="1367" y="178" text-anchor="middle" fill="#64748b" font-size="10">License + orgs</text>
+    <text x="1367" y="192" text-anchor="middle" fill="#64748b" font-size="10">src/enterprise/</text>
+    <text x="1367" y="210" text-anchor="middle" fill="#94a3b8" font-size="9">dashboard</text>
+    <text x="1367" y="226" text-anchor="middle" fill="#94a3b8" font-size="9">:3000 web UI</text>
+  </g>
+
+  <!-- Arrow: CLI -> UI -->
+  <line x1="460" y1="185" x2="540" y2="185" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ========================================================= -->
+  <!-- ROW 2: AGENT LOOP <-> LLM ENGINE                          -->
+  <!-- ========================================================= -->
+
+  <!-- Agent Loop -->
+  <g>
+    <rect x="60" y="340" width="480" height="320" rx="12" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.5"/>
+    <text x="300" y="368" text-anchor="middle" fill="#4338ca" font-size="16" font-weight="700">INTERACTIVE AGENT LOOP</text>
+    <text x="300" y="388" text-anchor="middle" fill="#64748b" font-size="11">src/agents/agent-loop.ts &#8212; max 25 iterations</text>
+
+    <rect x="85" y="410" width="130" height="56" rx="8" fill="#ffffff" stroke="#a5b4fc"/>
+    <text x="150" y="430" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Route task</text>
+    <text x="150" y="448" text-anchor="middle" fill="#64748b" font-size="10">classify complexity</text>
+
+    <rect x="240" y="410" width="130" height="56" rx="8" fill="#ffffff" stroke="#a5b4fc"/>
+    <text x="305" y="430" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">LLM request</text>
+    <text x="305" y="448" text-anchor="middle" fill="#64748b" font-size="10">stream + fallback</text>
+
+    <rect x="85" y="500" width="130" height="56" rx="8" fill="#ffffff" stroke="#a5b4fc"/>
+    <text x="150" y="520" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Parse tool calls</text>
+    <text x="150" y="538" text-anchor="middle" fill="#64748b" font-size="10">JSON arguments</text>
+
+    <rect x="240" y="500" width="130" height="56" rx="8" fill="#ffffff" stroke="#a5b4fc"/>
+    <text x="305" y="520" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Execute tools</text>
+    <text x="305" y="538" text-anchor="middle" fill="#64748b" font-size="10">via Tool Registry</text>
+
+    <rect x="395" y="410" width="120" height="146" rx="8" fill="#ffffff" stroke="#a5b4fc"/>
+    <text x="455" y="430" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Agents</text>
+    <text x="455" y="448" text-anchor="middle" fill="#64748b" font-size="10">builtin.ts</text>
+    <text x="455" y="464" text-anchor="middle" fill="#64748b" font-size="10">custom.ts (.mtc)</text>
+    <text x="455" y="480" text-anchor="middle" fill="#64748b" font-size="10">subagent.ts</text>
+    <text x="455" y="496" text-anchor="middle" fill="#64748b" font-size="10">rules.ts (AGENTS.md)</text>
+    <text x="455" y="512" text-anchor="middle" fill="#94a3b8" font-size="9">system prompt +</text>
+    <text x="455" y="526" text-anchor="middle" fill="#94a3b8" font-size="9">tool permissions</text>
+    <text x="455" y="542" text-anchor="middle" fill="#94a3b8" font-size="9">frontmatter.ts</text>
+
+    <line x1="215" y1="438" x2="240" y2="438" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="150" y1="466" x2="150" y2="500" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="305" y1="466" x2="305" y2="500" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="215" y1="528" x2="240" y2="528" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- LLM Engine -->
+  <g>
+    <rect x="620" y="340" width="820" height="320" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="1030" y="368" text-anchor="middle" fill="#1d4ed8" font-size="16" font-weight="700">LLM ENGINE</text>
+    <text x="1030" y="388" text-anchor="middle" fill="#64748b" font-size="11">src/llm/ &#8212; client.ts &#183; router.ts &#183; fallback.ts &#183; config.ts</text>
+
+    <rect x="650" y="410" width="170" height="60" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="735" y="432" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Router</text>
+    <text x="735" y="450" text-anchor="middle" fill="#64748b" font-size="10">routeTask()</text>
+    <text x="735" y="462" text-anchor="middle" fill="#64748b" font-size="10">simple / default / reasoning</text>
+
+    <rect x="835" y="410" width="170" height="60" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="920" y="432" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Fallback</text>
+    <text x="920" y="450" text-anchor="middle" fill="#64748b" font-size="10">completeWithFallback()</text>
+    <text x="920" y="462" text-anchor="middle" fill="#64748b" font-size="10">2 incomplete retries</text>
+
+    <rect x="1020" y="410" width="180" height="60" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="1110" y="432" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Providers</text>
+    <text x="1110" y="450" text-anchor="middle" fill="#64748b" font-size="10">DeepSeek / OpenAI / Anthropic</text>
+    <text x="1110" y="462" text-anchor="middle" fill="#64748b" font-size="10">OpenRouter / llama.cpp</text>
+
+    <rect x="1215" y="410" width="200" height="60" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="1315" y="432" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Model registry</text>
+    <text x="1315" y="450" text-anchor="middle" fill="#64748b" font-size="10">KNOWN_MODELS + config</text>
+    <text x="1315" y="462" text-anchor="middle" fill="#64748b" font-size="10">tokens / cost / context window</text>
+
+    <text x="650" y="500" fill="#334155" font-size="11">&#8226; Task classification &#8594; routeTask(query, fileCount) &#8594; model tier</text>
+    <text x="650" y="518" fill="#334155" font-size="11">&#8226; Streaming completion with tool-call parsing</text>
+    <text x="650" y="536" fill="#334155" font-size="11">&#8226; Provider keys stored in ~/.config/mtc/config.json</text>
+    <text x="650" y="554" fill="#334155" font-size="11">&#8226; llama-server local mode on :8080 for offline use</text>
+  </g>
+
+  <!-- AgentLoop -> LLM -->
+  <line x1="540" y1="460" x2="620" y2="460" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- LLM -> AgentLoop (response) -->
+  <line x1="620" y1="520" x2="540" y2="520" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="580" y="452" text-anchor="middle" fill="#64748b" font-size="10">request</text>
+  <text x="580" y="546" text-anchor="middle" fill="#64748b" font-size="10">response</text>
+
+  <!-- UI -> AgentLoop -->
+  <line x1="750" y1="270" x2="750" y2="340" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ========================================================= -->
+  <!-- ROW 3: TOOL REGISTRY + SESSION + MCP                      -->
+  <!-- ========================================================= -->
+
+  <!-- Tool registry -->
+  <g>
+    <rect x="60" y="720" width="480" height="200" rx="12" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="1.5"/>
+    <text x="300" y="748" text-anchor="middle" fill="#6b21a8" font-size="16" font-weight="700">TOOL REGISTRY</text>
+    <text x="300" y="768" text-anchor="middle" fill="#64748b" font-size="11">src/tools/ &#8212; executeTool() + permission gate</text>
+
+    <rect x="85" y="790" width="96" height="46" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+    <text x="133" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">read_file</text>
+    <text x="133" y="824" text-anchor="middle" fill="#94a3b8" font-size="9">search</text>
+
+    <rect x="193" y="790" width="96" height="46" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+    <text x="241" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">write_file</text>
+    <text x="241" y="824" text-anchor="middle" fill="#94a3b8" font-size="9">edit_file</text>
+
+    <rect x="301" y="790" width="96" height="46" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+    <text x="349" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">run_bash</text>
+    <text x="349" y="824" text-anchor="middle" fill="#94a3b8" font-size="9">git.ts</text>
+
+    <rect x="409" y="790" width="106" height="46" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+    <text x="462" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">glob / grep</text>
+    <text x="462" y="824" text-anchor="middle" fill="#94a3b8" font-size="9">skill / task</text>
+
+    <rect x="85" y="852" width="220" height="46" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+    <text x="195" y="872" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">apply_patch</text>
+    <text x="195" y="886" text-anchor="middle" fill="#94a3b8" font-size="9">websearch &#183; workspace</text>
+
+    <rect x="317" y="852" width="198" height="46" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="416" y="872" text-anchor="middle" fill="#9a3412" font-size="10" font-weight="600">Permissions (permissions.ts)</text>
+    <text x="416" y="886" text-anchor="middle" fill="#94a3b8" font-size="9">allow / deny / ask user (y/n/a)</text>
+  </g>
+
+  <!-- Session -->
+  <g>
+    <rect x="620" y="720" width="390" height="200" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.5"/>
+    <text x="815" y="748" text-anchor="middle" fill="#92400e" font-size="16" font-weight="700">SESSION &#8212; SQLite</text>
+    <text x="815" y="768" text-anchor="middle" fill="#64748b" font-size="11">src/session/ &#183; zero-config local store</text>
+
+    <rect x="640" y="790" width="105" height="52" rx="8" fill="#ffffff" stroke="#fcd34d"/>
+    <text x="692" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">history.ts</text>
+    <text x="692" y="826" text-anchor="middle" fill="#64748b" font-size="9">message rows</text>
+
+    <rect x="758" y="790" width="105" height="52" rx="8" fill="#ffffff" stroke="#fcd34d"/>
+    <text x="810" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">turns.ts</text>
+    <text x="810" y="826" text-anchor="middle" fill="#64748b" font-size="9">tokens + cost</text>
+
+    <rect x="876" y="790" width="112" height="52" rx="8" fill="#ffffff" stroke="#fcd34d"/>
+    <text x="932" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">patches.ts</text>
+    <text x="932" y="826" text-anchor="middle" fill="#64748b" font-size="9">checkpoint / revert</text>
+
+    <text x="640" y="868" fill="#64748b" font-size="11">&#8226; summary.ts rotateIfNeeded &#8594; context truncation</text>
+    <text x="640" y="888" fill="#64748b" font-size="11">&#8226; shared-sessions &#8212; collaboration + conflict resolve</text>
+  </g>
+
+  <!-- MCP -->
+  <g>
+    <rect x="1040" y="720" width="400" height="200" rx="12" fill="#ecfeff" stroke="#67e8f9" stroke-width="1.5"/>
+    <text x="1240" y="748" text-anchor="middle" fill="#155e75" font-size="16" font-weight="700">MCP &#8212; MODEL CONTEXT PROTOCOL</text>
+    <text x="1240" y="768" text-anchor="middle" fill="#64748b" font-size="11">src/mcp/ &#183; src/mcp-plugins/</text>
+
+    <rect x="1060" y="790" width="115" height="50" rx="8" fill="#ffffff" stroke="#67e8f9"/>
+    <text x="1117" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">client.ts</text>
+    <text x="1117" y="826" text-anchor="middle" fill="#64748b" font-size="9">stdio servers</text>
+
+    <rect x="1185" y="790" width="115" height="50" rx="8" fill="#ffffff" stroke="#67e8f9"/>
+    <text x="1242" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">config.ts</text>
+    <text x="1242" y="826" text-anchor="middle" fill="#64748b" font-size="9">.mtc/mcp.json</text>
+
+    <rect x="1310" y="790" width="115" height="50" rx="8" fill="#ffffff" stroke="#67e8f9"/>
+    <text x="1367" y="810" text-anchor="middle" fill="#334155" font-size="10" font-weight="600">bridges</text>
+    <text x="1367" y="826" text-anchor="middle" fill="#64748b" font-size="9">figma + devops</text>
+
+    <text x="1060" y="870" fill="#64748b" font-size="11">&#8226; Loaded from project, global, and OpenCode configs</text>
+    <text x="1060" y="890" fill="#64748b" font-size="11">&#8226; Plugin system &#8212; applyPlugins() / reloadPlugins()</text>
+  </g>
+
+  <!-- AgentLoop -> ToolRegistry -->
+  <line x1="300" y1="660" x2="300" y2="720" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- AgentLoop -> Session -->
+  <line x1="815" y1="660" x2="815" y2="720" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- ToolRegistry -> MCP (external tools) -->
+  <line x1="540" y1="820" x2="620" y2="820" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ========================================================= -->
+  <!-- ROW 4: DAEMON AUTOFIX PIPELINE                            -->
+  <!-- ========================================================= -->
+  <g>
+    <rect x="60" y="980" width="1380" height="280" rx="12" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="120" y="1010" fill="#991b1b" font-size="16" font-weight="700">DAEMON AUTOFIX PIPELINE (mtc daemon &#8212; autonomous, headless)</text>
+
+    <!-- steps -->
+    <rect x="90" y="1035" width="170" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="175" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">1 &#183; Webhook listen</text>
+    <text x="175" y="1073" text-anchor="middle" fill="#64748b" font-size="10">GitHub sig verify</text>
+    <text x="175" y="1087" text-anchor="middle" fill="#64748b" font-size="10">GitLab ack + reject</text>
+    <text x="175" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">timingSafeEqual</text>
+
+    <rect x="295" y="1035" width="170" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="380" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">2 &#183; Label match</text>
+    <text x="380" y="1073" text-anchor="middle" fill="#64748b" font-size="10">issue.labeled</text>
+    <text x="380" y="1087" text-anchor="middle" fill="#64748b" font-size="10">autofix label</text>
+    <text x="380" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">concurrency cap</text>
+
+    <rect x="500" y="1035" width="170" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="585" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">3 &#183; Clone repo</text>
+    <text x="585" y="1073" text-anchor="middle" fill="#64748b" font-size="10">depth=1, askpass</text>
+    <text x="585" y="1087" text-anchor="middle" fill="#64748b" font-size="10">clone URL validation</text>
+    <text x="585" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">read relevant files</text>
+
+    <rect x="705" y="1035" width="170" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="790" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">4 &#183; LLM fix</text>
+    <text x="790" y="1073" text-anchor="middle" fill="#64748b" font-size="10">routeTask()</text>
+    <text x="790" y="1087" text-anchor="middle" fill="#64748b" font-size="10">complete() fix plan</text>
+    <text x="790" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">extract file changes</text>
+
+    <rect x="910" y="1035" width="170" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="995" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">5 &#183; Apply fix</text>
+    <text x="995" y="1073" text-anchor="middle" fill="#64748b" font-size="10">write_file + validation</text>
+    <text x="995" y="1087" text-anchor="middle" fill="#64748b" font-size="10">path containment check</text>
+    <text x="995" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">run tests (bun/npm/pytest)</text>
+
+    <rect x="1115" y="1035" width="160" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="1195" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">6 &#183; PR</text>
+    <text x="1195" y="1073" text-anchor="middle" fill="#64748b" font-size="10">branch + commit</text>
+    <text x="1195" y="1087" text-anchor="middle" fill="#64748b" font-size="10">push + draft PR</text>
+    <text x="1195" y="1101" text-anchor="middle" fill="#94a3b8" font-size="9">comment on issue</text>
+
+    <rect x="1310" y="1035" width="100" height="80" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="1360" y="1055" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">7 &#183; Notify</text>
+    <text x="1360" y="1073" text-anchor="middle" fill="#64748b" font-size="10">Slack / Teams</text>
+    <text x="1360" y="1087" text-anchor="middle" fill="#94a3b8" font-size="9">job status</text>
+
+    <line x1="260" y1="1075" x2="295" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="465" y1="1075" x2="500" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="670" y1="1075" x2="705" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="875" y1="1075" x2="910" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="1080" y1="1075" x2="1115" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="1275" y1="1075" x2="1310" y2="1075" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <text x="90" y="1145" fill="#64748b" font-size="11">&#8226; Uses the same LLM Engine + Tool Registry &#8226; GitHub only (GitLab webhooks acknowledged but rejected) &#8226; max concurrent jobs guard &#8226; security: validateCloneUrl / validateFilePath</text>
+    <text x="90" y="1165" fill="#64748b" font-size="11">&#8226; Notifications via notifier.ts &#8594; Slack + Teams webhooks &#8226; Job tracked in-memory (pipeline.ts activeJobs)</text>
+    <text x="90" y="1195" fill="#94a3b8" font-size="10">Also in the enterprise tier: audit logs, org management, RBAC, web dashboard (src/enterprise/dashboard.ts), realtime updates, exports.</text>
+    <text x="90" y="1215" fill="#94a3b8" font-size="10">Eval &amp; benchmarking (mtc eval run/bench) drive the real agent loop against sandboxed tasks in tests/evals/.</text>
+    <text x="90" y="1235" fill="#94a3b8" font-size="10">Telemetry (opt-in) records session/tool/model analytics locally &#8212; never file contents.</text>
+  </g>
+
+  <!-- Connect Daemon box (top) to pipeline (bottom) -->
+  <line x1="1241" y1="240" x2="1241" y2="980" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow)"/>
+  <text x="1250" y="620" fill="#94a3b8" font-size="10">mtc daemon</text>
+</svg>

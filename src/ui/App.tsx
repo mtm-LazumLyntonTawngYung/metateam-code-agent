@@ -144,7 +144,7 @@ export default function App() {
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
   const [modelId, setModelId] = useState(() => {
     try { return loadLlmConfig().routing.defaultModel; }
-    catch { return "deepseek-chat"; }
+    catch { return "deepseek-v4-flash"; }
   });
   const [pendingPerm, setPendingPerm] = useState<PendingPermission | null>(
     null,

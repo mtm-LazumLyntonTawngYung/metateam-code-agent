@@ -158,7 +158,7 @@ LLM provider keys and routing are managed through the CLI
 ```bash
 mtc llm status
 mtc llm set-provider --id deepseek --key sk-...
-mtc llm set-routing --simple deepseek-chat --default deepseek-chat --reasoning claude-sonnet-4-20250514
+mtc llm set-routing --simple deepseek-v4-flash --default deepseek-v4-flash --reasoning claude-sonnet-4-20250514
 ```
 
 ### Local LLMs (llama.cpp)

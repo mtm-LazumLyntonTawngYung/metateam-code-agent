@@ -101,9 +101,9 @@ export async function runSubagent(task: SubagentTask): Promise<SubagentResult> {
 function defaultSubagentModel(): string {
   try {
     const cfg = loadLlmConfig();
-    return cfg.routing?.defaultModel || cfg.routing?.simpleModel || "deepseek-chat";
+    return cfg.routing?.defaultModel || cfg.routing?.simpleModel || "deepseek-v4-flash";
   } catch {
-    return "deepseek-chat";
+    return "deepseek-v4-flash";
   }
 }
 
