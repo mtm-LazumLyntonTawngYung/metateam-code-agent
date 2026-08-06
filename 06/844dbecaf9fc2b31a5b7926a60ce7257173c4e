@@ -1,0 +1,336 @@
+src/mcp/index.ts
+  s_8ad5a444a71fca::t_8ecc281f398558 5-11,14,32-54,63-64,71,88-89,98-99
+  s_8ad5a444a71fca::t_6cfaf1f40e0f98 84-85,87,90-91,96-97
+src/ui/AgentSelector.tsx
+  s_4ad71a0d4dbd0d::t_75cf7b9e2d3f86 17
+  s_4ad71a0d4dbd0d::t_edeb8f684e36ce 3
+src/auth/sso.ts
+  s_8ad5a444a71fca::t_4e345b3516a310 212-215
+src/ui/VariantsView.tsx
+  s_8ad5a444a71fca::t_38e25adccd7b5a 1-95
+src/ui/App.tsx
+  s_e361250e0dccf8::t_d914c353f553c4 493
+  s_e361250e0dccf8::t_fce07e47ef5254 8
+  s_8ad5a444a71fca::t_ed94fc92ba7fd9 19
+  s_8ad5a444a71fca::t_2fdbed27e93dc6 669-672
+  s_e361250e0dccf8::t_19f7196e2883a4 309
+  s_e681cb842411b2::t_ff895723e9a679 38
+  s_1da2d94efb5cf8::t_e3d81136596240 530
+  s_e361250e0dccf8::t_1c8272baff4680 647-651
+  s_8ad5a444a71fca::t_d2c14dd5514981 640
+  s_e361250e0dccf8::t_f5001cfc3a7293 524
+  s_e681cb842411b2::t_ea58f919e53a71 180,183
+  s_e361250e0dccf8::t_d234a4121d275a 656-664
+  s_e681cb842411b2::t_2511ccca5bbe6d 608
+  s_e681cb842411b2::t_5fb81f57e5ff1b 521
+  s_6424a7848db776::t_4effad152c55ee 311-318,320-342,345-389,396-416
+  s_1da2d94efb5cf8::t_ae87b35e943a39 78
+  s_e361250e0dccf8::t_732e118bf37be3 502
+  s_8ad5a444a71fca::t_b3f287ad9cfd48 20
+  s_e361250e0dccf8::t_3176c503726fd3 523
+  s_1da2d94efb5cf8::t_4576d1c44a21a5 596
+  s_8ad5a444a71fca::t_0b0f9f2e9e1816 158
+  s_e361250e0dccf8::t_7953849e03d47d 668
+  s_e361250e0dccf8::t_4e4bbb923b51e9 494
+  s_e361250e0dccf8::t_048a370b0fe420 554-557
+  s_e361250e0dccf8::t_8924cd0ac83972 310
+  s_e361250e0dccf8::t_d2901072a780d7 391
+  s_1da2d94efb5cf8::t_a863de182fdd52 706
+  s_8ad5a444a71fca::t_61e19440dfc613 666
+  s_e361250e0dccf8::t_0b774ee1f792d1 10
+  s_e361250e0dccf8::t_61fec408f41437 459-461,464-465
+  s_8ad5a444a71fca::t_bb4d318c48b28b 80
+  s_e681cb842411b2::t_ee4205c2d316e8 700
+  s_e361250e0dccf8::t_e4ae190a159394 12
+  s_e361250e0dccf8::t_7953a10092b258 84-85
+  s_8ad5a444a71fca::t_c867857abb3f25 531
+  s_1da2d94efb5cf8::t_ae203180264e77 673-674
+  s_e361250e0dccf8::t_12d71585b6b7e8 616
+  s_e681cb842411b2::t_45cc5ab9fba086 160
+  s_1da2d94efb5cf8::t_ff252e593b49ec 419
+  s_8ad5a444a71fca::t_bdc2f0ee160ad0 563
+  s_6424a7848db776::t_2d48f92a37e654 44-45
+  s_1da2d94efb5cf8::t_383d033b09ccbc 104-106
+  s_8ad5a444a71fca::t_f70d3fc950aa03 420
+  s_e361250e0dccf8::t_aeedb0441c2eec 77
+  s_e681cb842411b2::t_c65f439004aaf6 54
+  s_e681cb842411b2::t_ab65b8fed311ee 390
+  s_e681cb842411b2::t_c7e6336c8a9d90 103
+  s_6424a7848db776::t_2421477235707f 40-43
+  s_e361250e0dccf8::t_6e71c513b2acc3 102,107-112
+  s_e361250e0dccf8::t_f88ce9887aaa5b 653-654
+  s_e361250e0dccf8::t_30bc541cc165a9 392-395,417-418
+  s_1da2d94efb5cf8::t_4e9ddc4557191d 225,234,260,271,281
+  s_1da2d94efb5cf8::t_910842a1c48747 159
+  s_e361250e0dccf8::t_9dc2c63f58858d 319
+  s_1da2d94efb5cf8::t_b074752badfe9b 51
+  s_e361250e0dccf8::t_99b338131d722f 558-560
+  s_e361250e0dccf8::t_d5372fdf891f08 9
+  s_e361250e0dccf8::t_daf2aa5a1f11ca 2
+  s_6424a7848db776::t_f0ab5c5646443d 495-501,503-520,525-529
+  s_1da2d94efb5cf8::t_fd9eb08311d2eb 468-469,471-472
+  s_8ad5a444a71fca::t_3b756c64626ad8 646
+  s_e361250e0dccf8::t_abb5e885d51869 462-463
+  s_e361250e0dccf8::t_a279cdd72c3d20 82
+  s_e361250e0dccf8::t_8e19b6ee510e62 68
+  s_e361250e0dccf8::t_60c8f5c5ad2b96 75,83,86
+  s_e361250e0dccf8::t_7de569c01ea6bf 156
+  s_8ad5a444a71fca::t_3be9dd09fc3a19 21
+  s_e681cb842411b2::t_7f105aef1cad6c 81
+  s_e681cb842411b2::t_067539342cabe8 697
+  s_1da2d94efb5cf8::t_27ba4e61da637d 466-467,470
+  s_e361250e0dccf8::t_4f5d041c0e9ec3 76
+  s_e361250e0dccf8::t_a10c5187d7f20e 624
+  s_e681cb842411b2::t_86c04ef6d39190 164,168,172
+  s_8ad5a444a71fca::t_1cb03a394bfcb5 655
+  s_1da2d94efb5cf8::t_95270fce4674ae 53
+  s_e361250e0dccf8::t_111280fc473768 152-154,161
+  s_e361250e0dccf8::t_4c3daf449b258f 522
+  s_e361250e0dccf8::t_956ce52cb36a8e 11
+  s_8ad5a444a71fca::t_1aa458530c76f7 652
+  s_e681cb842411b2::t_c6902fe3bbae3a 675-686
+  s_e361250e0dccf8::t_baed45cdea7d65 55
+  s_e361250e0dccf8::t_d969ca04af4ae6 344
+  s_e361250e0dccf8::t_6083ea7a979d84 665,698-699
+  s_e361250e0dccf8::t_0e98ad178c15e7 155
+  s_8ad5a444a71fca::t_3be80abfde4142 473-478,562
+  s_e361250e0dccf8::t_0b86fce9a3f96a 549-553,587,589
+  h_10671eecd6b5d0 79,157,343,561,618,667
+src/ui/McpsView.tsx
+  s_8ad5a444a71fca::t_8c8cde01643130 3
+  s_8ad5a444a71fca::t_0eb2f8ea33df9f 1,4-16,21-80,82-158
+  s_8ad5a444a71fca::t_3273a483e40ee6 2
+  s_8ad5a444a71fca::t_5bb289b785fe69 81
+  s_8ad5a444a71fca::t_3287253d3965a1 19-20
+  s_8ad5a444a71fca::t_adb05fe3dfb59b 17-18
+  s_8ad5a444a71fca::t_ac058d081bc698 159-161
+  s_8ad5a444a71fca::t_2fb1595c823be3 162
+src/ui/Home.tsx
+  s_e361250e0dccf8::t_a12201aab224f1 16
+  s_4ad71a0d4dbd0d::t_402526d1e732e6 3
+  s_e361250e0dccf8::t_b070ea97549ba3 63
+  s_e361250e0dccf8::t_f08635b0efe554 13
+  s_4ad71a0d4dbd0d::t_a121ce61a026dc 17
+src/ui/ThemePicker.tsx
+  s_1da2d94efb5cf8::t_307e7516e5b358 7
+  s_1da2d94efb5cf8::t_09c5f63fccb22a 4,14,21,28
+  s_1da2d94efb5cf8::t_7602b883961ec8 2-3,5-6,8-12,16-17,32-33,40-72
+  s_1da2d94efb5cf8::t_f0cf6ec24e2e66 1,13,15,18-20,22-27,29-31,34,36-39
+  s_1da2d94efb5cf8::t_81df12a7cbf9da 35
+src/ui/SessionsView.tsx
+  s_e681cb842411b2::t_6ab4fb9c0e0da5 13-24,95,116
+  s_e681cb842411b2::t_a8e5e3124a39e9 1-12,25-94,96-101,103-115,117,121-133
+  s_e681cb842411b2::t_e89bbf7bc5f8a1 102,118-120
+src/ui/ConnectForm.tsx
+  s_4ad71a0d4dbd0d::t_2d5e13e194a783 21
+  s_30e8f9cc80e001::t_051132b12cc20f 4
+  s_30e8f9cc80e001::t_a1a08fc707c470 60-69
+  s_4ad71a0d4dbd0d::t_d5e8cdc6f757e6 5
+  h_10671eecd6b5d0 11
+src/llm/client.ts
+  h_10671eecd6b5d0 74,125,182
+  s_30e8f9cc80e001::t_168a2cb123a4df 26-27
+  s_30e8f9cc80e001::t_0e48b8aa43150b 173-181,183-221
+src/llm/config.ts
+  s_30e8f9cc80e001::t_d29938ab583b2f 35-37,39-41
+  s_30e8f9cc80e001::t_b4e7bc1a985681 38
+src/ui/ModelPicker.tsx
+  s_4ad71a0d4dbd0d::t_9ed6c9721afa54 14
+  s_e361250e0dccf8::t_de0609e367a931 1-5,7-13,15-63
+  s_4ad71a0d4dbd0d::t_a55dce01739154 6
+src/auth/index.ts
+  s_8ad5a444a71fca::t_7402978c75fd77 6-7
+  s_8ad5a444a71fca::t_a2fe057ca51699 8
+src/config/index.ts
+  s_e361250e0dccf8::t_c2d9bf53cad217 17
+  s_1da2d94efb5cf8::t_08222736e4a266 21
+src/ui/HelpOverlay.tsx
+  s_e361250e0dccf8::t_9829542eb59b70 2,12-25
+  s_e361250e0dccf8::t_0f6d7e5f31ff8e 1,3-11
+src/ui/CommandPalette.tsx
+  s_e361250e0dccf8::t_fca298473896a6 4,7,10-26,50-59,63-65
+  s_4ad71a0d4dbd0d::t_39d843277204d1 46
+  s_4ad71a0d4dbd0d::t_40a7ddefa91347 5
+src/ui/DiffView.tsx
+  s_4ad71a0d4dbd0d::t_4e9afcc559e779 3
+  s_4ad71a0d4dbd0d::t_997fe2be0d3ff6 50
+src/mcp/config.ts
+  s_8ad5a444a71fca::t_3aae55a906cd21 15-25,37-69,75-76
+src/ui/GitDiffView.tsx
+  s_e361250e0dccf8::t_05b2064174be4e 46-57
+  s_e361250e0dccf8::t_f042d7a7272b85 175
+  s_e361250e0dccf8::t_c50fbf56f8ad55 1,19-20,34,38,45,59,61,77,93,130-132,134,176-178,203,212,225,229,232,241
+  s_e361250e0dccf8::t_98235e2f9c50a0 136,147,153,155-169,171
+  s_e361250e0dccf8::t_1bd54c7aa66a6b 94-112
+  s_e361250e0dccf8::t_2ac98fe0827fb6 125-126
+  s_e361250e0dccf8::t_e0a38d9e24c0f7 204-205
+  s_e361250e0dccf8::t_0d56b45b9ad87c 21-33
+  s_e361250e0dccf8::t_341f69467ddb2c 133
+  s_e361250e0dccf8::t_a75dba570f4038 183
+  s_e361250e0dccf8::t_2e50b66b008ddc 239
+  s_e361250e0dccf8::t_5dc456b33c01d5 75
+  s_e361250e0dccf8::t_a8b823111b2902 234-235
+  s_e361250e0dccf8::t_342cc658c14fda 62-68
+  s_e361250e0dccf8::t_164f70a94379cf 39-44
+  s_e361250e0dccf8::t_e09daf2cc14d9a 80-92
+  s_e361250e0dccf8::t_a1b0fb7740c548 151
+  s_e361250e0dccf8::t_d618d6c74600d1 170
+  s_e361250e0dccf8::t_326513406babc1 207-208
+  s_e361250e0dccf8::t_afbf3789ec579c 35-37
+  s_e361250e0dccf8::t_b0dc2345faa18a 137-146
+  s_e361250e0dccf8::t_aa66eee48c8435 3,5,14,58,113-114,117-119,124,127-129,150,184,191,237,240,242-246
+  s_e361250e0dccf8::t_f4e22a60d38c5b 6
+  s_e361250e0dccf8::t_7a6c7fed2b2b6a 115-116
+  s_e361250e0dccf8::t_2263f1454c9ed5 135
+  s_e361250e0dccf8::t_5c492db03620d9 148-149
+  s_e361250e0dccf8::t_6d4104cb8cd730 60
+  s_e361250e0dccf8::t_2a68f5e35654c2 185-190
+  s_e361250e0dccf8::t_b8cf10dac8f3ad 195-198
+  s_e361250e0dccf8::t_f3a3bb71806402 230-231
+  s_e361250e0dccf8::t_26fc58d318cee9 202
+  s_e361250e0dccf8::t_5d393b500756fb 8-13
+  s_e361250e0dccf8::t_74776c482a8039 172
+  s_e361250e0dccf8::t_1069fdb7b3b537 213-224
+  s_e361250e0dccf8::t_b0e6d93a67fdee 154
+  s_e361250e0dccf8::t_cfd0cd12e74b3b 226-228
+  s_e361250e0dccf8::t_d791ff06d3399b 2
+  s_4ad71a0d4dbd0d::t_f9fb2f85fb91aa 4
+  s_e361250e0dccf8::t_83faee20eac1c8 16-18
+  s_e361250e0dccf8::t_edef10357e5221 7,15,69-71,74,76,78-79,123,152,173-174,179-182,194,199-201,206,209-211,233,236,238
+  s_e361250e0dccf8::t_d3ba655a55175d 72-73
+  s_e361250e0dccf8::t_8e25e1cb2dc864 192-193
+  s_4ad71a0d4dbd0d::t_b9d6915eb8912f 120
+  h_10671eecd6b5d0 121-122
+src/skills/types.ts
+  s_e361250e0dccf8::t_2b72fa7c10c6bd 1-4,7-12,14,16
+  s_e361250e0dccf8::t_b9a034a40c983a 5-6,13,15
+src/ui/PermissionPrompt.tsx
+  s_4ad71a0d4dbd0d::t_9b6e6fceed2e8f 4
+  s_4ad71a0d4dbd0d::t_bc774003617641 17
+src/agents/agent-loop.ts
+  h_10671eecd6b5d0 108
+  s_30e8f9cc80e001::t_d6e5025ce3c8ca 102-103,105
+  s_30e8f9cc80e001::t_2442ab9b823d7c 6
+src/llm/types.ts
+  h_10671eecd6b5d0 81-82
+  h_10671eecd6b5d0 124-173,177-179
+src/ui/components/Statusbar.tsx
+  s_4ad71a0d4dbd0d::t_dbe50c009a592f 2
+  s_e361250e0dccf8::t_d723be50fa0535 9,12,24-26
+  s_4ad71a0d4dbd0d::t_d9ff44d1087749 13
+src/skills/registry.ts
+  s_e361250e0dccf8::t_8aa713e4675416 4,6,8,12,14-16,63-66,70-72,74-92
+  s_e361250e0dccf8::t_278b8e75552e3a 13,17
+  s_e361250e0dccf8::t_0a93623157ab08 1-3,5,7,9-11,18-62,67-69,73
+src/ui/SkillsView.tsx
+  s_e361250e0dccf8::t_a419db70a62c27 1
+  s_e361250e0dccf8::t_e3047438c305e7 3-10
+  s_e361250e0dccf8::t_e549c15290f892 2,11
+src/skills/index.ts
+  s_e361250e0dccf8::t_dabb407ce91406 1-2
+src/ui/components/Header.tsx
+  s_4ad71a0d4dbd0d::t_71db6e38a2b4b6 2
+  s_4ad71a0d4dbd0d::t_76b3163c51aab7 5
+src/ui/components/Sidebar.tsx
+  s_e361250e0dccf8::t_42c1a897d20b82 78-84
+  s_e361250e0dccf8::t_e024c2f6d07c28 40
+  s_e361250e0dccf8::t_3d87b4a06d5988 26
+src/ui/theme.tsx
+  h_10671eecd6b5d0 38,54,68-71,86,100-355
+  s_1da2d94efb5cf8::t_bd1343c9e4d2e3 14,20,377-416
+  s_1da2d94efb5cf8::t_acdd7f399be61a 368-370
+  s_1da2d94efb5cf8::t_9f813c798cc07b 372-376
+  s_1da2d94efb5cf8::t_7c80cfa1c99b74 418
+  s_1da2d94efb5cf8::t_1e8e45c9c6316d 363-366
+  s_1da2d94efb5cf8::t_ab447786668f6e 423
+  s_1da2d94efb5cf8::t_4c391d58600502 362,367,371,417,419-422
+  s_1da2d94efb5cf8::t_ef44d01e04b1aa 11-13
+  s_1da2d94efb5cf8::t_5d93fb99fefbc5 15-19
+  h_10671eecd6b5d0 1-10,21-37,39-53,55-67,72-85,87-99,356-361
+src/ui/ChatView.tsx
+  s_4ad71a0d4dbd0d::t_0562f0fc08d692 33
+  s_4ad71a0d4dbd0d::t_171645c70c701c 4
+src/skills/catalog.ts
+  s_e361250e0dccf8::t_c91c635564d574 1-3,19-23
+  s_e361250e0dccf8::t_268d29adc02273 4-18
+src/ui/modals/SkillsBrowser.tsx
+  s_e361250e0dccf8::t_a8930077a38a7a 24-30,55-56,59-61,95-108,113-114,125,131-132,146
+  s_4ad71a0d4dbd0d::t_764a94c3faec22 6
+  s_e361250e0dccf8::t_315261e8ec8f72 1-5,7-23,37-54,57-58,62-94,109-112,115-124,126-130,133-145,147-152
+  s_4ad71a0d4dbd0d::t_6c718808f1a7ac 31-36
+src/daemon/github.ts
+  h_10671eecd6b5d0 66
+.gitignore
+  h_10671eecd6b5d0 17-19
+src/cli.tsx
+  h_10671eecd6b5d0 449,457-463,466,469
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "06844dbecaf9fc2b31a5b7926a60ce7257173c4e",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  },
+  "sessions": {
+    "s_1da2d94efb5cf8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04e89f741ffeZJyPQn3mGkGH3z",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_30e8f9cc80e001": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04e1a2cceffeFA5RyiMZylCOCq",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_4ad71a0d4dbd0d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04e85a7efffekic5i9maG6NNkO",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_6424a7848db776": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04dee3f12ffeq4i0W5PDVKRV2C",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_8ad5a444a71fca": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04e34865cffea4r3uBbvUFNipZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_e361250e0dccf8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04ebd5b67ffeY6X7mke1N1f03I",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_e681cb842411b2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04dfa827affeavT3OVPJRQYkvF",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
