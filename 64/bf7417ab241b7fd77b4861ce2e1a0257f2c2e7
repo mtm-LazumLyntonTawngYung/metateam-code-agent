@@ -1,0 +1,26 @@
+tests/unit/shared-sessions.test.ts
+  h_10671eecd6b5d0 59,63
+src/tools/websearch.ts
+  h_10671eecd6b5d0 1-119
+src/agents/index.ts
+  h_10671eecd6b5d0 8
+src/shared-sessions/session-service.ts
+  h_10671eecd6b5d0 11,137
+src/config/index.ts
+  h_10671eecd6b5d0 24
+src/config/schema.ts
+  h_10671eecd6b5d0 112-126,267-268
+src/tools/index.ts
+  h_10671eecd6b5d0 6,17,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "64bf7417ab241b7fd77b4861ce2e1a0257f2c2e7",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
