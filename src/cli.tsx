@@ -40,6 +40,7 @@ import {
 } from "./enterprise/index";
 import { join } from "path";
 import { homedir } from "os";
+import { existsSync } from "fs";
 import { listSessions, getPatches, revertFileToVersion } from "./session/index";
 import { applyPlugins, getLoadedPlugins, loadPlugins, reloadPlugins } from "./plugins";
 
@@ -739,6 +740,64 @@ debugCmd
     console.log(`    Reasoning: ${llm.routing.reasoningModel}`);
     console.log(`    Reasoning enabled: ${llm.routing.reasoningEnabled}`);
     console.log();
+  });
+
+debugCmd
+  .command("logs")
+  .description("Tail development logs in another terminal")
+  .option("-n, --lines <n>", "Number of lines to show", "100")
+  .option("-f, --follow", "Follow log output (like tail -f)")
+  .action(async (options: { lines: string; follow: boolean }) => {
+    const { getDevLogPath } = await import("./utils/logger");
+    const logPath = getDevLogPath();
+    
+    if (!existsSync(logPath)) {
+      console.log(`\n  No dev log found at: ${logPath}`);
+      console.log(`  Run with MTC_DEV=true or NODE_ENV=development to enable logging.\n`);
+      return;
+    }
+    
+    const lines = parseInt(options.lines, 10) || 100;
+    
+    const printLines = (line: string) => {
+      try {
+        const entry = JSON.parse(line);
+        const level = entry.level?.toUpperCase() ?? "";
+        const prefix = level ? `[${level.padEnd(5)}] ` : "";
+        console.log(`  ${prefix}${entry.msg}`);
+        if (entry.level === "error" && entry.stack) {
+          console.log(`    ${entry.stack}`);
+        }
+      } catch {
+        console.log(`  ${line}`);
+      }
+    };
+    
+    const { readFileSync } = await import("fs");
+    const content = readFileSync(logPath, "utf-8");
+    const allLines = content.trim().split("\n").filter(Boolean);
+    const recent = allLines.slice(-lines);
+    for (const line of recent) {
+      printLines(line);
+    }
+    
+    if (options.follow) {
+      console.log(`\n  Following ${logPath} (Ctrl+C to stop)...\n`);
+      const { watchFile } = await import("fs");
+      let lastSize = content.length;
+      watchFile(logPath, { interval: 500 }, (curr, prev) => {
+        if (curr.size > prev.size) {
+          const newContent = readFileSync(logPath, "utf-8");
+          const newLines = newContent.slice(lastSize).trim().split("\n").filter(Boolean);
+          for (const line of newLines) {
+            printLines(line);
+          }
+          lastSize = curr.size;
+        }
+      });
+    } else {
+      console.log();
+    }
   });
 
 program.parse(process.argv);

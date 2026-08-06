@@ -8,7 +8,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from "./types";
-import { findProvider, findModel } from "./config";
+import { findProvider, findProviderById, findModel } from "./config";
 import { trackModelUsage } from "../telemetry/tracker";
 import { LlmError, IncompleteResponseError } from "../utils/errors";
 import { createOpenAiCompatibleProvider, createAnthropicProvider } from "./providers";
@@ -45,8 +45,8 @@ const providers = new Map<string, ProviderAdapter>();
 function getOrCreateProvider(providerId: string): ProviderAdapter {
   let p = providers.get(providerId);
   if (p) return p;
-  const provider = findProvider(providerId);
-  if (!provider) throw new Error(`No provider configured for model: ${providerId}`);
+  const provider = findProviderById(providerId);
+  if (!provider) throw new Error(`No provider configured: ${providerId}`);
   const factory =
     providerFactories.get(provider.id) ?? providerFactories.get("openai") ?? openAiCompatibleFactory;
   p = factory({ id: provider.id, baseUrl: provider.baseUrl, apiKey: provider.apiKey });

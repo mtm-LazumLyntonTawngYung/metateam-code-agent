@@ -29,7 +29,7 @@ export type AgentUpdate =
   | { kind: "error"; error: string }
   | { kind: "reasoning"; text: string };
 
-export const MAX_AGENT_ITERATIONS = 25;
+export const MAX_AGENT_ITERATIONS = 250;
 
 export const DEFAULT_MAX_TOKENS = 4096;
 
@@ -150,7 +150,13 @@ export async function runAgentLoop(
   let incompleteRetries = 0;
   const MAX_INCOMPLETE_RETRIES = 2;
 
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
+  for (let iteration = 0; ; iteration++) {
+    if (iteration >= maxIterations) {
+      const msg = `Agent reached maximum of ${maxIterations} iterations.`;
+      onUpdate({ kind: "error", error: msg });
+      return msg;
+    }
+
     if (signal?.aborted) {
       const msg = "Agent aborted by user.";
       onUpdate({ kind: "error", error: msg });
@@ -300,10 +306,6 @@ export async function runAgentLoop(
       }
     }
   }
-
-  const msg = `Agent reached maximum of ${maxIterations} iterations.`;
-  onUpdate({ kind: "error", error: msg });
-  return msg;
 }
 
 function estimateCost(modelId: string, usage: { inputTokens: number; outputTokens: number }): number {

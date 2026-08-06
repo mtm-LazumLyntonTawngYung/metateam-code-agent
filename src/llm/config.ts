@@ -127,7 +127,18 @@ export function findModel(id: string) {
 
 export function findProvider(modelId: string): ProviderConfig | undefined {
   const cfg = loadLlmConfig();
-  return cfg.providers.find((p) => p.models.includes(modelId));
+  const byModel = cfg.providers.find((p) => p.models.includes(modelId));
+  if (byModel) return byModel;
+  const known = findModel(modelId);
+  if (known) {
+    return cfg.providers.find((p) => p.id === known.provider);
+  }
+  return undefined;
+}
+
+export function findProviderById(id: string): ProviderConfig | undefined {
+  const cfg = loadLlmConfig();
+  return cfg.providers.find((p) => p.id === id);
 }
 
 export function getAllKnownModels(): ModelConfig[] {
