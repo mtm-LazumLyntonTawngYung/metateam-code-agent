@@ -1,0 +1,51 @@
+src/config/index.ts
+  s_0fea11ffdf3972::t_2f23a3845b4a13 21
+src/enterprise/types.ts
+  s_0fea11ffdf3972::t_792ad218f6f2a6 65
+src/enterprise/org.ts
+  s_0fea11ffdf3972::t_4a46c58a8bf664 36,40-43
+  s_0fea11ffdf3972::t_da8b34480c4318 82-83,96
+  s_0fea11ffdf3972::t_913209078cd0ab 134-142
+src/auth/sso.ts
+  s_0fea11ffdf3972::t_75ac2c59829fec 5
+  s_0fea11ffdf3972::t_f5eacb3c141b5e 214-216
+src/enterprise/index.ts
+  s_0fea11ffdf3972::t_5c62e8e43a8c97 16,19-20
+src/enterprise/user.ts
+  s_0fea11ffdf3972::t_bcfb8e320910c2 1-11,13-20,51-54,57-98
+  s_0fea11ffdf3972::t_2745598fdd1258 12,21-50,55-56
+src/enterprise/dashboard.ts
+  s_0fea11ffdf3972::t_0b6408a7f27d46 58
+  s_34cdfb4ceb3a5c::t_4825eb02d5a94c 57,59-61
+  s_34cdfb4ceb3a5c::t_3a6c67df4aee55 606,613-614,616
+  s_34cdfb4ceb3a5c::t_19d157ee4b0b2c 636
+  s_34cdfb4ceb3a5c::t_dcbca05e98e046 328-331
+  s_0fea11ffdf3972::t_78165d7b252a0c 542-554,562,566,569
+  s_0fea11ffdf3972::t_ef70045766836c 13
+  s_34cdfb4ceb3a5c::t_c2fb79ddcdd9bf 369
+  s_34cdfb4ceb3a5c::t_f79ba2ea12c3d7 537-541,555-561,563-565,567-568,570-571
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7a7e19113c84c154183fc6c0e319bfdbe15d243e",
+  "prompts": {},
+  "sessions": {
+    "s_0fea11ffdf3972": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04881a1a7ffevix8feAtiGEQqR",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_34cdfb4ceb3a5c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_048a40cdcffeWOleBVCeDvqvZq",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
