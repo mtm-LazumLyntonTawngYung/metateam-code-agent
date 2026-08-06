@@ -1,0 +1,44 @@
+CHANGELOG.md
+  s_403c34f4751866::t_cd650393e68db3 3-16
+src/daemon/config.ts
+  s_403c34f4751866::t_c4c7396089f1a7 1-41
+src/daemon/index.ts
+  s_403c34f4751866::t_ba81b4bb850bd4 1-21
+src/daemon/types.ts
+  s_403c34f4751866::t_f75657ab609f77 1-48
+docs/internal/README.md
+  s_403c34f4751866::t_dccad5e3e4bdc9 19
+docs/internal/daemon.md
+  s_403c34f4751866::t_6c9f83d229726e 1-152
+src/cli.tsx
+  s_403c34f4751866::t_3338b3436800e0 147-175
+  s_403c34f4751866::t_04623d2ade9c8c 19-20
+src/daemon/webhook.ts
+  s_403c34f4751866::t_ac772c64b66a34 1-181
+src/daemon/github.ts
+  s_403c34f4751866::t_b8f642e88f7f4d 1-151
+src/daemon/gitlab.ts
+  s_403c34f4751866::t_0d32df9f8e9f31 1-73
+src/daemon/pipeline.ts
+  s_403c34f4751866::t_6d65075ab8d1b7 1-305
+src/daemon/notifier.ts
+  s_403c34f4751866::t_8834609026b596 1-114
+.mtc/daemon.json
+  s_403c34f4751866::t_a33162650db9dc 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "792044d5eef805c4cb96277e1126f4c140fc5849",
+  "prompts": {},
+  "sessions": {
+    "s_403c34f4751866": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0538db391ffeoAUxFXgzXlxTRb",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
