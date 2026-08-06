@@ -1,0 +1,41 @@
+src/review/index.ts
+  s_e9bd648b1bdd91::t_53368ddd8cf58d 1-50,52-188,194-198,208-217
+  s_e9bd648b1bdd91::t_d9247367ec944a 189-193
+  s_e9bd648b1bdd91::t_6dc645f580dad3 51
+  s_e9bd648b1bdd91::t_dd142a6fc07c94 199-207
+src/init/index.ts
+  s_e9bd648b1bdd91::t_129ebaac7cbfd5 1
+  s_e9bd648b1bdd91::t_fa38f099da8962 2,4-167,171-181
+  s_e9bd648b1bdd91::t_82ef88c047e8d6 3
+  s_e9bd648b1bdd91::t_8a39f30badeb39 168-170
+.github/workflows/mtc-review.yml
+  s_e9bd648b1bdd91::t_bdf000e84ac4a2 1-176
+src/init/templates.ts
+  s_e9bd648b1bdd91::t_6731ce6966d8a9 1-40,46-260
+  s_e9bd648b1bdd91::t_f86e7427d0fde3 41-45
+src/cli.tsx
+  s_e9bd648b1bdd91::t_b0f8d8ae1618bc 142-144
+  s_e9bd648b1bdd91::t_ec99906273cab9 161-169,174-209
+  s_e9bd648b1bdd91::t_9b3e4f6a7e1cee 150-152
+  s_e9bd648b1bdd91::t_04dd2d2668d08b 170-173
+  s_e9bd648b1bdd91::t_a8610d36b4294f 9
+  s_e9bd648b1bdd91::t_1f257dae46786d 10
+  s_e9bd648b1bdd91::t_fe68b4b48812f4 137-140,145-149,153-160
+  s_e9bd648b1bdd91::t_489810277e9c32 141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "e2edb2a632bc4198a6485fed5b37e083bc3f918f",
+  "prompts": {},
+  "sessions": {
+    "s_e9bd648b1bdd91": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_053c58c13ffetGhUrRem8TjiOZ",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
