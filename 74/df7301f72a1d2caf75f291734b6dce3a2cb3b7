@@ -1,0 +1,24 @@
+CHANGELOG.md
+  s_2ec77a14fc4f3a::t_36a33436fa06b4 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "74df7301f72a1d2caf75f291734b6dce3a2cb3b7",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  },
+  "sessions": {
+    "s_2ec77a14fc4f3a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03ab03acfffe2jUfc6YmCj4ufy",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
