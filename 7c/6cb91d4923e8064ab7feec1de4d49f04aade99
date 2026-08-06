@@ -1,0 +1,45 @@
+docs/internal/governance.md
+  s_143c13fffd1462::t_852ac8691ad08a 81-83
+src/enterprise/index.ts
+  s_143c13fffd1462::t_8bc4f3d6bad79a 1-9
+src/enterprise/license.ts
+  s_143c13fffd1462::t_c6142ecf6a8592 1-9
+docs/internal/ip-governance.md
+  s_143c13fffd1462::t_96e243d66c8008 1-173
+src/enterprise/org.ts
+  s_143c13fffd1462::t_11d7d8f23c788a 1-9
+LICENSE
+  s_143c13fffd1462::t_a85ecadacd42d3 1-21
+src/enterprise/types.ts
+  s_143c13fffd1462::t_f82e6dd69eaabb 1-9
+docs/internal/README.md
+  s_143c13fffd1462::t_3a8d0d4bc047a2 41
+src/enterprise/dashboard.ts
+  s_143c13fffd1462::t_2f5a09c3de5566 1-9
+TRADEMARKS.md
+  s_143c13fffd1462::t_4f38851f12b51c 1-49
+src/enterprise/tier.ts
+  s_143c13fffd1462::t_cb7fb65360484d 1-9
+package.json
+  s_143c13fffd1462::t_e1a94a64226c11 5
+.npmignore
+  s_143c13fffd1462::t_b05c0bace13167 1-26
+src/enterprise/audit.ts
+  s_143c13fffd1462::t_a3ce5779ffbff0 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7c6cb91d4923e8064ab7feec1de4d49f04aade99",
+  "prompts": {},
+  "sessions": {
+    "s_143c13fffd1462": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05318ca5dffe0wgXpa8eHxqlGk",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
