@@ -1,0 +1,35 @@
+src/ui/components/InputBox.tsx
+  s_bb8268d312fa52::t_2d955387d951b9 2,5-6,9,12-17
+package.json
+  s_bb8268d312fa52::t_d305f788e9e6a7 15,20
+bun.lock
+  s_bb8268d312fa52::t_52e1e2ec8c9c2c 8,13,28-29,90-91,102-103,112-113,120-121,126-127,174-175,180-183
+src/ui/banner.ts
+  s_bb8268d312fa52::t_0883e9e7e515a1 1-6
+src/ui/Home.tsx
+  s_bb8268d312fa52::t_c5cb719b4b6c16 10
+  s_bb8268d312fa52::t_a409bd8b6956ec 1,4-5,9,11,13-59,61
+  s_bb8268d312fa52::t_8f1e5be6925e40 2
+src/ui/components/Statusbar.tsx
+  s_bb8268d312fa52::t_a3876129ab70a6 7,12-19
+src/cli.tsx
+  s_bb8268d312fa52::t_670f39e324a8bb 16
+  s_bb8268d312fa52::t_30418de77a78a4 1,12-15,17-18
+  s_bb8268d312fa52::t_b0c698ad473453 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "086dfb141815ab9d389f0a191d212d5497f0e58b",
+  "prompts": {},
+  "sessions": {
+    "s_bb8268d312fa52": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0543481a2ffeilgAAQ57qiWalA",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
