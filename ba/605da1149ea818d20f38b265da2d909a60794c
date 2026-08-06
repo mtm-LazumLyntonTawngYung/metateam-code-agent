@@ -1,0 +1,25 @@
+src/auth/sso.ts
+  s_01203e5fb10b66::t_e2cf70ceb71b50 139,143-145
+  s_01203e5fb10b66::t_051b0425826f4f 4,8-26,30-36,62-63,72-73,84-88,90-91,93,99-107,110-116,120,123,126-128,218
+  s_01203e5fb10b66::t_58f0a955230dc2 137-138
+  s_01203e5fb10b66::t_ae82c75c3247ea 140-142
+  s_01203e5fb10b66::t_ff95527c8b898a 146-148
+  s_01203e5fb10b66::t_84e62551c85da7 215-217
+  s_01203e5fb10b66::t_013f981da38c54 219-220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ba605da1149ea818d20f38b265da2d909a60794c",
+  "prompts": {},
+  "sessions": {
+    "s_01203e5fb10b66": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04f15e512ffewH8m4mCnMeAB9U",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
