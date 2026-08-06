@@ -1,0 +1,30 @@
+src/agents/agent-loop.ts
+  h_10671eecd6b5d0 29,100
+src/cli.tsx
+  h_10671eecd6b5d0 61,170,179,260
+src/daemon/webhook.ts
+  h_10671eecd6b5d0 34,116,204
+src/llm/types.ts
+  h_10671eecd6b5d0 202
+src/tools/glob_files.ts
+  h_10671eecd6b5d0 32
+src/ui/App.tsx
+  h_10671eecd6b5d0 209,213,217,225,389,431,433,693,716,748,754,760,763,774,777,780,783,792,804,807
+src/ui/ChatView.tsx
+  h_10671eecd6b5d0 81,363,376,462
+src/ui/GitDiffView.tsx
+  h_10671eecd6b5d0 97,100,219-220
+src/ui/McpsView.tsx
+  h_10671eecd6b5d0 109,184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "3e7b8518d70ca761d9a121a0d806d7858a5a03df",
+  "prompts": {},
+  "humans": {
+    "h_10671eecd6b5d0": {
+      "author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
