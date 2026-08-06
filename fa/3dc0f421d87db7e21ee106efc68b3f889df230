@@ -1,0 +1,35 @@
+src/enterprise/dashboard.ts
+  s_18654d354a1f8d::t_d3b5a74c92765f 169-172
+  s_0fea11ffdf3972::t_4ab2ff7eae8113 253-377
+  s_18654d354a1f8d::t_525a62e0c34a02 105-114,118-127,130-137
+  s_0fea11ffdf3972::t_7522ad767b8372 10,20-41,68-104,115-117,128-129,138-152,155-159,173-190
+  s_18654d354a1f8d::t_dad91ab993f78e 42-67
+  s_0fea11ffdf3972::t_53ca4cd77f600a 246,248-249
+  s_18654d354a1f8d::t_d2887f0524fac3 12
+  s_0fea11ffdf3972::t_6f9ce61d5c9da8 191
+  s_0fea11ffdf3972::t_1b770f82dfbce9 378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "fa3dc0f421d87db7e21ee106efc68b3f889df230",
+  "prompts": {},
+  "sessions": {
+    "s_0fea11ffdf3972": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04881a1a7ffevix8feAtiGEQqR",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    },
+    "s_18654d354a1f8d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0476e13b6ffeUEOvsKt451OZTG",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
