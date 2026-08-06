@@ -1,0 +1,35 @@
+src/mcp-plugins/figma-bridge.ts
+  s_403c34f4751866::t_98dacacfbd35f3 1-483
+src/mcp-plugins/devops-bridge.ts
+  s_403c34f4751866::t_c1a5d464c68d6a 1-504
+.mtc/agents/product-manager.md
+  s_403c34f4751866::t_d901720366dbd1 1-95
+docs/internal/README.md
+  s_403c34f4751866::t_3e7d1421056925 21
+.mtc/agents/devops-engineer.md
+  s_403c34f4751866::t_1442b1341aace0 1-78
+tsconfig.json
+  s_403c34f4751866::t_54e60a1a4e646b 20
+CHANGELOG.md
+  s_403c34f4751866::t_c475d4aa8ea43e 3-12
+docs/internal/multi-department-workflows.md
+  s_403c34f4751866::t_837e7d36318f82 1-267
+.mtc/agents/qa-tester.md
+  s_403c34f4751866::t_ab77e276f803fd 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7b98ce8d5d8549c52f5b2e444662a082ed829a1b",
+  "prompts": {},
+  "sessions": {
+    "s_403c34f4751866": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0538db391ffeoAUxFXgzXlxTRb",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
