@@ -1,0 +1,21 @@
+src/auth/index.ts
+  s_01203e5fb10b66::t_e5835f305b3042 4-6
+  s_01203e5fb10b66::t_9d8db8322dce62 2-3
+  s_01203e5fb10b66::t_f1386601472d0e 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "e763e4a478ebad829144a445191e446108f39b5b",
+  "prompts": {},
+  "sessions": {
+    "s_01203e5fb10b66": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04f15e512ffewH8m4mCnMeAB9U",
+        "model": "unknown"
+      },
+      "human_author": "mtm-LazumLyntonTawngYung <lazumlyntontawngyung@metateammyanmar.com>"
+    }
+  }
+}
