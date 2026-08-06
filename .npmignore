@@ -24,3 +24,7 @@ CHANGELOG.md
 bin/
 dist/
 out/
+
+# .npmignore
+src/
+bin/*.exe
