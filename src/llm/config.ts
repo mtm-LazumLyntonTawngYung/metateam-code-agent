@@ -22,7 +22,7 @@ export const DEFAULT_PROVIDERS: ProviderConfig[] = [
     label: "DeepSeek",
     apiKey: "",
     baseUrl: "https://api.deepseek.com/v1",
-    models: ["deepseek-chat"],
+    models: ["deepseek-v4-flash"],
   },
   {
     id: "openai",
@@ -43,7 +43,7 @@ export const DEFAULT_PROVIDERS: ProviderConfig[] = [
     label: "OpenRouter",
     apiKey: "",
     baseUrl: "https://openrouter.ai/api/v1",
-    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat", "poolside/laguna-s-2.1:free"],
+    models: ["anthropic/claude-sonnet-4", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001", "deepseek/deepseek-v4-flash", "poolside/laguna-s-2.1:free"],
   },
   {
     id: "llamacpp",
@@ -78,8 +78,8 @@ export function loadLlmConfig(): LlmConfig {
   return {
     providers: defaults,
     routing: raw?.routing ?? {
-      simpleModel: "deepseek-chat",
-      defaultModel: "deepseek-chat",
+      simpleModel: "deepseek-v4-flash",
+      defaultModel: "deepseek-v4-flash",
       reasoningModel: "claude-sonnet-4-20250514",
       reasoningEnabled: false,
     },
@@ -127,7 +127,18 @@ export function findModel(id: string) {
 
 export function findProvider(modelId: string): ProviderConfig | undefined {
   const cfg = loadLlmConfig();
-  return cfg.providers.find((p) => p.models.includes(modelId));
+  const byModel = cfg.providers.find((p) => p.models.includes(modelId));
+  if (byModel) return byModel;
+  const known = findModel(modelId);
+  if (known) {
+    return cfg.providers.find((p) => p.id === known.provider);
+  }
+  return undefined;
+}
+
+export function findProviderById(id: string): ProviderConfig | undefined {
+  const cfg = loadLlmConfig();
+  return cfg.providers.find((p) => p.id === id);
 }
 
 export function getAllKnownModels(): ModelConfig[] {

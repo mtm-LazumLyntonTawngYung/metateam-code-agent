@@ -94,7 +94,7 @@ export type RoutingDecision = {
 
 export const KNOWN_MODELS: ModelConfig[] = [
   {
-    id: "deepseek-chat",
+    id: "deepseek-v4-flash",
     displayName: "DeepSeek V4",
     provider: "deepseek",
     tier: "default",
@@ -184,7 +184,7 @@ export const KNOWN_MODELS: ModelConfig[] = [
     contextWindow: 128000,
   },
   {
-    id: "deepseek/deepseek-chat",
+    id: "deepseek/deepseek-v4-flash",
     displayName: "DeepSeek V4 (OpenRouter)",
     provider: "openrouter",
     tier: "default",
@@ -257,6 +257,6 @@ export const KNOWN_MODELS: ModelConfig[] = [
 
 export const DEFAULT_ROUTING: Record<ModelTier, string[]> = {
   fast: ["gpt-4o-mini", "claude-haiku-3-5-20241022", "openai/gpt-4o-mini", "google/gemini-2.0-flash-001"],
-  default: ["deepseek-chat", "gpt-4o", "openai/gpt-4o", "qwen2.5-7b-instruct"],
+  default: ["deepseek-v4-flash", "gpt-4o", "openai/gpt-4o", "qwen2.5-7b-instruct"],
   reasoning: ["claude-sonnet-4-20250514", "gpt-4o", "anthropic/claude-sonnet-4"],
 };

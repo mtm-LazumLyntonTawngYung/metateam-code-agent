@@ -43,15 +43,15 @@ Global settings live in `~/.config/mtc/`:
 {
   "apiKey": "sk-...",                    // legacy single-provider key
   "endpoint": "https://api.deepseek.com/v1",
-  "selectedModel": "deepseek-chat",      // default model for the agent loop
+  "selectedModel": "deepseek-v4-flash",      // default model for the agent loop
   "agentId": "build",
   "installedSkills": ["tdd"],            // installed skill ids
   "telemetry": { "enabled": false, "deviceId": "..." },
   "llm": {
     "providers": [],
     "routing": {
-      "simpleModel": "deepseek-chat",
-      "defaultModel": "deepseek-chat",
+      "simpleModel": "deepseek-v4-flash",
+      "defaultModel": "deepseek-v4-flash",
       "reasoningModel": "claude-sonnet-4-20250514"
     }
   },
@@ -143,7 +143,7 @@ mtc llm status
 mtc llm set-provider --id deepseek --key sk-...
 
 # Set routing models (simple / default / reasoning)
-mtc llm set-routing --simple deepseek-chat --default deepseek-chat --reasoning claude-sonnet-4-20250514
+mtc llm set-routing --simple deepseek-v4-flash --default deepseek-v4-flash --reasoning claude-sonnet-4-20250514
 
 # List all known models
 mtc llm models

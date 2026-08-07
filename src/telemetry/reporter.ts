@@ -11,7 +11,7 @@ import type { ModelStats, ToolStats, DailyStats } from "./store";
 export type ModelPricing = Record<string, number>;
 
 export const MODEL_PRICING: ModelPricing = {
-  "deepseek-chat": 0.55,
+  "deepseek-v4-flash": 0.55,
   "deepseek-reasoner": 1.2,
   "gpt-4o": 5,
   "gpt-4o-mini": 0.35,
@@ -23,7 +23,7 @@ export const MODEL_PRICING: ModelPricing = {
   "anthropic/claude-3.5-haiku": 1.5,
   "openai/gpt-4o": 5,
   "openai/gpt-4o-mini": 0.35,
-  "deepseek/deepseek-chat": 0.55,
+  "deepseek/deepseek-v4-flash": 0.55,
 };
 
 export const DEFAULT_PRICE_PER_1M = 2;
@@ -61,7 +61,7 @@ export function buildOptimizationRecommendations(
     const share = Math.round((top.tokens / totalTokens) * 100);
     recommendations.push(
       `${top.model} accounts for ${share}% of tokens at ~$${top.price}/1M tokens. ` +
-        `Consider routing simple tasks to a cheaper model (e.g. gpt-4o-mini or deepseek-chat).`,
+        `Consider routing simple tasks to a cheaper model (e.g. gpt-4o-mini or deepseek-v4-flash).`,
     );
   }
 

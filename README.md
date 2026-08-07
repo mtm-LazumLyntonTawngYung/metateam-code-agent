@@ -13,10 +13,14 @@ to accelerate development, refactoring, and code reviews.
 - **Smart Tool Permissions** — Granular control over which tools each agent
   can use, with user-facing permission prompts for sensitive operations.
 - **Session Management** — Persistent conversation history, token tracking, and automatic session summaries.
+- **Session Checkpoints** — Every file edit is recorded as a checkpoint; restore
+  any file to an earlier state with `mtc session revert`.
 - **Code Editing Tools** — Read, write, edit, and search files; run bash commands; all tracked and permissioned.
 - **Multi-LLM Routing** — Configure DeepSeek, OpenAI, Anthropic, or OpenRouter
   providers with automatic task classification and fallback.
 - **Local LLM Support** — Run local models via llama.cpp (`llama-server`) for offline/private use.
+- **Plugin System** — Load TypeScript/JavaScript plugins from `.mtc/plugins` or
+  `~/.config/mtc/plugins`, each contributing custom tools.
 - **Agent-driven Eval & Benchmarking** — Run the real agent loop against
   sandboxed tasks with `mtc eval run` and benchmark all tasks with
   `mtc eval bench`.
@@ -99,12 +103,18 @@ Add `bin/` to your `PATH`, or run directly:
 ./bin/mtc --version          # macOS / Linux
 ```
 
-### Docker
+## Available Scripts
 
-```bash
-docker build -t mtc .
-docker run -it mtc
-```
+Run from the repository root with [Bun](https://bun.sh):
+
+| Script | Description |
+|--------|-------------|
+| `bun run dev` | Start the TUI in development mode |
+| `bun run build` | Compile a standalone binary to `bin/mtc` (Windows: `bin/mtc.exe`) |
+| `bun run typecheck` | Run the TypeScript compiler with no emit |
+| `bun test` | Run the test suite |
+| `bun run test:coverage` | Run the test suite with coverage |
+| `bun run test:eval` | Run the agent-driven evaluation suite |
 
 ## Usage
 
@@ -121,13 +131,23 @@ bun run build
 # Type check
 bun run typecheck
 
-# Run agent-driven eval against a sandboxed task
-mtc eval run <task> --model <id>
+# Evaluate the agent against sandboxed tasks
+mtc eval list                          # list available tasks
+mtc eval run <task> --model <id>       # run a single task
+mtc eval bench                         # benchmark all tasks
 
-# Benchmark all eval tasks
-mtc eval bench
+# Session checkpoints
+mtc session patches <session>          # list recorded file edits
+mtc session revert <session> <file> [version]   # restore a file
 
-# Start the enterprise dashboard (requires license)
+# Plugins
+mtc plugin list
+mtc plugin reload
+
+# Diagnostics
+mtc debug info
+
+# Enterprise dashboard (requires license)
 mtc enterprise dashboard -p 3000
 ```
 
@@ -158,7 +178,7 @@ LLM provider keys and routing are managed through the CLI
 ```bash
 mtc llm status
 mtc llm set-provider --id deepseek --key sk-...
-mtc llm set-routing --simple deepseek-chat --default deepseek-chat --reasoning claude-sonnet-4-20250514
+mtc llm set-routing --simple deepseek-v4-flash --default deepseek-v4-flash --reasoning claude-sonnet-4-20250514
 ```
 
 ### Local LLMs (llama.cpp)
@@ -229,6 +249,69 @@ Usage analytics are **opt-in** and disabled by default. Enable them with
 with `mtc analytics disable`. Data is stored locally and never includes file
 contents, prompts, or responses. See [docs/internal/privacy-policy.md](docs/internal/privacy-policy.md).
 
+## Environment Variables
+
+Most configuration lives in `~/.config/mtc/config.json` and is managed via
+`mtc llm set-provider`. Environment variables are used for daemon credentials,
+SSO, enterprise licensing, and bundled MCP bridges. See `.env.example` for the
+full template.
+
+| Variable | Purpose |
+|----------|---------|
+| `MTC_AZURE_CLIENT_ID` | Microsoft Entra ID client ID (SSO device-code flow) |
+| `MTC_AZURE_TENANT_ID` | Microsoft Entra ID tenant ID |
+| `MTC_AZURE_CLIENT_SECRET` | Optional; falls back to public-client flow when absent |
+| `MTC_GITHUB_TOKEN` | GitHub token for the daemon (issues / draft PRs) |
+| `MTC_GITLAB_TOKEN` | GitLab token for the daemon |
+| `MTC_WEBHOOK_SECRET` | Secret used for webhook signature / token validation |
+| `MTC_SLACK_WEBHOOK` | Slack notification webhook URL |
+| `MTC_TEAMS_WEBHOOK` | Microsoft Teams notification webhook URL |
+| `MTC_WS_TOKEN` | Auth token for the WebSocket server (`mtc serve`) |
+| `MTC_LICENSE_SECRET` | Enterprise license signing / verification secret |
+| `FIGMA_TOKEN` | Figma MCP bridge token |
+| `DATADOG_API_KEY` / `DATADOG_APP_KEY` | Datadog MCP bridge keys |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS MCP bridge credentials |
+
+## Project Structure
+
+```
+.
+├── .mtc/                    # Workspace configuration (mcp.json, agents/, rules/, skills/)
+├── src/
+│   ├── cli.tsx              # CLI entry point (commander + Ink TUI)
+│   ├── agents/              # Agent loop and agent definitions
+│   ├── auth/                # SSO (Microsoft Entra ID) and token handling
+│   ├── config/              # Configuration loading and validation
+│   ├── daemon/              # Headless webhook daemon and autofix pipeline
+│   ├── enterprise/          # Licensing, org management, control-plane dashboard
+│   ├── eval/                # Agent-driven eval tasks and benchmarking
+│   ├── init/                # Project scaffolding and templates
+│   ├── llm/                 # Multi-LLM providers, routing, and cost tracking
+│   ├── mcp/                 # Model Context Protocol server loading
+│   ├── mcp-plugins/         # Bundled MCP bridges (Figma, Datadog, AWS, ...)
+│   ├── multi-agent/         # Multi-agent orchestration and task routing
+│   ├── plugins/             # Plugin extension system
+│   ├── review/              # Automated code review (`mtc review`)
+│   ├── secrets/             # Secret detection and redaction
+│   ├── server/              # WebSocket server (`mtc serve`)
+│   ├── session/             # Conversation history and file checkpoints
+│   ├── shared-sessions/     # Collaboration / session sharing
+│   ├── skills/              # Skills catalog and loader
+│   ├── telemetry/           # Opt-in usage analytics
+│   ├── tools/               # Agent tool implementations (read, write, bash, ...)
+│   ├── ui/                  # Ink UI components
+│   └── utils/               # Shared utilities
+├── tests/
+│   ├── evals/               # Sandboxed eval tasks
+│   └── unit/                # Unit tests
+├── bin/                     # Compiled binary (mtc / mtc.exe) and launcher
+├── docs/                    # Internal documentation portal
+├── examples/                # Example configs and plugins
+├── .env.example             # Environment variable template
+├── install.sh               # Quick install script (macOS / Linux)
+└── package.json
+```
+
 ## Security
 
 - **Webhook validation** — GitHub signatures are verified with
@@ -247,4 +330,20 @@ contents, prompts, or responses. See [docs/internal/privacy-policy.md](docs/inte
 - **[Internal Documentation Portal](docs/internal/README.md)** — Onboarding, governance, architecture, workflows
 - **[Internal Playbook](docs/playbook.md)** — Prompt engineering, agent usage, troubleshooting
 - **[Migration Guide](docs/migration-guide.md)** — License format, SSO, agent permissions, and telemetry changes
-- **[Hackathon Guide](docs/hackathon.md)** — Building subagents and MCP plugins
+
+## Contributing
+
+See the [Contributing Guide](docs/internal/contributing.md) for the full
+workflow (code of conduct, development setup, branch naming, commit
+conventions, and the PR process). In short:
+
+1. Branch as `feature/#<issue-number>-<short-description>`
+2. Run `bun run typecheck` and `bun test` before opening a PR
+3. Follow [Conventional Commits](https://www.conventionalcommits.org/)
+4. Update the README and `CHANGELOG.md` for user-visible changes
+
+## License
+
+- Open-source edition: [MIT](LICENSE)
+- Enterprise edition (SSO, org management, audit logs, control-plane dashboard):
+  [LICENSE.ENTERPRISE](LICENSE.ENTERPRISE) with tiered licensing
